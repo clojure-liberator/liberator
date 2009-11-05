@@ -9,21 +9,24 @@
 (ns compojure-rest
   (:use compojure))
 
-(declare handle-allowed handle-accept handle-authorized create-response)
+(declare handle-allowed handle-accept handle-authorized handle-exists create-response
+	 handle-if-match handle-if-none-match)
 
 (def -const-nil (constantly nil))
 
 (def default-resource-functions
-     { :valid-method (fn [req]
-		       (let [functions (req :functions)]
-			 (contains? functions (req :request-method))))
+     {
+      :valid-method (fn [req]
+		      (let [functions (req ::functions)]
+			(contains? functions (req :request-method))))
       :head -const-nil
-      :etag -const-nil
+      :generate-etag -const-nil
       :last-modified -const-nil
       :expires -const-nil
       :allowed? (constantly true)
       :authorized? (constantly true)
       :content-type-provided #(some #{((% :headers) "accept")} ["text/html" "*/*"])
+      :exists? (constantly true)
       })
 
 ;; returns a 2-vector [result new-request]
@@ -38,10 +41,8 @@
 		 vector-or-result 
 		 [vector-or-result req])]
     (do
-      (prn "with-request " vector)
+      (if false (println (str "REQ is " vector)))
       vector)))
-
-
 
 (defn filter-nil-values [m]
   (into {} (filter (fn [[_ v]] (not (nil? v))) m)))
@@ -66,7 +67,7 @@
 	string-or-fn))))
 
 (defn handle-request  [req]
-  (let [functions (req :functions) 
+  (let [functions (req ::functions) 
 	valid-method (functions :valid-method)
 	[valid req] (with-request req valid-method)]
     (if-not valid 
@@ -74,7 +75,7 @@
       (handle-accept req))))
 
 (defn handle-accept [req]
-  (let [c-t-p (-> req :functions :content-type-provided)
+  (let [c-t-p (-> req ::functions :content-type-provided)
 	[negotiated-type req] (with-request req (partial negotiate-content-type c-t-p))
 	req (assoc req :negotiated-type negotiated-type)]
     (if negotiated-type
@@ -83,7 +84,7 @@
 
 
 (defn handle-authorized [req]
-  (let [f-authorized? (-> req :functions :authorized?)
+  (let [f-authorized? (-> req ::functions :authorized?)
 	[authorized req]
     	(with-request req f-authorized?)]
     (if authorized
@@ -91,36 +92,66 @@
       [401 "Unauthorized"])))
 
 (defn handle-allowed [req]
-  (let [[allowed req] (with-request req (-> req :functions :allowed?))]
+  (let [[allowed req] (with-request req (-> req ::functions :allowed?))]
     (if allowed
-      (create-response req)
+      (handle-exists req)
       [403 "Forbidden"])))
 
+(defn handle-exists [req]
+  (let [[exists req] (with-request req (-> req ::functions :exists?))]
+    (if exists
+      (handle-if-match req)
+      [404 "Not found"])))
+
+(defn handle-if-match [req]
+  (let [h-if-match ((req :headers) "if-match")]
+    (if (or (= h-if-match "*") (nil? h-if-match))
+      (handle-if-none-match req)
+      (let [gen-etag (-> req ::functions :generate-etag)
+	    [etag req] (with-request req gen-etag)]
+	(if (= h-if-match etag)
+	  (handle-if-none-match req)
+	  [412 "precondition failed"])))))
+
+(defn handle-if-none-match [req]
+  (let [h-if-none-match ((req :headers) "if-none-match")
+	gen-etag (-> req ::functions :generate-etag)
+	[etag req] (with-request req gen-etag)]
+    (if (or (nil? h-if-none-match)
+	    (and (not (= h-if-none-match "*"))
+		 (not (= h-if-none-match etag))))
+      (create-response req)
+      (if (some #{(req :request-method)} [:get :head])
+	[304 "not modified"]
+	[412 "precondition failed"]))))
+
 (defn create-response [req]
-  (let [functions (req :functions)
-	expires (functions :expires)
-	last-modified (functions :last-modified)
-	gen-etag (functions :etag)
-	method (req :request-method)
-	handler (functions method)
-	[etag req] (with-request req gen-etag)
-	[body req] (with-request req handler) 
-	[h-expires req] (with-request req expires)
-	[h-last-modified req] (with-request req last-modified)
-	resp-headers (merge (filter-nil-values 
-			     {  "Content-Type" (req :negotiated-type)
-				"Expires" (http-date h-expires) 
-				"Last-Modified" (http-date h-last-modified)
-				"ETag" etag
-				})
-			    (req :headers))]
-    {
-     :status 200	
-     :headers resp-headers 
-     :body body
-     }))
+  (do
+    (let [functions (req ::functions)]
+      (let [
+	    expires (functions :expires)
+	    last-modified (functions :last-modified)
+	    gen-etag (functions :generate-etag)
+	    method (req :request-method)
+	    handler (functions method)
+	    [etag req] (with-request req gen-etag)
+	    [body req] (with-request req handler) 
+	    [h-expires req] (with-request req expires)
+	    [h-last-modified req] (with-request req last-modified)
+	    resp-headers (filter-nil-values 
+			  {  "Content-Type" (req :negotiated-type)
+			     "Expires" (http-date h-expires) 
+			     "Last-Modified" (http-date h-last-modified)
+			     "ETag" etag
+			     })
+	    ]
+       {
+	:status 200	
+	:headers resp-headers 
+	:body body
+	}))))
 
 (defn make-handler [functions]
   (fn [req]
     (let [functions-with-defaults (merge default-resource-functions functions)]
-      (handle-request (assoc req :functions functions-with-defaults)))))
+      (handle-request (assoc req ::functions functions-with-defaults)))))

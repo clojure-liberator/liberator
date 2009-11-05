@@ -11,14 +11,16 @@
   (:use compojure-rest))
 
 (defn hello-resource []
-  (compojure-rest/make-handler {
-      :get (fn [req] (str "Hello " ((req :route-params {}) :who "unknown foreigner")))
-      :generate-etag (fn [req] ((req :route-params) :who))
-      :expires (constantly 10000)		; expire in 10 sec
-      :last-modified (constantly -10000)	; last modified 10 sec ago
-      :authorized? (fn [req] (not (= "tiger" ((req :route-params {}) :who))))
-      :allowed? (fn [req] (not (= "scott" ((req :route-params {}) :who))))
-      }))
+  (compojure-rest/make-handler
+   {
+    :get (fn [req] (str "Hello " ((req :route-params {}) :who "unknown foreigner")))
+    :generate-etag (fn [req] ((req :route-params) :who))
+    :expires (constantly 10000)		; expire in 10 sec
+    :last-modified (constantly -10000)	; last modified 10 sec ago
+    :authorized? (fn [req] (not (= "tiger" ((req :route-params {}) :who))))
+    :allowed? (fn [req] (not (= "scott" ((req :route-params {}) :who))))
+    :exists? #(not (= "cat" ((% :route-params {}) :who)))
+    }))
 
 
 (defroutes my-app
