@@ -10,25 +10,26 @@
   (:use compojure)
   (:use compojure-rest))
 
-(defn hello-resource []
-  (compojure-rest/make-handler
-   {
-    :get (fn [req] (str "Hello " ((req :route-params {}) :who "unknown foreigner")))
-    :generate-etag (fn [req] ((req :route-params) :who))
-    :expires (constantly 10000)		; expire in 10 sec
-    :last-modified (constantly -10000)	; last modified 10 sec ago
-    :authorized? (fn [req] (not (= "tiger" ((req :route-params {}) :who))))
-    :allowed? (fn [req] (not (= "scott" ((req :route-params {}) :who))))
-    :exists? #(not (= "cat" ((% :route-params {}) :who)))
-    }))
-
+(defn hello-resource [request]
+  ((-> (method-not-allowed)
+       (wrap-generate-body (fn [r] (str "Hello " ((request :params) :who "stranger"))))
+       (wrap-etag (comp :who :params))
+       (wrap-expiry (constantly 10000))	
+       (wrap-last-modified -1000)
+       (wrap-exists (comp not #(some #{%} ["cat"]) :who :params))
+       (wrap-auth (comp not #(some #{%} ["evil"]) :who :params))
+       (wrap-allow (comp not #(some #{%} ["scott"]) :who :params)))
+   request))
 
 (defroutes my-app
-  (ANY "/hello/:who" (hello-resource))
-  (ANY "/simple/" (compojure-rest/make-handler { :get (fn [req] "Simple") }))
-  (ANY "*" (page-not-found)))
+  (ANY "/hello/:who" hello-resource)
+  (GET "/simple" (str "simple"))
+  (GET "/echo/:foo" (fn [req] {:headers { "Content-Type" "text/plain" } :body (str (dissoc req :servlet-request))}))
+  (GET "*" (page-not-found)))
 
 (defn main []
   (do
     (defserver test-server {:port 8080} "/*" (servlet my-app))
     (start test-server)))
+
+

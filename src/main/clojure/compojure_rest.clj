@@ -7,151 +7,105 @@
 ;; this software.
 
 (ns compojure-rest
-  (:use compojure))
+  (:use compojure)
+  (:use clojure.contrib.core)
+  (:import java.util.Date)
+  (:import java.lang.System)
+  (:import java.util.Locale)
+  (:import java.text.SimpleDateFormat))
 
-(declare handle-allowed handle-accept handle-authorized handle-exists create-response
-	 handle-if-match handle-if-none-match)
 
-(def -const-nil (constantly nil))
-
-(def default-resource-functions
-     {
-      :valid-method (fn [req]
-		      (let [functions (req ::functions)]
-			(contains? functions (req :request-method))))
-      :head -const-nil
-      :generate-etag -const-nil
-      :last-modified -const-nil
-      :expires -const-nil
-      :allowed? (constantly true)
-      :authorized? (constantly true)
-      :content-type-provided #(some #{((% :headers) "accept")} ["text/html" "*/*"])
-      :exists? (constantly true)
-      })
-
-;; returns a 2-vector [result new-request]
-;; vector-or-f-or-result if a function may return result or  [result req']
-;; vector-or-f-or-result may be result (single value)
-;; vector-or-f-or-result may be 2-vector
-(defn with-request [req vector-or-f-or-result]
-  (let [vector-or-result (if (fn? vector-or-f-or-result)
-			   (vector-or-f-or-result req)
-			   vector-or-f-or-result)
-	vector (if (sequential? vector-or-result)
-		 vector-or-result 
-		 [vector-or-result req])]
-    (do
-      (if false (println (str "REQ is " vector)))
-      vector)))
-
-(defn filter-nil-values [m]
-  (into {} (filter (fn [[_ v]] (not (nil? v))) m)))
+(defn evaluate-generate [function-or-value request]
+  (if (fn? function-or-value)
+    (function-or-value request)
+    function-or-value))
 
 (def *http-date-format*
-     (new java.text.SimpleDateFormat
-	  "EEE, dd MMM yyyy HH:mm:ss Z"
-	  java.util.Locale/US))
+     (new SimpleDateFormat
+          "EEE, dd MMM yyyy HH:mm:ss Z"
+          Locale/US))
 
 (defn http-date [int-or-date]
   (if-let [date (if (integer? int-or-date)
-	       (new java.util.Date (+ int-or-date (java.lang.System/currentTimeMillis)))
-	       int-or-date)]
+		  (new Date (+ int-or-date (System/currentTimeMillis)))
+		  int-or-date)]
     (.format *http-date-format* date)))
 
-;; todo use cl-conneg instead of "contains"
-(defn negotiate-content-type [string-or-fn req]
-  (if (fn? string-or-fn)
-    (string-or-fn req)
-    (let [accept ((req :headers) "accept" "text/html")]
-      (if (and (not (nil? accept)) (.contains accept string-or-fn))
-	string-or-fn))))
+(defn wrap-header [handler header generate-header]
+  (fn [request]
+    (let [value (evaluate-generate generate-header request)
+	  response (handler request)]
+      (assoc-in response [:headers header] (str value))))) 
 
-(defn handle-request  [req]
-  (let [functions (req ::functions) 
-	valid-method (functions :valid-method)
-	[valid req] (with-request req valid-method)]
-    (if-not valid 
-      [501 "Not implemented"]
-      (handle-accept req))))
+(defn wrap-if-match [handler gen-etag]
+  (fn [request]
+    (let [if-match (-?> request :headers (get  "if-match"))]
+      (if (or (= if-match "*") (nil? if-match))
+	(handler request)
+	(let [etag (gen-etag request)]
+	  (if (= if-match etag)
+	    (handler (assoc-in request [::rest :etag] etag))
+	    {:status 412 :body "precondition failed"}))))))
 
-(defn handle-accept [req]
-  (let [c-t-p (-> req ::functions :content-type-provided)
-	[negotiated-type req] (with-request req (partial negotiate-content-type c-t-p))
-	req (assoc req :negotiated-type negotiated-type)]
-    (if negotiated-type
-      (handle-authorized req)
-      [415 "Unsupported media type"])))
+(defn wrap-if-none-match [handler gen-etag]
+  (fn [request]
+    (let [if-none-match (-?> request :headers (get  "if-none-match"))]
+      (if (or (nil? if-none-match)
+	      (and (not (= if-none-match "*"))
+		   (not (= if-none-match (gen-etag request)))))
+	(handler request)
+	(if (some #{(request :request-method)} [:get :head])
+	  {:status 304 }
+	  {:status 412 :body "precondition failed"})))))
 
+(defn wrap-generate-etag [handler generate-etag]
+  (fn [request]
+    (let [etag (or (-?> request ::rest :etag) (generate-etag request))]
+      ((wrap-header handler "Etag" etag) request))))
 
-(defn handle-authorized [req]
-  (let [f-authorized? (-> req ::functions :authorized?)
-	[authorized req]
-    	(with-request req f-authorized?)]
-    (if authorized
-      (handle-allowed req)
-      [401 "Unauthorized"])))
+(defn wrap-expiry [handler generate-expires]
+  (wrap-header handler "Expires"
+	       #(http-date (evaluate-generate generate-expires %))))
 
-(defn handle-allowed [req]
-  (let [[allowed req] (with-request req (-> req ::functions :allowed?))]
-    (if allowed
-      (handle-exists req)
-      [403 "Forbidden"])))
+(defn wrap-last-modified [handler generate-last-modified]
+  (wrap-header handler "Last-Modified"
+	       #(http-date (evaluate-generate generate-last-modified %))))
 
-(defn handle-exists [req]
-  (let [[exists req] (with-request req (-> req ::functions :exists?))]
-    (if exists
-      (handle-if-match req)
-      [404 "Not found"])))
+(defn wrap-exists [handler exists-function]
+  (fn [request]
+    (if (exists-function request)
+      (handler request)
+      {:status 404 :body "not found"})))
 
-(defn handle-if-match [req]
-  (let [h-if-match ((req :headers) "if-match")]
-    (if (or (= h-if-match "*") (nil? h-if-match))
-      (handle-if-none-match req)
-      (let [gen-etag (-> req ::functions :generate-etag)
-	    [etag req] (with-request req gen-etag)]
-	(if (= h-if-match etag)
-	  (handle-if-none-match req)
-	  [412 "precondition failed"])))))
+(defn wrap-auth [handler auth-function]
+  (fn [request]
+    (if (auth-function request)
+      (handler request)
+      {:status 401 :body "unauthorized"})))
 
-(defn handle-if-none-match [req]
-  (let [h-if-none-match ((req :headers) "if-none-match")
-	gen-etag (-> req ::functions :generate-etag)
-	[etag req] (with-request req gen-etag)]
-    (if (or (nil? h-if-none-match)
-	    (and (not (= h-if-none-match "*"))
-		 (not (= h-if-none-match etag))))
-      (create-response req)
-      (if (some #{(req :request-method)} [:get :head])
-	[304 "not modified"]
-	[412 "precondition failed"]))))
+(defn wrap-allow [handler allow-function]
+  (fn [request]
+    (if (allow-function request)
+      (handler request)
+      {:status 403 :body "forbidden"})))
 
-(defn create-response [req]
-  (do
-    (let [functions (req ::functions)]
-      (let [
-	    expires (functions :expires)
-	    last-modified (functions :last-modified)
-	    gen-etag (functions :generate-etag)
-	    method (req :request-method)
-	    handler (functions method)
-	    [etag req] (with-request req gen-etag)
-	    [body req] (with-request req handler) 
-	    [h-expires req] (with-request req expires)
-	    [h-last-modified req] (with-request req last-modified)
-	    resp-headers (filter-nil-values 
-			  {  "Content-Type" (req :negotiated-type)
-			     "Expires" (http-date h-expires) 
-			     "Last-Modified" (http-date h-last-modified)
-			     "ETag" etag
-			     })
-	    ]
-       {
-	:status 200	
-	:headers resp-headers 
-	:body body
-	}))))
+(defn wrap-generate-body [handler generate-body-function-or-val]
+  (fn [request]
+    (if (match-method :get request)
+      (compojure.http.response/create-response
+       request
+       (if (fn? generate-body-function-or-val)
+	 (generate-body-function-or-val request)
+	 generate-body-function-or-val))
+      (handler request))))
 
-(defn make-handler [functions]
-  (fn [req]
-    (let [functions-with-defaults (merge default-resource-functions functions)]
-      (handle-request (assoc req ::functions functions-with-defaults)))))
+(defn wrap-etag [handler generate-etag]
+  (-> handler
+      (wrap-if-match generate-etag)
+      (wrap-if-none-match generate-etag)
+      (wrap-generate-etag generate-etag)))
+
+(defn method-not-allowed []
+  (fn [request] 
+    (compojure.http.response/create-response
+     request {:status 405 :body "method not allowed"})))
