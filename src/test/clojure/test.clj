@@ -21,8 +21,26 @@
        (wrap-allow (comp not #(some #{%} ["scott"]) :who :params)))
    request))
 
+
+
+(def product-resource
+     (resource {:delete (fn [req] "deleted")
+		:put    (fn [req] (str "PUT: "
+				       ((req :params) :id) (req :body)))
+		:get    {:json (fn [req] (str "JSON: " (-> req :rest :product)))
+			 :xml  (fn [req] (str "XML:"   (-> req :rest :product)))}}))
+
+
+(decorate product-resource
+	  (wrap-exists (fn [req]
+			 (if-let [product (str "PRODUCT-" ((req :params) :id))]
+			   (assoc-in req [:rest :product] product)))))
+
+
+
 (defroutes my-app
   (ANY "/hello/:who" hello-resource)
+  (ANY "/product/:id" product-resource)
   (GET "/simple" (str "simple"))
   (GET "/echo/:foo" (fn [req] {:headers { "Content-Type" "text/plain" } :body (str (dissoc req :servlet-request))}))
   (GET "*" (page-not-found)))

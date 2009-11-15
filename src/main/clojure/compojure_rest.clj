@@ -71,11 +71,17 @@
   (wrap-header handler "Last-Modified"
 	       #(http-date (evaluate-generate generate-last-modified %))))
 
-(defn wrap-exists [handler exists-function]
+(defn wrap-predicate [handler pred else]
   (fn [request]
-    (if (exists-function request)
-      (handler request)
-      {:status 404 :body "not found"})))
+    (if-let [r (pred request)]
+      (let [r2 (if (map? r) r request)]
+       (handler r2))
+      (else request))))
+
+(defn wrap-exists [handler exists-function]
+  (wrap-predicate handler exists-function (constantly { :status 404 :body "not found"})))
+
+
 
 (defn wrap-auth [handler auth-function]
   (fn [request]
@@ -109,3 +115,13 @@
   (fn [request] 
     (compojure.http.response/create-response
      request {:status 405 :body "method not allowed"})))
+
+
+;; handlers must be a map of request-method -> (fn [request])
+(defn resource [handlers]
+  (fn [request]
+    (some #(% request)
+	  (filter (comp not nil?)
+		  (map 
+		   #(if (match-method % request) (handlers %))
+		   (keys handlers))))))
