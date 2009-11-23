@@ -8,7 +8,7 @@
 
 (ns test
   (:use compojure)
-  (:use compojure-rest))
+  (:use compojure-rest/resouce))
 
 (defn hello-resource [request]
   ((-> (method-not-allowed)
