@@ -8,12 +8,12 @@
 
 (ns compojure-rest
   (:use compojure)
+  (:use compojure.http.response)
   (:use clojure.contrib.core)
   (:import java.util.Date)
   (:import java.lang.System)
   (:import java.util.Locale)
   (:import java.text.SimpleDateFormat))
-
 
 (defn evaluate-generate [function-or-value request]
   (if (fn? function-or-value)
@@ -71,12 +71,26 @@
   (wrap-header handler "Last-Modified"
 	       #(http-date (evaluate-generate generate-last-modified %))))
 
+(defn wrap-if-unmodified-since [handler generate-last-modified]
+  (fn [request]
+    (if-let [if-unmodified-since (-?> request :headers (get "if-unmodified-since"))]
+      {:status 412 :body "if-unmodified-since not supported"}
+      (handler request)
+      )))
+
+(defn wrap-if-modified-since [handler generate-last-modified]
+  (fn [request]
+    (if-let [if-modified-since (-?> request :headers (get "if-modified-since"))]
+      {:status 412 :body "if-modified-since not supported"}
+      (handler request)
+      )))
+
 (defn wrap-predicate [handler pred else]
   (fn [request]
-    (if-let [r (pred request)]
+    (if-let [r (evaluate-generate pred request)]
       (let [r2 (if (map? r) r request)]
        (handler r2))
-      (else request))))
+      (create-response request (evaluate-generate else request)))))
 
 (defn wrap-exists [handler exists-function]
   (wrap-predicate handler exists-function (constantly { :status 404 :body "not found"})))
@@ -85,13 +99,13 @@
 
 (defn wrap-auth [handler auth-function]
   (fn [request]
-    (if (auth-function request)
+    (if (evaluate-generate auth-function request)
       (handler request)
       {:status 401 :body "unauthorized"})))
 
 (defn wrap-allow [handler allow-function]
   (fn [request]
-    (if (allow-function request)
+    (if (evaluate-generate allow-function request)
       (handler request)
       {:status 403 :body "forbidden"})))
 
@@ -116,12 +130,6 @@
     (compojure.http.response/create-response
      request {:status 405 :body "method not allowed"})))
 
-
-;; handlers must be a map of request-method -> (fn [request])
-(defn resource [handlers]
-  (fn [request]
-    (some #(% request)
-	  (filter (comp not nil?)
-		  (map 
-		   #(if (match-method % request) (handlers %))
-		   (keys handlers))))))
+(defn wrap-service-available [handler service-available-function]
+  (wrap-predicate service-available-function
+		  { :status 503 :body "service unavailable"}))

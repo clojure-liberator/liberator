@@ -8,7 +8,8 @@
 
 (ns test
   (:use compojure)
-  (:use compojure-rest/resouce))
+  (:use compojure-rest)
+  (:use compojure-rest.resource))
 
 (defn hello-resource [request]
   ((-> (method-not-allowed)
@@ -24,17 +25,20 @@
 
 
 (def product-resource
-     (resource {:delete (fn [req] "deleted")
-		:put    (fn [req] (str "PUT: "
-				       ((req :params) :id) (req :body)))
-		:get    {:json (fn [req] (str "JSON: " (-> req :rest :product)))
-			 :xml  (fn [req] (str "XML:"   (-> req :rest :product)))}}))
+     (resource
+      :content-types-provided [ "text/html", "text/plain"]
+      :exists (fn [req] (if-let [id (-> req :route-params :id)]
+			  (if (< id 10)
+			    (assoc req ::product (str "P-" id)))))
+      :generate-etag (fn [req] (str "X-" (req ::product)))
+      :delete (fn [req] "deleted")
+      :put    (fn [req] (str "PUT: "
+			     ((req :route-params) :id) (req :body)))
+      :get    {
+	       "text/html" (fn [req] (str "<h1>" (req ::product) "</h1>"))
+	       :json (fn [req] (str "JSON: " (req ::product)))
+	       :xml  (fn [req] (str "XML:"   (req ::product)))}))
 
-
-(decorate product-resource
-	  (wrap-exists (fn [req]
-			 (if-let [product (str "PRODUCT-" ((req :params) :id))]
-			   (assoc-in req [:rest :product] product)))))
 
 
 
