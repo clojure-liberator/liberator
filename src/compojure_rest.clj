@@ -11,6 +11,7 @@
   (:use compojure.http.response)
   (:use clojure.contrib.core)
   (:import java.util.Date)
+  (:import java.util.TimeZone)
   (:import java.lang.System)
   (:import java.util.Locale)
   (:import java.text.SimpleDateFormat))
@@ -20,16 +21,26 @@
     (function-or-value request)
     function-or-value))
 
-(def *http-date-format*
-     (new SimpleDateFormat
-          "EEE, dd MMM yyyy HH:mm:ss Z"
-          Locale/US))
+(def *http-date-format* "EEE, dd MMM yyyy HH:mm:ss Z")
 
-(defn http-date [int-or-date]
-  (if-let [date (if (integer? int-or-date)
-		  (new Date (+ int-or-date (System/currentTimeMillis)))
-		  int-or-date)]
-    (.format *http-date-format* date)))
+(defmulti -get-timezone (fn [x] (type x)))
+(defmethod -get-timezone String [tz] (TimeZone/getTimeZone tz))
+(defmethod -get-timezone TimeZone [tz] tz)
+
+(defn http-date-format
+  ([] (http-date-format (TimeZone/getDefault)))
+  ([tz] (let [df (new SimpleDateFormat
+		      *http-date-format*
+		      Locale/US)]
+	  (do (.setTimeZone df (-get-timezone tz))
+	      df))))
+
+(defn relative-date [int]
+  (new Date (+ int (System/currentTimeMillis))))
+
+(defn http-date
+  ([date] (.format (http-date-format) date))
+  ([date timezone] (.format (http-date-format timezone) date)))
 
 (defn wrap-header [handler header generate-header]
   (fn [request]
