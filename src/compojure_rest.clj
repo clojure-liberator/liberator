@@ -93,8 +93,8 @@
   (fn [request]
     (if-let [if-modified-since (-?> request :headers (get "if-modified-since"))]
       {:status 412 :body "if-modified-since not supported"}
-      (handler request)
-      )))
+      (handler request))))
+
 
 (defn wrap-predicate [handler pred else]
   (fn [request]

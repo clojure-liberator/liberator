@@ -10,6 +10,7 @@
   (:use compojure)
   (:use compojure.http.response)
   (:use compojure-rest)
+  (:require  [com.twinql.clojure.conneg :as conneg])
   (:use clojure.contrib.core)
   (:use clojure.contrib.trace)
   (:import clojure.lang.Fn)
@@ -18,6 +19,7 @@
   (:import java.lang.System)
   (:import java.util.Locale)
   (:import java.text.SimpleDateFormat))
+
 
 
 (def *default-functions*
@@ -53,6 +55,15 @@
 	accept-header
 	(#(some #{accept-header} provided-l))))))
 
+(defn conneg-negotiate [provided accept-header]
+  (let [provided-l (if (coll? provided) provided [provided]) 
+	[a b] (conneg/best-allowed-content-type
+	       accept-header
+	       provided-l)]
+    (str a "/" b)))
+
+
+
 (defn wrap-options [handler generate-options-header]
   (fn [request]
     (if (= :options (request :request-method))
@@ -65,24 +76,24 @@
 	  provided (evaluate-generate provider-function request)]
       (if-let [neg (negotiate-function provided accept)]
 	(handler (assoc-in request [::rest neg-key] neg))
-	{:statuc 406 :body (str header " " accept " cannot be provided. Available is " provided)}))
-    ))
+	{:statuc 406 :body (str header " " accept " cannot be provided. Available is " provided)}))))
+
 
 (defn wrap-accept [handler content-types-provided]
-  (wrap-accept-header handler content-types-provided simple-negotiate
-		      "Accept" :neg-content-type "*/*"))
+  (wrap-accept-header handler content-types-provided conneg-negotiate
+		      "accept" :neg-content-type "*/*"))
 
 (defn wrap-accept-language [handler provider-function]
   (wrap-accept-header handler provider-function simple-negotiate
-		      "Accept-Language" :neg-lang "*"))
+		      "accept-language" :neg-lang "*"))
 
 (defn wrap-accept-charset [handler provider-function]
   (wrap-accept-header handler provider-function simple-negotiate
-		      "Accept-Charset" :neg-charset "*"))
+		      "accept-charset" :neg-charset "*"))
 
 (defn wrap-accept-encoding [handler provider-function]
   (wrap-accept-header handler provider-function simple-negotiate
-		      "Accept-Encoding" :neg-encoding "*"))
+		      "accept-encoding" :neg-encoding "*"))
 
 (defn send-response [response]
   response)
@@ -130,41 +141,41 @@
     (class generator)))
 
 (defmethod evaluate-body Fn
-  [update request]
-  (update request))
+  [fn request]
+  (fn request))
 
 (defmethod evaluate-body Map
   [content-type-map request]
   (let [content-type (-> request ::rest :neg-content-type)]
     (if-let [generator (content-type-map content-type)] 
-     (generator request)
-     {:status 500
-      :body (str "No body generation function found for negotiated content type \""
-		 content-type "\" request is " request)})))
+      {:status 200
+       :body (generator request)
+       :headers { "Content-Type" content-type }}
+      {:status 500
+       :body (str "No body generation function found for negotiated content type \""
+		  content-type "\"")})))
 
-(defmethod evaluate-body String
+(defmethod evaluate-body :default
   [body request]
   body)
 
 (defn check-multiple [m request]
-(trace "c-m"  (if (m :multiple-choices?)
-     300
-     (if (= :get (request :request-method))
-       (evaluate-body (m :get) request)
-       ""))))
+  (if (m :multiple-choices?)
+    300
+    (if (= :get (request :request-method))
+      (evaluate-body (m :get) request)
+      "")))
 
 
 (defn handle-get-head [m request]
-  (trace "handle-get-head" 
-	 (let [resp (trace "ETag"
-		     (if-let [etag (evaluate-generate (m :generate-etag) request)]
-		       {:headers { "Etag" etag } } {}))
-	       resp (trace "Last-M"
-			   (if-let [lm (evaluate-generate (m :last-modified) request)]
-			     (assoc-in resp [:headers "Last-Modified"] lm) resp))
-	       resp (trace "Exp" (if-let [exp (evaluate-generate (m :expires) request)]
-		       (assoc-in resp [:headers "Expires"] exp) resp))]
-	   (update-response request resp (check-multiple m request)))))
+  
+  (let [resp (if-let [etag (evaluate-generate (m :generate-etag) request)]
+		  {:headers { "Etag" etag } } {})
+	resp (if-let [lm (evaluate-generate (m :last-modified) request)]
+		  (assoc-in resp [:headers "Last-Modified"] lm) resp)
+	resp (if-let [exp (evaluate-generate (m :expires) request)]
+	       (assoc-in resp [:headers "Expires"] exp) resp)]
+    (update-response request resp (check-multiple m request))))
 
 
 
