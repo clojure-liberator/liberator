@@ -36,6 +36,24 @@ A small example web application as in test.clj
       (do
         (defserver test-server {:port 8080} "/*" (servlet my-app))
         (start test-server)))
+
+You can also define a resource in a more RESTful way, like webmachine allows:
+
+    (def product-resource
+     (resource
+      :content-types-provided [ "text/html", "text/plain"]
+      :exists (fn [req] (if-let [id (-> req :route-params :id)]
+			  (if (< id 10)
+			    (assoc req ::product (str "P-" id)))))
+      :generate-etag (fn [req] (str "X-" (req ::product)))
+      :delete (fn [req] "deleted")
+      :put    (fn [req] (str "PUT: "
+			     ((req :route-params) :id) (req :body)))
+      :get    {
+	       "text/html" (fn [req] (str "<h1>" (req ::product) "</h1>"))
+	       :json (fn [req] (str "JSON: " (req ::product)))
+	       :xml  (fn [req] (str "XML:"   (req ::product)))}))
+
     
 
 Dependencies
@@ -43,16 +61,10 @@ Dependencies
 
 For compojure-rest you'll need
 
-* The [Clojure](http://clojure.org) programming language
-* The [Clojure-Contrib](http://code.google.com/p/clojure-contrib/) library
-* A Java servlet container like [Jetty](http://www.mortbay.org/jetty/)
-* Apache Commons [FileUpload](http://commons.apache.org/fileupload),
-  [IO](http://commons.apache.org/io) and
-  [Codec](http://commons.apache.org/codec).
+* Leiningen build tool
 * The [Compojure](http://groups.google.com/group/compojure) library
+* clj-conneg for content negotiation. (Available from my github space)
 
-A pom descriptor is available for your convenience "mvn package" should
-drop you a fine jar file in target/compojure-rest-VERSION.jar
 
 License
 -------
