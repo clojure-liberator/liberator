@@ -16,7 +16,7 @@
   (:import java.util.Locale)
   (:import java.text.SimpleDateFormat))
 
-(defn evaluate-generate [function-or-value request]
+(defn apply-if-function [function-or-value request]
   (if (fn? function-or-value)
     (function-or-value request)
     function-or-value))
@@ -42,9 +42,14 @@
   ([date] (.format (http-date-format) date))
   ([date timezone] (.format (http-date-format timezone) date)))
 
+(defn parse-http-date [date-string]
+  (try 		      
+   (.parse http-date-format date-string)
+   (catch java.text.ParseException e nil)))
+
 (defn wrap-header [handler header generate-header]
   (fn [request]
-    (let [value (evaluate-generate generate-header request)
+    (let [value (apply-if-function generate-header request)
 	  response (handler request)]
       (assoc-in response [:headers header] (str value))))) 
 
@@ -76,11 +81,11 @@
 
 (defn wrap-expiry [handler generate-expires]
   (wrap-header handler "Expires"
-	       #(http-date (evaluate-generate generate-expires %))))
+	       #(http-date (apply-if-function generate-expires %))))
 
 (defn wrap-last-modified [handler generate-last-modified]
   (wrap-header handler "Last-Modified"
-	       #(http-date (evaluate-generate generate-last-modified %))))
+	       #(http-date (apply-if-function generate-last-modified %))))
 
 (defn wrap-if-unmodified-since [handler generate-last-modified]
   (fn [request]
@@ -98,10 +103,10 @@
 
 (defn wrap-predicate [handler pred else]
   (fn [request]
-    (if-let [r (evaluate-generate pred request)]
+    (if-let [r (apply-if-function pred request)]
       (let [r2 (if (map? r) r request)]
        (handler r2))
-      (create-response request (evaluate-generate else request)))))
+      (create-response request (apply-if-function else request)))))
 
 (defn wrap-exists [handler exists-function]
   (wrap-predicate handler exists-function (constantly { :status 404 :body "not found"})))
@@ -110,13 +115,13 @@
 
 (defn wrap-auth [handler auth-function]
   (fn [request]
-    (if (evaluate-generate auth-function request)
+    (if (apply-if-function auth-function request)
       (handler request)
       {:status 401 :body "unauthorized"})))
 
 (defn wrap-allow [handler allow-function]
   (fn [request]
-    (if (evaluate-generate allow-function request)
+    (if (apply-if-function allow-function request)
       (handler request)
       {:status 403 :body "forbidden"})))
 
@@ -136,7 +141,7 @@
       (wrap-if-none-match generate-etag)
       (wrap-generate-etag generate-etag)))
 
-(defn method-not-allowed []
+(defn send-method-not-allowed []
   (fn [request] 
     (compojure.http.response/create-response
      request {:status 405 :body "method not allowed"})))
