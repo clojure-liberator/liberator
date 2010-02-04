@@ -12,7 +12,6 @@
   (:use compojure-rest)
   (:require  [com.twinql.clojure.conneg :as conneg])
   (:use clojure.contrib.core)
-  (:use clojure.contrib.trace)
   (:import clojure.lang.Fn)
   (:import java.util.Date)
   (:import java.util.Map)
@@ -29,17 +28,27 @@
 	   (fn? x) :fn)))
 
 (defmethod coll-validator :col [xs]
-  (trace (str "c-v/c: " xs) (fn [x] (trace (str "c-v/c: " x " " xs) (some #{x} xs)))))
+  (fn [x] (some #{x} xs)))
 (defmethod coll-validator :fn [f]
-  (trace (str "c-v/f: " f) f))
+  f)
 (defmethod coll-validator :default [x]
-  (trace (str "c-v/d: " x) (partial = x)))
+  (partial = x))
 
 ;; todos
 ;; make authorized handler returning single value (not map) as identifier of a principal
 
 
 (declare default-make-body)
+
+
+(def console-trace println)
+(def no-trace (constantly nil))
+
+(def *trace* no-trace)
+
+(defn trace [name value]
+  (do (*trace* (str name ": " value))
+      value))
 
 
 
@@ -50,6 +59,11 @@
 
 (defn make-function [x]
   (if (fn? x) x (constantly x)))
+
+(defn -gen-etag [rmap request]
+  (or (request ::etag)
+      (if-let [gen-etag (rmap :etag)]
+	(gen-etag request))))
 
 (defn make-body-response [rmap request status]
   (let [ctp  ((rmap :content-types-provided) request)
@@ -138,11 +152,11 @@
 
 (defdecision multiple-representations? handle-multiple-representations handle-ok)
 
-(defdecision entity? multiple-representations? no-content)
+(defdecision respond-with-entity? multiple-representations? no-content)
 
 (defhandler created 201 nil)
 
-(defdecision new? created entity?)
+(defdecision new? created respond-with-entity?)
 
 (defdecision post-redirect? handle-see-other new?)
 
@@ -179,7 +193,7 @@
 
 (defdecision put-to-different-url? handle-moved-permamently conflict?)
 
-(defdecision method-put? (partial =method :put) moved-permanently? existed?)
+(defdecision method-put? (partial =method :put) put-to-different-url? existed?)
 
 (defhandler precondition-failed 412 "Precondition failed.")
 
@@ -196,23 +210,22 @@
   precondition-failed)
 
 
-(defdecision put-to-existing? (partial =method :post)
+(defdecision put-to-existing? (partial =method :put)
   conflict? multiple-representations?)
 
-(defdecision post-to-existing? (partial =method :port)
+(defdecision post-to-existing? (partial =method :post) 
   post-redirect? put-to-existing?)
 
 (defmulti make-date class)
 (defmethod make-date java.util.Date [date] date)
 (defmethod make-date java.lang.Long [millis-since-epoch] (java.util.Date millis-since-epoch))
 
-(defn handle-accepted [rmap request]
-  { :status 202 :body ((rmap :accepted) request)})
+(defhandler handle-accepted 202 "Accepted")
 
-(defdecision delete entity? handle-accepted)
+(defdecision delete-enacted? respond-with-entity? handle-accepted)
 
 (defdecision method-delete? (partial =method :delete)
-  delete post-to-existing?)
+  delete-enacted? post-to-existing?)
 
 (defn modified-since? [rmap request]
   (if-let [last-modified (rmap :last-modified)]
@@ -230,11 +243,6 @@
 (defdecision if-modified-since-exists? (partial header-exists? "if-modified-since")
   -if-modified-since-valid-date? method-delete?)
 
-
-(defn -gen-etag [rmap request]
-  (or (request ::etag)
-      (if-let [gen-etag (rmap :etag)]
-	(gen-etag request))))
 
 (defn etag-matches-for-if-none? [rmap request]
   (let [etag (-gen-etag rmap request)]
@@ -310,8 +318,8 @@
 (defn media-type-available? [rmap request]
   (decide :media-type-available? 
 	  #(when-let [type (conneg/best-allowed-content-type 
-			    (trace "ACCEPT" ((% :headers {}) "accept")) 
-			    (trace "CTP"    (keys (trace "CTPM "((rmap :content-types-provided) %)))))]
+			    ((% :headers {}) "accept") 
+			    (keys ((rmap :content-types-provided) %)))]
 	     {::negotiated-content-type (str (first type) "/" (nth type 1))})
 	  accept-language-exists?
 	  not-acceptable
@@ -361,27 +369,31 @@
 (defhandler service-not-available 503 "Service not available.")
 (defdecision service-available? known-method? service-not-available)
 
-(def *default-functions*
+(def *default-functions* 
      {
-      :service-available?       true
-      :known-method?            #(some #{(% :request-method)} [:get :head :options
-							       :put :post :delete :trace])
-      :uri-too-long?            false
-      :method-allowed?          #(some #{(% :request-method)} [:get :head ])
-      :malformed?               false
-      :authorized?              true
-      :allowed?                 true
-      :valid-content-header?    true
-      :known-content-type?      true
-      :valid-entity-length?     true
-      :exists?                  true
-      :existed?                 false
-      :conflict?                false
-      :new?                     true
+      :service-available?        true
+      :known-method?             #(some #{(% :request-method)} [:get :head :options
+								:put :post :delete :trace])
+      :uri-too-long?             false
+      :method-allowed?           #(some #{(% :request-method)} [:get :head ])
+      :malformed?                false
+      :authorized?               true
+      :allowed?                  true
+      :valid-content-header?     true
+      :known-content-type?       true
+      :valid-entity-length?      true
+      :exists?                   true
+      :existed?                  false
+      :respond-with-entity?      false
+      :conflict?                 false
+      :new?                      true
+      :post-to-existing?         false
+      :post-redirect?            false
+      :put-to-different-url?     false
       :multiple-representations? false
-      :content-types-provided   { "text/html" :to_html }
-      :to_html                  ""
-      })
+      :content-types-provided    { "text/html" :to_html }
+      :to_html                   ""
+     })
 
 
 ;; handlers must be a map of implementation methods

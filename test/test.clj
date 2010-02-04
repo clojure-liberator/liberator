@@ -11,11 +11,12 @@
   (:use compojure-rest)
   (:use compojure-rest.resource)
   (:use clojure.contrib.duck-streams)
-  (:use clojure.contrib.trace)
   (:import java.io.InputStreamReader)
   (:import [java.security MessageDigest]))
 
-(defn id-for [text]
+
+
+(defn sha [text]
   (->> text
     .getBytes
     (.digest (MessageDigest/getInstance "SHA"))
@@ -29,7 +30,7 @@
     (if-let [body (request :body)]
       (slurp* (InputStreamReader. body encoding)))))
 
-(def products (agent []))
+(def products (ref []))
 
 (defn has? [key val]
   #(when (= val (% key)) %))
@@ -43,13 +44,13 @@
 (defn add-product [title]
   (dosync
    (let [next-id (inc (max-id @products))]
-     (send products #(conj % { :id next-id :title title }))
+     (alter products #(conj % { :id next-id :title title }))
      next-id)))
 
 (defn remove-product-by-id [id]
   (dosync 
-   (send products (fn [ps] (remove (has? :id id) ps)))
-   (not (product-by-id id))))
+   (let [oldps @products]
+     (= oldps (alter products (fn [ps] (remove (has? :id id) ps)))))))
 
 (defn all-products [] @products)
 
@@ -80,15 +81,16 @@
       :exists? (fn [req] (if-let [id (trace "id" (read-string (-> req :route-params :id)))]
 			   (if-let [product (trace "product" (product-by-id id))]
 			    { ::product product })))
-      :etag    (fn [req] (id-for (str (-> req ::product :title))))
-      :delete  (fn [req] (remove-product-by-id (-> req :route-params :id)))
-      :entity? false
+      :conflict? true
+      :etag    (fn [req] (sha (str (-> req ::product :title))))
+      :delete-enacted? (fn [req] (remove-product-by-id (read-string (-> req :route-params :id))))
       :to_html (fn [rmap req status]
 		 (let [product (req ::product)]	
 		   (html [:h1 (product :id)] [:p (product :title)])))
       :to_text (fn [rmap req status]
 		 (let [product (req ::product)]	
 		   (str  (product :id) ": " (product :title))))))
+
 
 (defroutes my-app
   (ANY "/hello/*"      hello-resource)
