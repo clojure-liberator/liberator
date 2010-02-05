@@ -12,6 +12,7 @@
   (:use compojure-rest)
   (:require  [com.twinql.clojure.conneg :as conneg])
   (:use clojure.contrib.core)
+  (:use clojure.contrib.trace)
   (:import clojure.lang.Fn)
   (:import java.util.Date)
   (:import java.util.Map)
@@ -41,13 +42,13 @@
 (declare default-make-body)
 
 
-(def console-trace println)
-(def no-trace (constantly nil))
+(def console-logger println)
+(def no-logger (constantly nil))
 
-(def *trace* no-trace)
+(def *logger* console-logger)
 
-(defn trace [name value]
-  (do (*trace* (str name ": " value))
+(defn log [name value]
+  (do (*logger* (str "LOG " name ": " (pr-str value)))
       value))
 
 
@@ -67,7 +68,7 @@
 
 (defn make-body-response [rmap request status]
   (let [ctp  ((rmap :content-types-provided) request)
-	type (trace "Make body response for content type" (or (request ::negotiated-content-type)
+	type (log "Make body response for content type" (or (request ::negotiated-content-type)
 				       (some #{"text/html" "text/plain"} (keys ctp))
 				       (first (keys ctp))))
 	body-generator (if type (ctp type))
@@ -95,7 +96,7 @@
 	  ftest (make-function ftest)
 	  fthen (make-handler-function then)
 	  felse (make-handler-function else)
-	  result (trace (str  "Decision " name) (ftest request))
+	  result (log (str  "Decision " name) (ftest request))
 	  request (if (map? result) (merge request result ) request)]
       ((if result fthen felse) rmap request))
     { :status 500 :body (str "No handler found for key " name ". Key defined for resource " 
@@ -187,9 +188,11 @@
 
 (defdecision existed? moved-permanently? post-to-missing?)
 
+(defdecision can-put-to-missing? respond-with-entity? not-found)
+
 (defhandler conflict 409 "Conflict.")
 
-(defdecision conflict? conflict new?) 
+(defdecision conflict? conflict respond-with-entity?)
 
 (defdecision put-to-different-url? handle-moved-permamently conflict?)
 
@@ -385,12 +388,13 @@
       :exists?                   true
       :existed?                  false
       :respond-with-entity?      false
-      :conflict?                 false
       :new?                      true
       :post-to-existing?         false
       :post-redirect?            false
       :put-to-different-url?     false
       :multiple-representations? false
+      :conflict?                 false
+      :can-put-to-missing?       false
       :content-types-provided    { "text/html" :to_html }
       :to_html                   ""
      })

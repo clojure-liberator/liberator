@@ -11,6 +11,7 @@
   (:use compojure-rest)
   (:use compojure-rest.resource)
   (:use clojure.contrib.duck-streams)
+  (:use clojure.contrib.trace)
   (:import java.io.InputStreamReader)
   (:import [java.security MessageDigest]))
 
@@ -52,6 +53,10 @@
    (let [oldps @products]
      (= oldps (alter products (fn [ps] (remove (has? :id id) ps)))))))
 
+(defn update-product-with-id [id title]
+  (dosync
+   (alter products (fn [ps] (conj (remove (has? :id id) ps) { :id id :title title})))))
+
 (defn all-products [] @products)
 
 (def hello-resource
@@ -70,7 +75,7 @@
 			[:head [:title "All Products"]]
 			[:body [:h1 "All Products"]
 			 [:ul (map (fn [p] [:li [:a { :href (p :id)} (p :title)]]) 
-				   (trace "AP" (all-products)))]]]))
+				   (all-products))]]]))
       :to_text (fn [_ req _]
 		 (apply str (map #(str (% :id) ": " (% :title) "\n") (all-products))))))
 
@@ -78,10 +83,15 @@
      (resource
       :method-allowed? #(some #{(% :request-method)} [:get :delete :put ])
       :content-types-provided { "text/html" :to_html, "text/plain" :to_text }
-      :exists? (fn [req] (if-let [id (trace "id" (read-string (-> req :route-params :id)))]
-			   (if-let [product (trace "product" (product-by-id id))]
-			    { ::product product })))
-      :conflict? true
+      :exists? (fn [req] (if-let [id (read-string (-> req :route-params :id))]
+			   (if-let [product (product-by-id id)]
+			     { ::product product })
+			   nil))
+      :conflict? (fn [req] (let [id (read-string (-> req :route-params :id))]
+			     (dosync 
+			      (when (product-by-id id)
+				(update-product-with-id id (slurp-body req)))
+			      false)))
       :etag    (fn [req] (sha (str (-> req ::product :title))))
       :delete-enacted? (fn [req] (remove-product-by-id (read-string (-> req :route-params :id))))
       :to_html (fn [rmap req status]
