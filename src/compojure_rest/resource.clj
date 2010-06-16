@@ -42,15 +42,20 @@
 (declare default-make-body)
 
 
-(def console-logger println)
+(def console-logger #(println (str "LOG " %)))
 (def no-logger (constantly nil))
+
+(declare -log)
+(def var-logger (fn [msg] (dosync (alter -log #(conj % msg)))))
 
 (def *logger* console-logger)
 
 (defn log [name value]
-  (do (*logger* (str "LOG " name ": " (pr-str value)))
+  (do (*logger* (str name ": " (pr-str value)))
       value))
 
+(defn make-trace-headers [log]
+  log)
 
 
 (declare if-none-match-exists?)
@@ -61,31 +66,46 @@
 (defn make-function [x]
   (if (fn? x) x (constantly x)))
 
+(defn request-method-in [& methods]
+  #(some #{(:request-method %)} methods))
+
 (defn -gen-etag [rmap request]
   (or (request ::etag)
       (if-let [gen-etag (rmap :etag)]
 	(gen-etag request))))
 
+(defn -make-body-response [generator rmap request status]
+  (let [body (generator rmap request status)	
+	type (request ::negotiated-content-type)
+	response (create-response request 
+				  {:status status
+				   :headers { "Content-Type" type } 
+				   :body body })]
+    (if-let [etag (-gen-etag rmap request)]
+      (update-response request response { :headers { "ETag" etag}})
+      response)))
+
+(defn resolve-recursive [rmap val]
+  (if (keyword? (log "resolve recursive" val))
+    (resolve-recursive rmap (rmap val))
+    val))
+
 (defn make-body-response [rmap request status]
   (let [ctp  ((rmap :content-types-provided) request)
-	type (log "Make body response for content type" (or (request ::negotiated-content-type)
-				       (some #{"text/html" "text/plain"} (keys ctp))
-				       (first (keys ctp))))
-	body-generator (if type (ctp type))
-	body-generator (if (keyword? body-generator) 
-			 (rmap body-generator) body-generator)]
-    (if body-generator 
-      (let [response  
-	    (create-response 
-	     request 
-	     {:status status :headers { "Content-Type " type } 
-	      :body ((make-function body-generator) rmap request status)})]
-	(if-let [etag (-gen-etag rmap request)]
-	  (update-response request response { :headers { "ETag" etag}})
-	  response))
-      [500 (str "No body generator found for content type " type)])))
-
-
+	type (log "Make body response for content type" 
+		  (or (request ::negotiated-content-type)
+		      (some #{"text/html" "text/plain"} (keys ctp))
+		      (first (keys ctp))))
+	request (assoc request ::negotiated-content-type type)
+	body-generator (ctp type)
+	resolved-generator (resolve-recursive rmap body-generator)]
+    
+    
+    (if (log "resolved body generator" resolved-generator)
+      (-make-body-response resolved-generator rmap request status)
+      (create-response request
+		       [500 (str "Could not resolve body generator " body-generator ".")]))))
+  
 (defn make-handler-function [x]
   (if (number? x) (fn [rmap request] (make-body-response rmap request x))
       (make-function x)))
@@ -96,8 +116,10 @@
 	  ftest (make-function ftest)
 	  fthen (make-handler-function then)
 	  felse (make-handler-function else)
-	  result (log (str  "Decision " name) (ftest request))
-	  request (if (map? result) (merge request result ) request)]
+	  r-and-u (log (str  "Decision " name) (ftest request))
+	  result (if (vector? r-and-u) (first r-and-u) r-and-u)
+	  request-update (if (vector? r-and-u) (second r-and-u) r-and-u)
+	  request (if (map? request-update) (merge request request-update ) request)]
       ((if result fthen felse) rmap request))
     { :status 500 :body (str "No handler found for key " name ". Key defined for resource " 
 			     (keys rmap))}))
@@ -165,7 +187,7 @@
 
 (defhandler gone 410 "Resouce is gone.")
 
-(defdecision can-post-to-missing? post-redirect? gone)
+(defdecision can-post-to-missing? post-redirect? not-found)
 
 (defdecision post-to-missing? (partial =method :post)
   can-post-to-missing? not-found)
@@ -298,31 +320,28 @@
 
 (defdecision exists? if-match-exists? if-match-star-exists-for-missing?)
 
-(defn encoding-available? [rmap request]
-  { :status 501 :body "Handling of Header accept-ancoding not implemented."})
+(defhandler not-acceptable 406 "No acceptable resrouce available.")
+
+(defdecision encoding-available?  exists? not-acceptable)
 
 (defdecision accept-encoding-exists? (partial header-exists? "accept-encoding")
   encoding-available? exists?)
 
-(defn charset-available? [rmap request]
-  { :status 501 :body "Handling of header accept-charset not implemented."})
+(defdecision charset-available? accept-encoding-exists? not-acceptable)
 
 (defdecision accept-charset-exists? (partial header-exists? "accept-charset")
   charset-available? accept-encoding-exists?)
 
-(defn language-available? [_ _] 
-  {:statu 501 :body "Handling of header accept-language not implemented."})
+(defdecision language-available? accept-charset-exists? not-acceptable)
 
 (defdecision accept-language-exists? (partial header-exists? "accept-language")
   language-available? accept-charset-exists?)
-
-(defhandler not-acceptable 406 "No acceptable media type available.")
 
 (defn media-type-available? [rmap request]
   (decide :media-type-available? 
 	  #(when-let [type (conneg/best-allowed-content-type 
 			    ((% :headers {}) "accept") 
-			    (keys ((rmap :content-types-provided) %)))]
+			    (trace "PT" (keys ((rmap :content-types-provided) %))))]
 	     {::negotiated-content-type (str (first type) "/" (nth type 1))})
 	  accept-language-exists?
 	  not-acceptable
@@ -375,11 +394,13 @@
 (def *default-functions* 
      {
       :service-available?        true
-      :known-method?             #(some #{(% :request-method)} [:get :head :options
-								:put :post :delete :trace])
+      :known-method?            (request-method-in :get :head :options
+						   :put :post :delete :trace)
       :uri-too-long?             false
-      :method-allowed?           #(some #{(% :request-method)} [:get :head ])
+      :method-allowed?           (request-method-in :get :head)
       :malformed?                false
+      :encoding-available?       true
+      :charset-available?        true
       :authorized?               true
       :allowed?                  true
       :valid-content-header?     true
@@ -395,19 +416,28 @@
       :multiple-representations? false
       :conflict?                 false
       :can-put-to-missing?       false
+      :can-post-to-missing       true
+      :language-available?       true
       :content-types-provided    { "text/html" :to_html }
       :to_html                   ""
      })
 
 
-;; handlers must be a map of implementation methods
-(defn resource [& kvs]
-  (fn [request]
-    (let [m (merge *default-functions* (apply hash-map kvs))
+;; resources are a map of implementation methods
+
+(defn -resource [request kvs]
+      (let [m (merge *default-functions* kvs)
 	  m (map-values make-function m)]
-      (service-available? m request))))
+      (binding [-log (ref [])] 
+	(let [response (service-available? m request)]
+;	  (dosync (alter -log (fn [-log] nil)))
+	  (update-response request response
+			   { :headers { "X-Compojure-Rest-Trace" (make-trace-headers @-log)}})))))
 
-
+(defn resource [& kvs]
+  (fn [request] (-resource request (apply hash-map kvs))))
 
 (defmacro defresource [name & kvs]
-  `(def ~name ~(apply resource kvs)))
+  `(defn ~name [~'request] 
+     (-resource ~'request ~(apply hash-map kvs))))
+
