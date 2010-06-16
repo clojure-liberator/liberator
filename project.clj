@@ -1,7 +1,7 @@
-(defproject compojure-rest "0.1.0-SNAPSHOT"
+(defproject compojure-rest "0.1.1-SNAPSHOT"
   :dependencies [[org.clojure/clojure "1.1.0-alpha-SNAPSHOT"]
                  [org.clojure/clojure-contrib "1.0-SNAPSHOT"]
-		 [org.clojars.dvgb/compojure "0.3.1"]
+		 [compojure "0.3.2"]
 		 [org.clojars.ordnungswidrig/clj-conneg "0.1.1-SNAPSHOT"]
 		 [org.mortbay.jetty/jetty "6.1.21"]
 		 [commons-codec/commons-codec "1.4"]
