@@ -7,7 +7,7 @@
 ;; this software.
 
 (ns compojure-rest.accept-charset
-  (:require [clojure.contrib.str-utils :as str-utils]))
+  (:require [clojure.string :as string]))
 
 (declare parse-caqs split-caq)
 
@@ -15,9 +15,8 @@
 ;; [["utf-16" 0.8] ["iso-8859-15"] ["utf-8" 0.9]]
 ;; -> [["iso-8859-15" 1] ["iso-8859-1" 0.89] ["utf-8" 0.84] ["utf-16" 0.69] 
 ;; -> "iso-8859-15"
-
 (defn accept-charset [accept-charset-header allowed-charsets]
-  (let [charset-and-quality-strings (str-utils/re-split #"\s*,\s*") 
+  (let [charset-and-quality-strings (string/split accept-charset-header #"\s*,\s*") 
 	charset-and-qualities (parse-caqs charset-and-quality-strings)]))
 
 ;; ["iso-8859-1;q=0.5" "abc"] -> {"iso-8859-1" 0.5 "abc" 1 }
@@ -26,9 +25,9 @@
 
 ;; "iso-8859-1;q=0.5" -> ["iso-8859-1" 0.5]
 (defn split-caq [caq]
-  (let [[charset & params] (str-utils/re-split #"\s*;\s*" caq)
-	q (first (reverse (sort (filter (comp not nil?)
-					(map #(let [[param value] (str-utils/re-split #"\s*=" %)] 
+  (let [[charset & params] (string/split caq #"\s*;\s*")
+        q (first (reverse (sort (filter (comp not nil?)
+					(map #(let [[param value] (string/split % #"\s*=")] 
 						(if (= "q" param) (Integer/parseInt value)))
 					     params)))))]
     [charset q]))
