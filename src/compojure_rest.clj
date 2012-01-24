@@ -7,45 +7,7 @@
 ;; this software.
 
 (ns compojure-rest
-  (:use compojure)
-  (:use compojure.http.response)
-  (:use clojure.contrib.core)
-  (:import java.util.Date)
-  (:import java.util.TimeZone)
-  (:import java.lang.System)
-  (:import java.util.Locale)
-  (:import java.text.SimpleDateFormat))
-
-(defn apply-if-function [function-or-value request]
-  (if (fn? function-or-value)
-    (function-or-value request)
-    function-or-value))
-
-(def *http-date-format* "EEE, dd MMM yyyy HH:mm:ss Z")
-
-(defmulti -get-timezone (fn [x] (type x)))
-(defmethod -get-timezone String [tz] (TimeZone/getTimeZone tz))
-(defmethod -get-timezone TimeZone [tz] tz)
-
-(defn http-date-format
-  ([] (http-date-format (TimeZone/getDefault)))
-  ([tz] (let [df (new SimpleDateFormat
-		      *http-date-format*
-		      Locale/US)]
-	  (do (.setTimeZone df (-get-timezone tz))
-	      df))))
-
-(defn relative-date [int]
-  (new Date (+ int (System/currentTimeMillis))))
-
-(defn http-date
-  ([date] (.format (http-date-format) date))
-  ([date timezone] (.format (http-date-format timezone) date)))
-
-(defn parse-http-date [date-string]
-  (try 		      
-   (.parse http-date-format date-string)
-   (catch java.text.ParseException e nil)))
+  (:use compojure-rest/util))
 
 (defn wrap-header [handler header generate-header]
   (fn [request]
@@ -55,7 +17,7 @@
 
 (defn wrap-if-match [handler gen-etag]
   (fn [request]
-    (let [if-match (-?> request :headers (get  "if-match"))]
+    (let [if-match (get-in request :headers (get  "if-match"))]
       (if (or (= if-match "*") (nil? if-match))
 	(handler request)
 	(let [etag (gen-etag request)]
@@ -65,7 +27,7 @@
 
 (defn wrap-if-none-match [handler gen-etag]
   (fn [request]
-    (let [if-none-match (-?> request :headers (get  "if-none-match"))]
+    (let [if-none-match (get-in request :headers (get  "if-none-match"))]
       (if (or (nil? if-none-match)
 	      (and (not (= if-none-match "*"))
 		   (not (= if-none-match (gen-etag request)))))
@@ -76,7 +38,7 @@
 
 (defn wrap-generate-etag [handler generate-etag]
   (fn [request]
-    (let [etag (or (-?> request ::rest :etag) (generate-etag request))]
+    (let [etag (or (get-in request ::rest :etag) (generate-etag request))]
       ((wrap-header handler "Etag" etag) request))))
 
 (defn wrap-expiry [handler generate-expires]
@@ -89,14 +51,14 @@
 
 (defn wrap-if-unmodified-since [handler generate-last-modified]
   (fn [request]
-    (if-let [if-unmodified-since (-?> request :headers (get "if-unmodified-since"))]
+    (if-let [if-unmodified-since (get-in request :headers (get "if-unmodified-since"))]
       {:status 412 :body "if-unmodified-since not supported"}
       (handler request)
       )))
 
 (defn wrap-if-modified-since [handler generate-last-modified]
   (fn [request]
-    (if-let [if-modified-since (-?> request :headers (get "if-modified-since"))]
+    (if-let [if-modified-since (get-in request :headers (get "if-modified-since"))]
       {:status 412 :body "if-modified-since not supported"}
       (handler request))))
 
@@ -106,12 +68,10 @@
     (if-let [r (apply-if-function pred request)]
       (let [r2 (if (map? r) r request)]
        (handler r2))
-      (create-response request (apply-if-function else request)))))
+      (apply-if-function else request))))
 
 (defn wrap-exists [handler exists-function]
   (wrap-predicate handler exists-function (constantly { :status 404 :body "not found"})))
-
-
 
 (defn wrap-auth [handler auth-function]
   (fn [request]
@@ -127,12 +87,10 @@
 
 (defn wrap-generate-body [handler generate-body-function-or-val]
   (fn [request]
-    (if (match-method :get request)
-      (compojure.http.response/create-response
-       request
-       (if (fn? generate-body-function-or-val)
-	 (generate-body-function-or-val request)
-	 generate-body-function-or-val))
+    (if (= (:method request) :get)
+      (if (fn? generate-body-function-or-val)
+        (generate-body-function-or-val request)
+        generate-body-function-or-val)
       (handler request))))
 
 (defn wrap-etag [handler generate-etag]
@@ -143,8 +101,7 @@
 
 (defn send-method-not-allowed []
   (fn [request] 
-    (compojure.http.response/create-response
-     request {:status 405 :body "method not allowed"})))
+    {:status 405 :body "method not allowed"}))
 
 (defn wrap-service-available [handler service-available-function]
   (wrap-predicate service-available-function
