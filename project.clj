@@ -8,4 +8,5 @@
                      [swank-clojure "1.3.3"]
                      [malcolmsparks/ring-mock "0.2.0"]
                      [ring/ring-jetty-adapter "1.0.1"]
+                     [hiccup "0.3.7"]
 		     ])
