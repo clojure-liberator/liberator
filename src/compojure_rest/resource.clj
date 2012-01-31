@@ -97,7 +97,7 @@
         request (assoc request ::negotiated-content-type content-type)]
     
     (if (log "Generator is " generator)
-      (merge {:status 200} (compojure.response/render generator request))
+      (update-in (merge {:status 200} (compojure.response/render generator request)) [:headers] assoc "Content-Type" content-type)
       [500 (str "Could not resolve body generator for " content-type ".")]
       )
     ))
