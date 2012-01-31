@@ -2,4 +2,5 @@
 \#*#
 classes
 lib/
-/compojure-rest.jar
+/compojure-rest*.jar
+/pom.xml
