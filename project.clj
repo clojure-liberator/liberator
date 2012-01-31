@@ -1,4 +1,4 @@
-(defproject compojure-rest "0.2"
+(defproject compojure-rest "0.2.1"
   :dependencies [[org.clojure/clojure "1.3.0"]
 		 [compojure "1.0.1"]
                  ;;[com.twinql.clojure/clj-conneg "1.1.0"]
