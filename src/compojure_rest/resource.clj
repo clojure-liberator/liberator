@@ -401,7 +401,11 @@
 ;; resources are a map of implementation methods
 
 (defn -resource [request kvs]
-      (let [m (merge default-functions kvs)
+  (let [m (merge default-functions
+                 {:method-allowed? (apply request-method-in
+                                          (keys (select-keys kvs
+                                                             [:get :head :options :put :post :delete :trace])))}
+                 kvs)
 	  m (map-values make-function m)]
         (service-available? m request)))
 
