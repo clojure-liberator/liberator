@@ -1,4 +1,6 @@
-(ns compojure-rest.t-resource
+;; Originally this was compojure_rest/t_resource.clj in src/
+
+(ns test-resource
   (:use clojure.test)
   (:use compojure-rest.resource))
 

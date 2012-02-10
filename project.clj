@@ -1,11 +1,12 @@
-(defproject compojure-rest "0.1.1-SNAPSHOT"
-  :dependencies [[org.clojure/clojure "1.1.0-alpha-SNAPSHOT"]
-                 [org.clojure/clojure-contrib "1.0-SNAPSHOT"]
-		 [compojure "0.3.2"]
-		 [org.clojars.ordnungswidrig/clj-conneg "0.1.1-SNAPSHOT"]
-		 [org.mortbay.jetty/jetty "6.1.21"]
-		 [commons-codec/commons-codec "1.4"]
-		 [commons-fileupload/commons-fileupload "1.2.1"]
-		 [commons-io/commons-io "1.4"]]
-  :dev-dependencies [[org.clojure/swank-clojure "1.0"]
-		     [lein-clojars "0.5.0-SNAPSHOT"]])
+(defproject compojure-rest "0.2"
+  :dependencies [[org.clojure/clojure "1.3.0"]
+		 [compojure "1.0.1"]
+		 [commons-codec/commons-codec "1.5"]
+                 [org.clojure/tools.trace "0.7.1"]
+                 ]
+  :dev-dependencies [
+                     [swank-clojure "1.3.3"]
+                     [malcolmsparks/ring-mock "0.2.0"]
+                     [ring/ring-jetty-adapter "1.0.1"]
+                     [hiccup "0.3.7"]
+		     ])

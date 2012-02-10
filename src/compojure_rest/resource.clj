@@ -7,18 +7,10 @@
 ;; this software.
 
 (ns compojure-rest.resource
-  (:use compojure)
-  (:use compojure.http.response)
-  (:use compojure-rest)
-  (:require  [com.twinql.clojure.conneg :as conneg])
-  (:use clojure.contrib.core)
-  (:use clojure.contrib.trace)
-  (:import clojure.lang.Fn)
-  (:import java.util.Date)
-  (:import java.util.Map)
-  (:import java.lang.System)
-  (:import java.util.Locale)
-  (:import java.text.SimpleDateFormat))
+  (:use clojure.tools.trace
+        compojure-rest.conneg
+        compojure-rest.util)
+  (:require compojure.response))
 
 (defmulti coll-validator "Return a function that evaluaties of the give argument 
              a) is contained in a collection 
@@ -38,25 +30,22 @@
 ;; todos
 ;; make authorized handler returning single value (not map) as identifier of a principal
 
-
-(declare default-make-body)
-
-
 (def console-logger #(println (str "LOG " %)))
 (def no-logger (constantly nil))
 
-(declare -log)
-(def var-logger (fn [msg] (dosync (alter -log #(conj % msg)))))
+(declare ^:dynamic *-log*)
 
-(def *logger* console-logger)
+(def ^:dynamic *-logger* no-logger)
+
+(def var-logger (fn [msg] (dosync (alter *-log* #(conj % msg)))))
 
 (defn log [name value]
-  (do (*logger* (str name ": " (pr-str value)))
-      value))
+  (do
+    (*-logger* (str name ": " (pr-str value)))
+    value))
 
 (defn make-trace-headers [log]
   log)
-
 
 (declare if-none-match-exists?)
 
@@ -74,37 +63,33 @@
       (if-let [gen-etag (rmap :etag)]
 	(gen-etag request))))
 
+;; TODO: This is not called anywhere but we should be careful to preserve the ETag functionality prior to its removal.
 (defn -make-body-response [generator rmap request status]
-  (let [body (generator rmap request status)	
+  (let [body (generator request)	
 	type (request ::negotiated-content-type)
-	response (create-response request 
-				  {:status status
-				   :headers { "Content-Type" type } 
-				   :body body })]
+	response {:status status
+                  :headers {"Content-Type" type } 
+                  :body body }]
     (if-let [etag (-gen-etag rmap request)]
-      (update-response request response { :headers { "ETag" etag}})
+      (merge response {:headers {"ETag" etag}})
       response)))
 
-(defn resolve-recursive [rmap val]
-  (if (keyword? (log "resolve recursive" val))
-    (resolve-recursive rmap (rmap val))
-    val))
-
 (defn make-body-response [rmap request status]
-  (let [ctp  ((rmap :content-types-provided) request)
-	type (log "Make body response for content type" 
-		  (or (request ::negotiated-content-type)
-		      (some #{"text/html" "text/plain"} (keys ctp))
-		      (first (keys ctp))))
-	request (assoc request ::negotiated-content-type type)
-	body-generator (ctp type)
-	resolved-generator (resolve-recursive rmap body-generator)]
+  (let [
+        ct-map ((rmap (:request-method request)) request)
+        candidates (keys ct-map)
+        content-type (log "Make body response for content type" 
+                          (or (request ::negotiated-content-type)
+                              (some #{"text/html" "text/plain"} candidates)
+                              (first candidates)))
+        generator (get ct-map content-type)
+        request (assoc request ::negotiated-content-type content-type)]
     
-    
-    (if (log "resolved body generator" resolved-generator)
-      (-make-body-response resolved-generator rmap request status)
-      (create-response request
-		       [500 (str "Could not resolve body generator " body-generator ".")]))))
+    (if (log "Generator is " generator)
+      (update-in (merge {:status 200} (compojure.response/render generator request)) [:headers] assoc "Content-Type" content-type)
+      [500 (str "Could not resolve body generator for " content-type ".")]
+      )
+    ))
   
 (defn make-handler-function [x]
   (if (number? x) (fn [rmap request] (make-body-response rmap request x))
@@ -136,17 +121,15 @@
 (defn -defhandler [name status message]
   `(defn ~name [~'rmap ~'request]
      (if-let [~'handler (~'rmap ~(keyword name))]
-       (update-response ~'request 
-			(create-response ~'request (~'handler ~'rmap ~'request ~status)) 
-			{:status ~status})
-       (create-response ~'request 
-			{:status ~status 
-			 :headers { "Content-Type" "text/plain" } 
-			 :body ~message }))))
+       (merge 
+        (~'handler ~'rmap ~'request ~status) 
+        {:status ~status})
+       {:status ~status 
+        :headers { "Content-Type" "text/plain" } 
+        :body ~message })))
 
 (defmacro defhandler [name status message]
   (-defhandler name status message))
-
 
 (defn header-exists? [header request]
   (contains? (:headers request) header))
@@ -157,13 +140,12 @@
 (defn =method [method request]
   (= (request :request-method) method))
 
-
 (defn handle-see-other [rmap request]
   ;; handle body
   (if-let [fother (rmap :see-other)]
-    (create-response {:status 303 :headers { "Location "(fother rmap request)}})
-    (create-response {:status 500 
-		      :body "Internal Server error: no location specified for status 303."})))
+    {:status 303 :headers { "Location "(fother rmap request)}}
+    {:status 500 
+     :body "Internal Server error: no location specified for status 303."}))
 
 (defn handle-ok [rmap request]
   (make-body-response rmap request 200))
@@ -234,7 +216,6 @@
   not-modified
   precondition-failed)
 
-
 (defdecision put-to-existing? (partial =method :put)
   conflict? multiple-representations?)
 
@@ -264,10 +245,8 @@
     (modified-since? rmap (assoc request :if-modified-since-date date))
     method-delete?))
 
-
 (defdecision if-modified-since-exists? (partial header-exists? "if-modified-since")
   -if-modified-since-valid-date? method-delete?)
-
 
 (defn etag-matches-for-if-none? [rmap request]
   (let [etag (-gen-etag rmap request)]
@@ -282,10 +261,8 @@
   #(= "*" ((%1 :headers) "if-none-match"))
   handle-if-none-match etag-matches-for-if-none?)
 
-
 (defdecision if-none-match-exists? (partial header-exists? "if-none-match")
   if-none-match-star? if-modified-since-exists?)
-
 
 (defn unmodified-since? [rmap request]
   (if-let [last-modified (rmap :last-modified)]
@@ -320,7 +297,7 @@
 
 (defdecision exists? if-match-exists? if-match-star-exists-for-missing?)
 
-(defhandler not-acceptable 406 "No acceptable resrouce available.")
+(defhandler not-acceptable 406 "No acceptable resource available.")
 
 (defdecision encoding-available?  exists? not-acceptable)
 
@@ -339,9 +316,9 @@
 
 (defn media-type-available? [rmap request]
   (decide :media-type-available? 
-	  #(when-let [type (conneg/best-allowed-content-type 
-			    ((% :headers {}) "accept") 
-			    (trace "PT" (keys ((rmap :content-types-provided) %))))]
+	  #(when-let [type (compojure-rest.conneg/best-allowed-content-type 
+			    (get-in % [:headers "accept"]) 
+			    (keys ((rmap (:request-method %)))))]
 	     {::negotiated-content-type (str (first type) "/" (nth type 1))})
 	  accept-language-exists?
 	  not-acceptable
@@ -391,7 +368,7 @@
 (defhandler service-not-available 503 "Service not available.")
 (defdecision service-available? known-method? service-not-available)
 
-(def *default-functions* 
+(def default-functions 
      {
       :service-available?        true
       :known-method?            (request-method-in :get :head :options
@@ -418,21 +395,19 @@
       :can-put-to-missing?       false
       :can-post-to-missing       true
       :language-available?       true
-      :content-types-provided    { "text/html" :to_html }
-      :to_html                   ""
      })
 
 
 ;; resources are a map of implementation methods
 
 (defn -resource [request kvs]
-      (let [m (merge *default-functions* kvs)
+  (let [m (merge default-functions
+                 {:method-allowed? (apply request-method-in
+                                          (keys (select-keys kvs
+                                                             [:get :head :options :put :post :delete :trace])))}
+                 kvs)
 	  m (map-values make-function m)]
-      (binding [-log (ref [])] 
-	(let [response (service-available? m request)]
-;	  (dosync (alter -log (fn [-log] nil)))
-	  (update-response request response
-			   { :headers { "X-Compojure-Rest-Trace" (make-trace-headers @-log)}})))))
+        (service-available? m request)))
 
 (defn resource [& kvs]
   (fn [request] (-resource request (apply hash-map kvs))))
@@ -441,3 +416,10 @@
   `(defn ~name [~'request] 
      (-resource ~'request ~(apply hash-map kvs))))
 
+(defn wrap-trace-as-response-header [handler]
+  (fn [request]
+    (binding [*-log* (ref [])
+              *-logger* var-logger]
+      (merge 
+       (handler request)
+       {:headers { "X-Compojure-Rest-Trace" (make-trace-headers @*-log*)}}))))
