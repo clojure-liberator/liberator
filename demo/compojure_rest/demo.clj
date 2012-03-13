@@ -20,7 +20,7 @@
   (context "/users/:id" [id]
            (ANY "/foo" [] (resource
                            :get {"text/html"
-                                 (format "<body>User is %s</body" id)}
+                                 (format "<body>User is %s</body>" id)}
                            )))
   (route/not-found "<h1>Page not found</h1>"))
 
