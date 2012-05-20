@@ -1,6 +1,7 @@
 (ns compojure-rest.conneg
   (:use clojure.tools.trace)
-  (:require [clojure.string :as string]))
+  (:require [clojure.string :as string])
+  (:import (javax.xml.ws ProtocolException)))
 
 ;;;
 ;;; TODO: sort by level for text/html. Maybe also sort by charset.
@@ -60,10 +61,7 @@
     {:type [\"image\" \"*\"]
       :q 0.8}
     
-  If the fragment is invalid, nil is returned.
-  
-  Eventually, a `weights` map will be input, used to accord a server-side
-  weight to a format."
+  If the fragment is invalid, nil is returned."
 
   ([f]
    (let [parts (string/split f #"\s*;\s*")]
@@ -75,16 +73,6 @@
            (assoc
              (params->map (rest parts))
              :type type-pair)))))))
-
-(defn sort-by-q [coll]
-  (reverse     ; Highest first.
-    (sort-by #(get %1 :q 1)
-             coll)))
-
-(defn sorted-accept [h]
-  (sort-by-q
-    (map accept-fragment
-         (string/split h #"\s*,\s*"))))
 
 (defn acceptable-type
   "Compare two type pairs. If the pairing is acceptable,
@@ -118,6 +106,20 @@
           (= "*" amin)
           type-pair)))))
               
+(defn assoc-server-weight-fn [allowed-types]
+  (let [server-fragments (map accept-fragment allowed-types)]
+    (fn [accept-fragment]
+      (if-let [sq (:q (first (filter #(acceptable-type (:type accept-fragment) (:type %)) server-fragments)))]
+        (assoc accept-fragment :sq sq)
+        accept-fragment))))
+
+(defn sorted-accept [accepts-header allowed-types]
+  (reverse
+   (sort-by (juxt #(get %1 :q 1) #(get %1 :sq 1))
+            (map (assoc-server-weight-fn allowed-types)
+                 (map accept-fragment
+                      (string/split accepts-header #"\s*,\s*"))))))
+
 (defn allowed-types-filter [allowed-types]
   (fn [accept]
     (some (partial acceptable-type accept)
@@ -152,7 +154,7 @@
    (best-allowed-content-type accepts-header true))
   ([accepts-header
     allowed-types]    ; Set of strings or pairs. true/nil/:all for any.
-     (let [sorted (map :type (sorted-accept accepts-header))]
+     (let [sorted (map :type (sorted-accept accepts-header allowed-types))]
       (cond
         (contains? #{:all nil true} allowed-types)
         (first sorted)
@@ -160,9 +162,130 @@
         (fn? allowed-types)
         (first-fn (enpair allowed-types) sorted)
  
-        true
+        :otherwise
         (first-fn (allowed-types-filter (enpair allowed-types)) sorted)))))
 
+(defn split-qval [caq]
+  (let [[charset & params] (string/split caq #"\s*;\s*")
+        q (first (reverse (sort (filter (comp not nil?)
+                                        (map #(let [[param value] (string/split % #"\s*=")] 
+                                                (if (= "q" param) (Float/parseFloat value)))
+                                             params)))))]
+    (when (and
+           (not (nil? q))
+           (> q 1.0))
+      (throw (ProtocolException. "Quality value of header exceeds 1")))
+    (when (and
+           (not (nil? q))
+           (< q 0))
+      (throw (ProtocolException. "Quality value of header is less than 0")))
+    [charset (or q 1)]))
+
+(defn parse-accepts-header [accepts-header]
+  (->> (string/split accepts-header #"\s*,\s*")
+       (map split-qval)
+       (into {})))
+
+(defn select-best [candidates score-fn]
+  (->> candidates
+       (map (juxt identity #(or (score-fn %) 0)))
+       (sort-by second)
+       ;; If a parameter has a quality value of 0, then content with
+       ;; this parameter is `not acceptable' for the client
+       (remove #(= 0 (second %))) 
+       reverse
+       (map first) ; extract winning option
+       first))
+
+;; TODO Add tracing
+
+(defn best-allowed-charset [accepts-header available]
+  (let [accepts (->> (string/split accepts-header #"\s*,\s*")
+                     (map split-qval)
+                     (into {}))]
+    (select-best available
+                 (fn [charset]
+                   (or (get accepts charset)
+                       (get accepts "*")
+                       ;; "except for ISO-8859-1, which gets a quality
+                       ;; value of 1 if not explicitly mentioned"
+                       (if (= charset "iso-8859-1") 1 0)
+                       )))))
+
+(defn best-allowed-encoding [accepts-header available]
+  (let [accepts (->> (string/split accepts-header #"\s*,\s*")
+                     (map split-qval)
+                     (into {}))]
+    (or
+     (select-best available
+                  (fn [encoding]
+                    (or (get accepts encoding)
+                        (get accepts "*"))))
+     
+     
+     ;; The "identity" content-coding is always acceptable, unless
+     ;; specifically refused because the Accept-Encoding field includes
+     ;; "identity;q=0", or because the field includes "*;q=0" and does not
+     ;; explicitly include the "identity" content-coding. If the
+     ;; Accept-Encoding field-value is empty, then only the "identity"
+     ;; encoding is acceptable.
+     (if-not (or (= 0 (get accepts "identity"))
+                 (and (= 0 (get accepts "*"))
+                      (not (contains? accepts "identity"))))
+       "identity"))))
+
+;; 3.10 Language Tags (p28)
+;; language-tag  = primary-tag *( "-" subtag )
+;; primary-tag   = 1*8ALPHA
+;; subtag        = 1*8ALPHA
+(defn remove-last-subtag [langtag]
+  (->> (string/split langtag #"-") ; split into tags
+       butlast ; remote the last subtag
+       (interpose "-") (reduce str))) ; recompose
 
 
+;; TODO What if no languages available?
+;;    "If no Content-Language is specified, the default is that the content is intended for all language audiences. This might mean that the sender does not consider it to be specific to any natural language, or that the sender does not know for which language it is intended."
 
+(defn best-allowed-language [accepts-header available]
+  (let [accepts (->> (string/split accepts-header #"\s*,\s*")
+                     (map split-qval)
+                     (into {}))
+        
+        score (fn [langtag]
+                (or
+                 ;; "A language-range matches a language-tag if it exactly equals the tag"
+                 (get accepts langtag)  
+                 (->> langtag
+                      ;; "The language quality factor assigned to a
+                      ;; language-tag by the Accept-Language field is
+                      ;; the quality value of the longest language-range
+                      ;; in the field that matches the language-tag"
+                      (iterate remove-last-subtag) (take-while (comp not empty?))
+                      (map #(get accepts %)) ; any score?
+                      (filter identity)
+                      first)            ; partial match
+                 ;; "If no Content-Language is specified, the default is
+                 ;; that the content is intended for all language
+                 ;; audiences. This might mean that the sender does not
+                 ;; consider it to be specific to any natural language,
+                 ;; or that the sender does not know for which language
+                 ;; it is intended."
+                 (if (= "*" langtag) 0.01)
+                 0))]
+    (or
+     (select-best available (fn [option]
+                              (cond
+                               (string? option) (score option) ; single langtag
+                               ;; "Multiple languages MAY be
+                               ;; listed for content that is intended for multiple audiences. For
+                               ;; example, a rendition of the "Treaty of Waitangi," presented
+                               ;; simultaneously in the original Maori and English versions, would
+                               ;; call for"
+                               ;;
+                               ;; Content-Language: mi, en
+                               (coll? option) (apply max (map score option))))))))
+
+
+;; TODO Have we considered the case where no accept-language tag is provided? (rfc 2616 is clear about this)
+;; TODO As above but what about no accept-charset, no accept-encoding, no accept?
