@@ -33,6 +33,7 @@
     "Encode the type into the given encoding (eg. gzip, compress)"))
 
 (defn default-dictionary [k lang]
+  (println "k is " k)
   (name k))
 
 (defn html-table [data fields lang dictionary]
@@ -127,6 +128,9 @@ preference."
          (in-charset (:charset representation))
          (encode (:encoding representation))
          )})
+
+  (render-item [this context]
+    this)
   
   (in-charset [this charset]
     (if charset

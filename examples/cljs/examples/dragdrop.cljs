@@ -9,35 +9,20 @@
    [goog.json :as gjson]
    ))
 
-(defn dragOver [ev]
-  (set! (.. ev -dropTargetItem -element -style -background) "yellow")
-  )
+;; From Mark McGranaghan, http://mmcgrana.github.com/2011/09/clojurescript-nodejs.html
+(defn clj->js
+  "Recursively transforms ClojureScript maps into Javascript objects,
+   other ClojureScript colls into JavaScript arrays, and ClojureScript
+   keywords into JavaScript strings."
+  [x]
+  (cond
+    (string? x) x
+    (keyword? x) (name x)
+    (map? x) (.-strobj (reduce (fn [m [k v]]
+               (assoc m (clj->js k) (clj->js v))) {} x))
+    (coll? x) (apply array (map clj->js x))
+    :else x))
 
-(defn dragOut [ev]
-  (set! (.. ev -dropTargetItem -element -style -background) "silver")
-  )
-
-(defn dropList [ev]
-  (dom/log "drop")
-  )
-
-(defn dragList [ev]
-  (dom/log "drag")
-  )
-
-(defn dropIt [ev]
-  (set! (.. ev -dropTargetItem -element -style -background) "silver")
-  ;; TODO Do the POST
-  (dom/log "DROP!!!")
-
-  (goog.net.XhrIo/send
-   (.. js/window -document -URL)
-   (fn [ev] (dom/log "POST returned"))
-   "POST"
-   (gjson/serialize (clj->js (.. ev -dragSourceItem -data -strobj)))
-   (js-obj "Accept" "application/json"
-           "Content-Type" "application/json"))
-  (dom/log "DROP done!!!"))
 
 (defn add-athletes [json]
   (dom/log "add athletes: ")
@@ -59,6 +44,34 @@
        :otherwise (dom/log (str "Failed.\n" status ": " message)))))
    "GET" "" (js-obj "Accept" "application/json")))
 
+(defn dragOver [ev]
+  (set! (.. ev -dropTargetItem -element -style -background) "yellow"))
+
+(defn dragOut [ev]
+  (set! (.. ev -dropTargetItem -element -style -background) "silver"))
+
+(defn dropList [ev]
+  (dom/log "drop"))
+
+(defn dragList [ev]
+  (dom/log "drag"))
+
+(defn dropIt [ev]
+  (set! (.. ev -dropTargetItem -element -style -background) "silver")
+  ;; TODO Do the POST
+  (dom/log "DROP!!!")
+  (dom/log (str "DATA>" (gjson/serialize (clj->js {:name (.. ev -dragSourceItem -data)}))))
+  (goog.net.XhrIo/send
+   (.. js/window -document -URL)
+   (fn [ev] (dom/log "POST returned"))
+   "POST"
+   
+   (gjson/serialize (clj->js {:name (.. ev -dragSourceItem -data)}))
+   (js-obj "Accept" "application/json"
+           "Content-Type" "application/json"))
+  (dom/log "DROP done!!!")
+  (load-athletes))
+
 (defn ^:export build-page []
 
   (let [content (dom/get-element "content")]
@@ -73,11 +86,23 @@
         list1 (goog.fx.DragDropGroup.)
         dropArea (goog.fx.DragDrop. "dropArea")]
     (gdom/removeChildren athletes)
-    (doseq [fruit ["Apple" "Banana" "Grape"]]
-      (let [athlete (dom/element [:li fruit])]
+
+    (doseq [name ["Daniel Frank"
+                   "Auguste Cavadini"
+                   "Robert McKnight"
+                   "Jessie Pollock"
+                   "Stanisława Walasiewicz"
+                   "Andrea Henkel"
+                   "RaymondLenroy Bonney"
+                   "Herv Flandin"
+                   "John Allan Peterson"
+                   "Jari Torkki"
+                   ]]
+      
+      (let [athlete (dom/element [:li name])]
         (dom/append athletes athlete)
-        (.addItem list1 athlete (.. athlete -firstChild -nodeValue)))
-      )
+        (.addItem list1 athlete (.. athlete -firstChild -nodeValue))))
+    
     (.addTarget list1 dropArea)
     (.setSourceClass list1 "source")
     (.setTargetClass dropArea "target")
@@ -87,10 +112,8 @@
     (gevents/listen list1 "dragout" dragOut)
     (gevents/listen list1 "drop" dropList)
     (gevents/listen list1 "drag" dragList)
-    (gevents/listen dropArea "drop" dropIt)
-
-    )
+    (gevents/listen dropArea "drop" dropIt))
 
   (load-athletes)
-  (dom/log "SUCCESS!")  
-  )
+  (dom/log "SUCCESS!"))
+

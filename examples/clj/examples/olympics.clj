@@ -4,21 +4,38 @@
 
 ;; http://download.freebase.com/datadumps/latest/browse/olympics/olympic_games.tsv
 
-(def dataset
+(defn parse-dataset [f]
   (let [[header & rows]
-        (->> "Downloads/olympic_games.tsv"
-             (file (System/getProperty "user.home"))
+        (->> f
              reader line-seq
              (map #(split % #"\t")))]
     (map #(zipmap header %) rows)))
+
+(def dataset
+  (parse-dataset (file (System/getProperty "user.home") "Downloads/olympic_games.tsv")))
 
 (defn get-olympic-games-index []
   (->> dataset
        (map #(select-keys % ["id" "name" "host_city" "mascot"]))
        (sort-by #(get % "name"))))
 
+
+
+
+
 (defn get-olympic-games [id]
   (-> (filter #(= (get % "id") id) dataset)
       first
-      (update-in ["competitions"] #(split % #",") ; 'competitions' is delimited with hyphens
-       )))
+      (update-in ["competitions"] #(split % #","))))
+
+(def athletes
+  (parse-dataset (file (System/getProperty "user.home") "Downloads/olympic_athlete.tsv")))
+
+(defn get-athletes-sample []
+  (map #(get % "name") (map #(select-keys % ["name"]) (take 10 athletes))))
+
+;;(get-athletes-sample)
+
+
+;; (spit (clojure.java.io/file "/tmp/foo.clj") (with-out-str (doall (map prn (map #(select-keys % ["name"]) (take 10 athletes))))))
+

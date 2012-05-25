@@ -58,8 +58,7 @@
 
 ;; Drag drop demo
 
-(def athletes (ref [{:name "Steve"}
-                    {:name "Brian"}]))
+(def athletes (atom []))
 
 (defrecord DragDropPage [main]
   Representation
@@ -81,8 +80,9 @@
 
 (defresource drag-drop
   :method-allowed? #(some #{(get-in % [:request :request-method])} [:get :post])
-  :available-media-types ["text/html" "application/json"]
-  :create! (fn [context] (println "Add athlete! " (json/read-json (io/reader (get-in context [:request :body])))))
+  :available-media-types ["text/html" "application/json" "text/plain"]
+  :available-charsets ["utf-8"]
+  :create! (fn [context] (swap! athletes conj {:name (:name (json/read-json (io/reader (get-in context [:request :body]))))}))
   :handle-ok (fn [context]
                (case (get-in context [:representation :media-type])
                  ;; If HTML, some presentation.
@@ -90,6 +90,11 @@
                  (DragDropPage. "examples.dragdrop.build_page()")
                  ;; Otherwise 'just the data please'.
                  @athletes)))
+
+(defresource athletes-resource
+  :available-media-types ["text/plain" "application/json"]
+  :available-charsets ["utf-8"]
+  :handle-ok (olympics/get-athletes-sample))
 
 ;; Routes
 
@@ -102,6 +107,8 @@
     (ANY "/olympics/index" [] olympic-games-index)
     (ANY "/olympics/index-fancy" [] olympic-games-index-fancy)
     (ANY "/drag-drop" [] drag-drop)
+    (ANY "/drag-drop/athletes" [] athletes-resource)
+
     (ANY "/static/*" [] static)
     (ANY ["/olympics/:stem" :stem #"m/.*"] [stem]
          (-> olympic-games

@@ -375,10 +375,27 @@
 (defdecision accept-encoding-exists? (partial header-exists? "accept-encoding")
   encoding-available? exists?)
 
-(defdecision charset-available? accept-encoding-exists? handle-not-acceptable)
+(defn charset-available? [context]
+  (decide :charset-available?
+          #(try-header "Accept-Charset"
+                       (let [provs ((get-in context [:resource :available-charsets]) context)]
+                         (if-let [cs (or (compojure-rest.conneg/best-allowed-charset
+                                            (get-in % [:request :headers "accept-charset"])
+                                            provs)
+                                           (first provs))]
+                           {:representation {:charset cs}}
+                           true)))
+          accept-encoding-exists? handle-not-acceptable context))
 
-(defdecision accept-charset-exists? (partial header-exists? "accept-charset")
-  charset-available? accept-encoding-exists?)
+(defn accept-charset-exists? [context]
+  (decide :accept-charset-exists?
+          (fn [context] (if (header-exists? "accept-charset" context)
+                          true
+                          (if-let [charset-provided (first ((get-in context [:resource :available-charsets]) context))]
+                            [false {:representation {:charset charset-provided}}]
+                            false
+                            )))
+          charset-available? accept-encoding-exists? context))
 
 (defn language-available? [context]
   (decide :language-available?
