@@ -250,7 +250,9 @@
 
 (defhandler handle-conflict 409 "Conflict.")
 
-(defdecision conflict? handle-conflict respond-with-entity?)
+(defdecision update! respond-with-entity? respond-with-entity?)
+
+(defdecision conflict? handle-conflict update!)
 
 (defdecision put-to-different-url? handle-moved-permamently conflict?)
 
@@ -280,9 +282,11 @@
 
 (defdecision delete-enacted? respond-with-entity? handle-accepted)
 
+(defdecision delete! delete-enacted? delete-enacted?)
+
 (defdecision ^{:step :M16} method-delete?
   (partial =method :delete)
-  delete-enacted?
+  delete!
   post-to-existing?)
 
 (defn modified-since? [context]
@@ -462,6 +466,7 @@
 
 (def default-functions 
      {
+      ;; Decisions
       :service-available?        true
       :known-method?            (request-method-in :get :head :options
 						   :put :post :delete :trace)
@@ -490,8 +495,16 @@
       :moved-permanently?        false
       :moved-temporarily?        false
 
+      ;; Handlers
       :handle-ok                 "OK"
-      :create!                   false
+
+      ;; Imperatives. Doesn't matter about decision outcome, both
+      ;; outcomes follow the same route.
+      :create!                   true
+      :update!                   true
+      :delete!                   true
+
+      ;; Directives
       :available-media-types     ["*/*"]
       ;; "If no Content-Language is specified, the default is that the
       ;; content is intended for all language audiences. This might mean
