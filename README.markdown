@@ -51,8 +51,8 @@ You can also define a resource in a more RESTful way, like webmachine allows:
 			     ((req :route-params) :id) (req :body)))
       :get    {
 	       "text/html" (fn [req] (str "<h1>" (req ::product) "</h1>"))
-	       :json (fn [req] (str "JSON: " (req ::product)))
-	       :xml  (fn [req] (str "XML:"   (req ::product)))}))
+	       "application/json" (fn [req] (str "JSON: " (req ::product)))
+	       "application/xml"  (fn [req] (str "XML:"   (req ::product)))}))
 
     
 
