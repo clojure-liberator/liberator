@@ -487,6 +487,7 @@
       :language-available?       true
       :moved-permanently?        false
       :moved-temporarily?        false
+      :delete-enacted?           true
 
       ;; Handlers
       :handle-ok                 "OK"
