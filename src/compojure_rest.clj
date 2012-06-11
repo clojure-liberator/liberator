@@ -7,7 +7,7 @@
 ;; this software.
 
 (ns compojure-rest
-  (:use compojure-rest/util))
+  (:use compojure-rest.util))
 
 (defn wrap-header [handler header generate-header]
   (fn [request]

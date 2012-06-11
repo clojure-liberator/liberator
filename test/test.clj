@@ -7,11 +7,15 @@
 ;; this software.
 
 (ns test
-  (:use compojure)
-  (:use compojure-rest)
-  (:use compojure-rest.resource)
-  (:use clojure.contrib.duck-streams)
-  (:use clojure.contrib.trace)
+  (:use [compojure.core]
+        [compojure-rest]
+        [compojure-rest.resource]
+        [clojure.tools.trace]
+        [hiccup.core]
+        [ring.adapter.jetty]
+        [ring.middleware.stacktrace :only (wrap-stacktrace)]
+        [ring.middleware.reload :only (wrap-reload)])
+  
   (:import java.io.InputStreamReader)
   (:import [java.security MessageDigest]))
 
@@ -23,13 +27,6 @@
     (.digest (MessageDigest/getInstance "SHA"))
     (map #(format "%02x" %))
     (apply str)))
-
-(defn slurp-body
-  "Slurp the request body into a string."
-  [request]
-  (let [encoding (compojure.http.request/get-character-encoding request)]
-    (if-let [body (request :body)]
-      (slurp* (InputStreamReader. body encoding)))))
 
 (def products (ref []))
 
@@ -69,7 +66,7 @@
      (resource 
       :method-allowed? #(some #{(% :request-method)} [:get :post])
       :content-types-provided { "text/html" :to_html, "text/plain" :to_text }
-      :created (fn [_ req _] (str "Product " (add-product (slurp-body req))  " created."))
+      :created (fn [_ req _] (str "Product " (add-product (slurp (:body req)))  " created."))
       :to_html (fn [_ req _] 
 		 (html [:html
 			[:head [:title "All Products"]]
@@ -90,7 +87,7 @@
       :conflict? (fn [req] (let [id (read-string (-> req :route-params :id))]
 			     (dosync 
 			      (when (product-by-id id)
-				(update-product-with-id id (slurp-body req)))
+				(update-product-with-id id (slurp (:body req))))
 			      false)))
       :etag    (fn [req] (sha (str (-> req ::product :title))))
       :delete-enacted? (fn [req] (remove-product-by-id (read-string (-> req :route-params :id))))
@@ -106,22 +103,26 @@
   (ANY "/hello/*"      hello-resource)
   (ANY "/products/"    products-resource)
   (ANY "/products/:id" product-resource)
-  (GET "/echo/:foo"    (resource  
-			:content-types-provided 
-			{ "text/plain" 
-			  (fn [_ req _] 
-			    (with-out-str (clojure.contrib.pprint/pprint
-					   (dissoc req :servlet-request)))),
-			  "text/html"
-			  (fn [_ req _]
-			    (html [:pre 
-				   (h (with-out-str (clojure.contrib.pprint/pprint
-						     (dissoc req :servlet-request))))]))}))
-  (GET "*" 404))
+  (GET "/echo/:foo"    [] (resource  
+                           :content-types-provided 
+                           { "text/plain" 
+                             (fn [_ req _] 
+                               (with-out-str (clojure.pprint/pprint
+                                              (dissoc req :servlet-request)))),
+                             "text/html"
+                             (fn [_ req _]
+                               (html [:pre 
+                                      (h (with-out-str (clojure.pprint/pprint
+                                                        (dissoc req :servlet-request))))]))}))
+  (GET "*" [] {:status 404 :body "Resource not found"}))
+
+(def handler
+  (-> my-app
+      wrap-reload
+      wrap-stacktrace))
 
 (defn main []
   (do
-    (defserver test-server {:port 8888} "/*" (servlet my-app))
-    (start test-server)))
+    (run-jetty #'handler {:port 3000 :join? false})))
 
 
