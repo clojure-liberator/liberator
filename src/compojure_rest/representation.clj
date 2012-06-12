@@ -33,7 +33,6 @@
     "Encode the type into the given encoding (eg. gzip, compress)"))
 
 (defn default-dictionary [k lang]
-  (println "k is " k)
   (name k))
 
 (defn html-table [data fields lang dictionary]
@@ -87,6 +86,122 @@ preference."
                       (assoc-in [:headers "Content-Type"] "text/plain"))))
         (handler request)))))
 
+
+(defmulti render-map-generic "dispatch on media type"
+  (fn [data context] (get-in context [:representation :media-type])))
+
+(defmethod render-map-generic "text/plain"
+  [data {:keys [dictionary language] :or {dictionary default-dictionary} :as context}]
+  (->> data
+       (map (fn [[k v]] (str (dictionary k language) "=" v)))
+       (interpose "\r\n")
+       (apply str)))
+
+(defn- render-map-csv [data sep]
+  (with-out-str
+    (csv/write-csv *out* [["name" "value"]] :newline :cr+lf :separator sep)
+    (csv/write-csv *out* (seq data) :newline :cr+lf :separator sep)))
+
+(defmethod render-map-generic "text/csv" [data context]
+  (render-map-csv \, data))
+
+(defmethod render-map-generic "text/tab-separated-values" [data context]
+  (render-map-csv \, 9))
+
+(defmethod render-map-generic "application/json" [data context]
+  (with-out-str json/print-json data))
+
+(defmethod render-map-generic "application/clojure" [data context]
+  (with-out-str (pr data)))
+
+(defn- render-map-html-table
+  [data
+   {{:keys [media-type language] :as representation} :representation
+    :keys [dictionary fields] :or {dictionary default-dictionary}
+    :as context} mode]
+  (let [content
+        [:div [:table 
+
+               [:tbody (for [[key value] data]
+                         [:tr
+                          [:th (or (dictionary key language) (default-dictionary key language))]
+                          [:td value]])]]]]
+    (condp = mode
+      :html  (html content)
+      :xhtml (xhtml content))))
+
+
+(defmethod render-map-generic "text/html" [data context]
+  (render-map-html-table data context :html))
+
+(defmethod  render-map-generic "application/xhtml+xml" [data context]
+  (render-map-html-table data context :html))
+
+
+(defmulti render-seq-generic (fn [data context] (get-in context [:representation :media-type])))
+
+(defn- render-seq-html-table
+  [data
+   {{:keys [media-type language] :as representation} :representation
+    :keys [dictionary fields] :or {dictionary default-dictionary
+                                   fields (keys (first data))}
+    :as context} mode]
+  (let [content (html-table data fields language dictionary)]
+    (condp = mode
+      :html  (html content)
+      :xhtml (xhtml content))))
+
+
+(defmethod render-seq-generic "text/html" [data context]
+  (render-seq-html-table data context :html))
+
+(defmethod  render-seq-generic "application/xhtml+xml" [data context]
+  (render-seq-html-table data context :html))
+
+(defmethod render-seq-generic "application/json" [data _]
+  (with-out-str
+    (json/pprint-json data)
+    (print "\r\n")))
+
+(defn render-seq-csv
+  [data
+   {{:keys [language] :as representation} :representation
+    :keys [dictionary fields] :or {dictionary default-dictionary
+                                   fields (keys (first data))}
+    :as context} sep]
+  (with-out-str
+    (csv/write-csv *out* [(map #(or (dictionary % language)
+                                    (default-dictionary % language)) fields)]
+                   :newline :cr+lf :separator sep)
+    (csv/write-csv *out* (map (apply juxt (map (fn [x] (fn [m] (get m x))) fields)) data)
+                   :newline :cr+lf :separator sep)))
+
+(defmethod render-seq-generic "text/csv" [data context]
+   (render-seq-csv data context \,))
+
+(defmethod render-seq-generic "text/tab-seprarated-values" [data context]
+  (render-seq-csv data context \,))
+
+(defmethod render-seq-generic "application/clojure"
+  [data
+   {{:keys [language] :as representation} :representation
+    :keys [dictionary fields] :or {dictionary default-dictionary
+                                   fields (keys (first data))}
+    :as context}]
+  (->>
+   data
+   (map #(render-item % (assoc context
+                          :dictionary dictionary
+                          :fields fields)))
+   (interpose "\r\n")
+   (apply str)))
+
+(defmethod render-seq-generic :default
+   [data {{:keys [language media-type] :as representation} :representation :as context}]
+   {:status 500 :body
+    (format "Failure to provide negotiated media-type and language (type=%s, lang=%s)" media-type language)})
+
+
 ;; Representation embodies all the rules as to who should encode the content.
 ;; The aim is to do more for developer's who don't want to, while seeding control for developers who need it.
 ;;
@@ -102,23 +217,8 @@ preference."
   clojure.lang.APersistentMap
   (as-response [this _] this)
 
-  (render-item [data {:keys [representation dictionary] :or {dictionary default-dictionary} :as context}]
-    (let [{:keys [media-type language]} representation]
-      (assert media-type)
-      (assert data)
-      (assert dictionary)
-      (case media-type
-        ("text/plain" "*/*") (str (reduce str (interpose "\r\n" (map (fn [[k v]] (str (dictionary k language) "=" v)) data))) "\r\n")
-        
-        ("text/csv" "text/tab-separated-values")
-        (with-out-str
-          (let [sep (case media-type "text/csv" \, "text/tab-separated-values" 9)]
-            (csv/write-csv *out* [["name" "value"]] :newline :cr+lf :separator sep)
-            (csv/write-csv *out* (seq data) :newline :cr+lf :separator sep)))
-        
-        "application/json" (with-out-str
-                             (json/print-json data))
-        "application/clojure" (with-out-str (pr data)))))
+  (render-item [data context]
+    (render-map-generic data context))
 
   ;; If a string is returned, we should carry out the conversion of both the charset and the encoding.
   String
@@ -170,56 +270,8 @@ preference."
   (as-response [data context] (as-response (seq data) context))
 
   clojure.lang.ISeq
-  (as-response [data {:keys [dictionary fields]
-                 :or {dictionary default-dictionary
-                      fields (keys (first data))}
-                 :as context}]
-    (let [{:keys [media-type language]} (:representation context)]
-      (assert media-type)
-      (as-response
-       ;; TODO Refactor: Replace 'case' with protocols
-       (case media-type
-         ("text/html")
-         (-> (html {:mode :html}
-                   (html-table data fields language dictionary))
-             (str "\r\n"))
-
-         "application/xhtml+xml"
-         (-> (xhtml {:mode :xml}
-                    (html-table data fields language dictionary))
-             (str "\r\n"))
-
-         "application/xml"
-         (-> (html
-              [:document
-               (for [row data]
-                 [:entry
-                  (for [field fields]
-                    (when-let [s (get row field)]
-                      (when-not (empty? s) [(keyword (str field "")) s])))])])
-             (str "\r\n"))
-
-         "application/json"
-         (with-out-str
-           (json/pprint-json data)
-           (print "\r\n"))
-
-         ("text/csv" "text/tab-separated-values")
-         (with-out-str
-           (let [sep (case media-type "text/csv" \, "text/tab-separated-values" 9)]
-             (csv/write-csv *out* [(map #(or (dictionary % language)
-                                             (default-dictionary % language)) fields)] :newline :cr+lf :separator sep)
-             (csv/write-csv *out* (map (apply juxt (map (fn [x] (fn [m] (get m x))) fields)) data) :newline :cr+lf :separator sep)))
-         
-         ("application/clojure" "text/plain" "*/*")
-         (->
-          (reduce str (interpose "\r\n" (map #(render-item % (assoc context
-                                                               :dictionary dictionary
-                                                               :fields fields)) data)))
-          (str (when (= media-type "application/clojure") "\r\n"))) ;; add a newline to application/clojure output
-
-         {:status 500 :body (format "Failure to provide negotiated media-type and language (type=%s, lang=%s)" media-type language)})
-       context))))
+  (as-response [data context]
+    (render-seq-generic data context)))
 
 (defrecord MapRepresentation [m]
   Representation
