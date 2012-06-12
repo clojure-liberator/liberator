@@ -182,16 +182,13 @@
 (defn =method [method context]
   (= (get-in context [:request :request-method]) method))
 
-(defprotocol Location
-  (to-location [_]))
+(defmulti to-location type)
 
-(extend-protocol Location
-  String
-  (to-location [this] {:headers {"Location" this}})
-  clojure.lang.APersistentMap
-  (to-location [this] this)
-  nil
-  (to-location [this] nil))
+(defmethod to-location String [uri] {:headers {"Location" uri}})
+
+(defmethod to-location clojure.lang.APersistentMap [this] this)
+
+(defmethod to-location nil [this] this)
 
 (defn -handle-moved [k status {:keys [resource] :as context}]
   (if-let [f (k resource)]
