@@ -50,7 +50,7 @@
                                s)
                              "")])])]]])
 
-(defmacro ->when [form pred & term]
+(defmacro ->when [pred form & term]
   `(if ~pred (-> ~form ~@term) ~form))
 
 (defn wrap-convert-suffix-to-accept-header
