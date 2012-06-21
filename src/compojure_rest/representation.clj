@@ -160,7 +160,7 @@ preference."
 
 (defmethod render-seq-generic "application/json" [data _]
   (with-out-str
-    (json/pprint-json data)
+    (json/print-json data)
     (print "\r\n")))
 
 (defn render-seq-csv
