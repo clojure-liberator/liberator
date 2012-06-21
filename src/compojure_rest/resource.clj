@@ -119,7 +119,7 @@
     (assoc res name (str value))
     res))
 
-(defn -defhandler [name status message]
+(defmacro ^:private defhandler [name status message]
   `(defn ~name [{~'resource :resource
                  ~'request :request
                  ~'representation :representation
@@ -168,10 +168,6 @@
          {:status ~status 
           :headers {"Content-Type" "text/plain"} 
           :body ~message}))))
-
-;; Is it necessary to have both a macro and a function?
-(defmacro defhandler [name status message]
-  (-defhandler name status message))
 
 (defn header-exists? [header context]
   (contains? (:headers (:request context)) header))
