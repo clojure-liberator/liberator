@@ -1,4 +1,4 @@
-(defproject compojure-rest "0.3.0"
+(defproject compojure-rest "0.2.2"
   :description "Compojure REST - A REST library for Clojure."
   :dependencies [[org.clojure/clojure "1.3.0"]
                  [org.clojure/tools.trace "0.7.3"]
