@@ -109,7 +109,7 @@ preference."
   (render-map-csv \, 9))
 
 (defmethod render-map-generic "application/json" [data context]
-  (with-out-str json/print-json data))
+  (with-out-str (json/print-json data)))
 
 (defmethod render-map-generic "application/clojure" [data context]
   (with-out-str (pr data)))
