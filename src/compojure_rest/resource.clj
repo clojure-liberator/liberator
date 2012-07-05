@@ -161,13 +161,15 @@
             ;; error if our BodyResponse function doesn't return a map,
             ;; so we check it now.
             (when-not (or (map? ~'response) (nil? ~'response))
-              (throw (Exception. (format "BodyResponse as-response function did not return a map (or nil) for instance of %s" (type ~'handler-response)))))
+              (throw (Exception. (format "%s as-response function did not return a map (or nil) for instance of %s" 'Representation (type ~'handler-response)))))
             ~'response))
          
          ;; If there is no handler we just return the information we have so far.
          {:status ~status 
           :headers {"Content-Type" "text/plain"} 
           :body ~message}))))
+
+
 
 (defn header-exists? [header context]
   (contains? (:headers (:request context)) header))
