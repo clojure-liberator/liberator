@@ -105,14 +105,24 @@
     {:status 500 :body (str "No handler found for key " name ". Key defined for resource " 
                             (keys resource))}))
 
-(defn -defdecision [name test then else]
-  (let [key (keyword name)]
-    `(defn ~name [~'context]
-       (decide ~key ~test ~then ~else ~'context))))
+(defn -defdecision
+  ([name test then else]
+     (-defdecision name (keyword name) test then else))
+  ([name key test then else]
+     `(defn ~name [~'context]
+        (decide ~key ~test ~then ~else ~'context))))
 
 (defmacro defdecision 
-  ([name then else] (-defdecision name nil then else))
-  ([name test then else] (-defdecision name test then else)))
+  ([name then else]
+     (-defdecision name nil then else))
+  ([name test then else]
+     (-defdecision name test then else)))
+
+(defmacro defdecisionalias
+  ([name key then else]
+     (-defdecision name key nil then else))
+  ([name key test then else]
+     (-defdecision name key test then else)))
 
 (defn set-header-maybe [res name value]
   (if (and value (not (empty? value)))
@@ -214,15 +224,15 @@
 
 (defdecision post-redirect? handle-see-other new?)
 
-(defdecision create! post-redirect? post-redirect?)
+(defdecisionalias post-create! :create! post-redirect? post-redirect?)
 
 (defhandler handle-not-found 404 "Resource not found.")
 
 (defhandler handle-gone 410 "Resouce is gone.")
 
-(defdecision can-post-to-missing? create! handle-not-found)
+(defdecision ^{:step :M7} can-post-to-missing? post-create! handle-not-found)
 
-(defdecision post-to-missing? (partial =method :post)
+(defdecision ^{:step :L7} post-to-missing? (partial =method :post)
   can-post-to-missing? handle-not-found)
 
 (defn handle-moved-permamently [context]
@@ -231,7 +241,7 @@
 (defn handle-moved-temporarily [context]
   (-handle-moved :moved-temporarily 307 context))
 
-(defdecision can-post-to-gone? create! handle-gone)
+(defdecision can-post-to-gone? post-create! handle-gone)
 
 (defdecision post-to-gone? (partial =method :post) can-post-to-gone? handle-gone)
 
@@ -245,11 +255,15 @@
 
 (defhandler handle-conflict 409 "Conflict.")
 
-(defdecision update! respond-with-entity? respond-with-entity?)
+(defdecisionalias put-update! :update! new? new?)
 
-(defdecision conflict? handle-conflict update!)
+(defdecisionalias put-create! :create! new? new?)
 
-(defdecision put-to-different-url? handle-moved-permamently conflict?)
+(defdecisionalias ^{:step :O14} update-conflict? :conflict? handle-conflict put-update!)
+
+(defdecisionalias ^{:step :P3} create-conflict? :conflict? handle-conflict put-create!)
+
+(defdecision put-to-different-url? handle-moved-permamently create-conflict?)
 
 (defdecision method-put? (partial =method :put) put-to-different-url? existed?)
 
@@ -268,10 +282,12 @@
   handle-precondition-failed)
 
 (defdecision ^{:step :O16} put-to-existing? (partial =method :put)
-  conflict? multiple-representations?)
+  update-conflict? multiple-representations?)
+
+(defdecisionalias post-update! :update! post-redirect? post-redirect?)
 
 (defdecision ^{:step :N16} post-to-existing? (partial =method :post) 
-  create! put-to-existing?)
+  post-update! put-to-existing?)
 
 (defhandler handle-accepted 202 "Accepted")
 
