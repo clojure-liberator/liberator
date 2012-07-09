@@ -106,23 +106,18 @@
                             (keys resource))}))
 
 (defn -defdecision
-  ([name test then else]
-     (-defdecision name (keyword name) test then else))
-  ([name key test then else]
-     `(defn ~name [~'context]
-        (decide ~key ~test ~then ~else ~'context))))
-
-(defmacro defdecision*
-  ([name key then else]
-     (-defdecision name key nil then else))
-  ([name key test then else]
-     (-defdecision name key test then else)))
+  [name test then else]
+  `(defn ~name [~'context]
+     (decide ~(keyword name) ~test ~then ~else ~'context)))
 
 (defmacro defdecision 
   ([name then else]
      (-defdecision name nil then else))
   ([name test then else]
      (-defdecision name test then else)))
+
+(defmacro defaction [name next]
+  `(defdecision ~name ~next ~next))
 
 (defn set-header-maybe [res name value]
   (if (and value (not (empty? value)))
@@ -224,13 +219,13 @@
 
 (defdecision post-redirect? handle-see-other new?)
 
-(defdecision* post-create! :create! post-redirect? post-redirect?)
-
 (defhandler handle-not-found 404 "Resource not found.")
 
 (defhandler handle-gone 410 "Resouce is gone.")
 
-(defdecision ^{:step :M7} can-post-to-missing? post-create! handle-not-found)
+(defaction post! post-redirect?)
+
+(defdecision ^{:step :M7} can-post-to-missing? post! handle-not-found)
 
 (defdecision ^{:step :L7} post-to-missing? (partial =method :post)
   can-post-to-missing? handle-not-found)
@@ -241,7 +236,7 @@
 (defn handle-moved-temporarily [context]
   (-handle-moved :moved-temporarily 307 context))
 
-(defdecision can-post-to-gone? post-create! handle-gone)
+(defdecision ^{:step :N5} can-post-to-gone? post! handle-gone)
 
 (defdecision post-to-gone? (partial =method :post) can-post-to-gone? handle-gone)
 
@@ -251,19 +246,13 @@
 
 (defdecision existed? moved-permanently? post-to-missing?)
 
-(defdecision can-put-to-missing? respond-with-entity? handle-not-found)
-
 (defhandler handle-conflict 409 "Conflict.")
 
-(defdecision* put-update! :update! new? new?)
+(defaction put! new?)
 
-(defdecision* put-create! :create! new? new?)
+(defdecision ^{:step [:O14 :P3]} conflict? handle-conflict put!)
 
-(defdecision* ^{:step :O14} update-conflict? :conflict? handle-conflict put-update!)
-
-(defdecision* ^{:step :P3} create-conflict? :conflict? handle-conflict put-create!)
-
-(defdecision put-to-different-url? handle-moved-permamently create-conflict?)
+(defdecision put-to-different-url? handle-moved-permamently conflict?)
 
 (defdecision method-put? (partial =method :put) put-to-different-url? existed?)
 
@@ -282,18 +271,16 @@
   handle-precondition-failed)
 
 (defdecision ^{:step :O16} put-to-existing? (partial =method :put)
-  update-conflict? multiple-representations?)
-
-(defdecision* post-update! :update! post-redirect? post-redirect?)
+  conflict? multiple-representations?)
 
 (defdecision ^{:step :N16} post-to-existing? (partial =method :post) 
-  post-update! put-to-existing?)
+  post! put-to-existing?)
 
 (defhandler handle-accepted 202 "Accepted")
 
 (defdecision delete-enacted? respond-with-entity? handle-accepted)
 
-(defdecision delete! delete-enacted? delete-enacted?)
+(defaction delete! delete-enacted?)
 
 (defdecision ^{:step :M16} method-delete?
   (partial =method :delete)
@@ -500,7 +487,6 @@
       :put-to-different-url?     false
       :multiple-representations? false
       :conflict?                 false
-      :can-put-to-missing?       false
       :can-post-to-missing?      true
       :language-available?       true
       :moved-permanently?        false
@@ -512,8 +498,8 @@
 
       ;; Imperatives. Doesn't matter about decision outcome, both
       ;; outcomes follow the same route.
-      :create!                   true
-      :update!                   true
+      :post!                     true
+      :put!                      true
       :delete!                   true
 
       ;; Directives
