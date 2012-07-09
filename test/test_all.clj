@@ -1,17 +1,19 @@
 (ns test-all
   (:use compojure-rest)
   (:use clojure.test)
+  (:use compojure-rest.util)
   (:import java.util.Date))
 
 
 
-(deftest test-evaluate-generate
-  (testing "with simple vaule"
-    (is (= :v (evaluate-generate :v {}))))
-  (testing "with constant function"
-    (is (= :c (evaluate-generate (fn [request] :c) {}))))
-  (testing "with function"
-    (is (= :a (evaluate-generate (fn [request] (request :x)) { :x :a})))))
+
+#_(deftest test-evaluate-generate
+    (testing "with simple vaule"
+      (is (= :v (evaluate-generate :v {}))))
+    (testing "with constant function"
+      (is (= :c (evaluate-generate (fn [request] :c) {}))))
+    (testing "with function"
+      (is (= :a (evaluate-generate (fn [request] (request :x)) { :x :a})))))
 
 (deftest test-http-date
   (testing "with zero-date"

@@ -15,7 +15,7 @@
             ((context "/users/:id" [id]
                       (ANY "/display" []
                            (resource
-                            :get {"text/plain" (format "User id is %s" id)}))))
+                            :handle-ok {"text/plain" (format "User id is %s" id)}))))
             :body))))
   (testing "Content negotiation"
     (are [accept content-type expected-type]
