@@ -1,5 +1,5 @@
-(ns compojure-rest.demo.server
-  (:use compojure-rest.demo)
+(ns liberator.demo.server
+  (:use liberator.demo)
   (:require
    swank.swank
    [ring.adapter.jetty :as jetty]))

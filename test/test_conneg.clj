@@ -1,7 +1,7 @@
 (ns test-conneg
   (:require [clojure.string :as string])
   (:use
-   compojure-rest.conneg
+   liberator.conneg
    midje.sweet))
 
 (facts
@@ -41,7 +41,7 @@
  ;; p20: "HTTP character sets are identified by case-insensitive
  ;; tokens. The complete set of tokens is defined by the IANA
  ;; Character Set registry"
- ;; TODO Test for case-insensitivity p20, it's possible that compojure-rest or ring will be downcasing anyway, check this
+ ;; TODO Test for case-insensitivity p20, it's possible that liberator or ring will be downcasing anyway, check this
  )
 
 (facts

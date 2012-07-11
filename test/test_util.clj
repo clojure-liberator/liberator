@@ -1,9 +1,9 @@
-(ns test-all
-  (:use compojure-rest)
-  (:use clojure.test)
-  (:import java.util.Date))
-
-
+(ns test-util
+  (:use
+   liberator.util
+   clojure.test)
+  (:import
+   (java.util Date)))
 
 (deftest test-evaluate-generate
   (testing "with simple vaule"

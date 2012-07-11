@@ -2,8 +2,8 @@
   (:require [examples.olympics :as olympics]
             [clojure.java.io :as io]
             [clojure.data.json :as json])
-  (:use [compojure-rest.resource :only [defresource wrap-trace-as-response-header]]
-        [compojure-rest.representation :only [Representation]]
+  (:use [liberator.core :only [defresource wrap-trace-as-response-header]]
+        [liberatory.representation :only [Representation]]
         [compojure.core :only [context ANY routes defroutes]]
         [hiccup.page :only [html5]]
         [clojure.string :only [split]]

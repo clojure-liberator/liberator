@@ -108,7 +108,7 @@ If you don't set one of the entries it will be set to the appropriate
 default value.
 
 You can also return anything that can be coerced into a Ring response
-(by implementing ```compojure-rest.representation.Representation```
+(by implementing ```liberator.representation.Representation```
 protocol). Out-of-the-box this includes String, File and InputStream
 instances, plus the usual Clojure data types.
 

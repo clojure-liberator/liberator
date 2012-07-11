@@ -6,7 +6,7 @@
 ;; terms of this license. You must not remove this notice, or any other, from
 ;; this software.
 
-(ns compojure-rest.representation
+(ns liberator.representation
   (:require
    [clojure.data.json :as json]
    [clojure.data.csv :as csv])

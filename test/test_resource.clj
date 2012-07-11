@@ -2,7 +2,7 @@
 
 (ns test-resource
   (:use clojure.test)
-  (:use compojure-rest.resource))
+  (:use liberator.code))
 
 (deftest test-handle-post
   (let [res (resource 

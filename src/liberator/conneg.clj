@@ -1,4 +1,4 @@
-(ns compojure-rest.conneg
+(ns liberator.conneg
   (:use clojure.tools.trace)
   (:require [clojure.string :as string])
   (:import (javax.xml.ws ProtocolException)))

@@ -4,9 +4,8 @@
   (:use
    [ring.util.mime-type :only [ext-mime-type]]
    [cljs.closure :only [build]]
-   [compojure.core :only [routes]]
-   [compojure.core :only [ANY]]
-   [compojure-rest.resource :only [defresource]]))
+   [compojure.core :only [routes ANY]]
+   [liberator.core :only [defresource]]))
 
 (defn wrap-binder [handler key value]
   (fn [request]

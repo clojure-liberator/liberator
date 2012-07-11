@@ -6,11 +6,11 @@
 ;; terms of this license. You must not remove this notice, or any other, from
 ;; this software.
 
-(ns compojure-rest.resource
-  (:require compojure-rest.conneg)
+(ns liberator.resource
+  (:require liberator.conneg)
   (:use
-   [compojure-rest.util :only [parse-http-date http-date]]
-   [compojure-rest.representation :only [Representation as-response]])
+   [liberator.util :only [parse-http-date http-date]]
+   [liberator.representation :only [Representation as-response]])
   (:import (javax.xml.ws ProtocolException)))
 
 (defprotocol DateCoercions
@@ -381,7 +381,7 @@
   (decide :charset-available?
           #(try-header "Accept-Charset"
                        (let [provs ((get-in context [:resource :available-charsets]) context)]
-                         (if-let [cs (or (compojure-rest.conneg/best-allowed-charset
+                         (if-let [cs (or (liberator.conneg/best-allowed-charset
                                             (get-in % [:request :headers "accept-charset"])
                                             provs)
                                            (first provs))]
@@ -402,7 +402,7 @@
 (defn language-available? [context]
   (decide :language-available?
           #(try-header "Accept-Language"
-                       (when-let [lang (compojure-rest.conneg/best-allowed-language
+                       (when-let [lang (liberator.conneg/best-allowed-language
                                         (get-in % [:request :headers "accept-language"]) 
                                         ((get-in context [:resource :available-languages]) context))]
                          (if (= lang "*")
@@ -416,7 +416,7 @@
 (defn media-type-available? [context]
   (decide :media-type-available?
           #(try-header "Accept"
-             (when-let [type (compojure-rest.conneg/best-allowed-content-type 
+             (when-let [type (liberator.conneg/best-allowed-content-type 
                               (get-in % [:request :headers "accept"]) 
                               ((get-in context [:resource :available-media-types]) context))]
                {:representation {:media-type (reduce str (interpose "/" type))}}))
@@ -541,7 +541,7 @@
               *-logger* var-logger]
       (let [resp (handler request)]
         (when resp
-          (assoc-in resp [:headers "X-Compojure-Rest-Trace"] (make-trace-headers @*-log*)))))))
+          (assoc-in resp [:headers "X-Liberator-Trace"] (make-trace-headers @*-log*)))))))
 
 (defn get-trace []
   (make-trace-headers @*-log*))

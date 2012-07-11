@@ -1,4 +1,4 @@
-(ns compojure-rest.util
+(ns liberator.util
   (:import java.util.TimeZone
            java.text.SimpleDateFormat
            java.util.Locale

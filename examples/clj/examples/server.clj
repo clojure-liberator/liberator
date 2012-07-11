@@ -4,7 +4,7 @@
   (:use
    [examples :only [assemble-routes]]
    [ring.middleware.multipart-params :only [wrap-multipart-params]]
-   [compojure-rest.representation :only [wrap-convert-suffix-to-accept-header]]
+   [liberator.representation :only [wrap-convert-suffix-to-accept-header]]
    [ring.util.response :only [header]]
    [compojure.handler :only [api]]))
 
