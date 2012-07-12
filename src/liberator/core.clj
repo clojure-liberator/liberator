@@ -6,7 +6,7 @@
 ;; terms of this license. You must not remove this notice, or any other, from
 ;; this software.
 
-(ns liberator.resource
+(ns liberator.core
   (:require liberator.conneg)
   (:use
    [liberator.util :only [parse-http-date http-date]]

@@ -48,7 +48,7 @@
  (best-allowed-encoding "compress;q=0.4, gzip;q=0.2" #{"compress" "gzip"}) => "compress"
  (best-allowed-encoding "compress;q=0.4, gzip;q=0.8" #{"compress" "gzip"}) => "gzip"
  ;; TODO Not sure about this one
- (best-allowed-encoding "ogzip;q=1.0, identity; q=0.5, *;q=0" #{"foo"}) => "gzip"
+ (best-allowed-encoding "gzip;q=1.0, identity; q=0.5, *;q=0" #{"foo"}) => "gzip"
  )
 
 ;; Language negotiation (14.4)
