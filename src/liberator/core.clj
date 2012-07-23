@@ -124,6 +124,10 @@
     (assoc res name (str value))
     res))
 
+(liberator.conneg/best-allowed-content-type 
+ "*/*"
+ nil)
+
 (defmacro ^:private defhandler [name status message]
   `(defn ~name [{~'resource :resource
                  ~'request :request
@@ -150,7 +154,16 @@
            (-> {} 
                (set-header-maybe
                 "Content-Type"
-                (when-let [~'media-type (:media-type ~'representation)]
+                (let [~'media-type (or (:media-type ~'representation)
+                                       ;; "If no Accept header field is
+                                       ;; present, then it is assumed
+                                       ;; that the client accepts all
+                                       ;; media types" [rfc-2616]
+                                       (liberator.conneg/stringify
+                                        (liberator.conneg/best-allowed-content-type 
+                                         "*/*"
+                                         ((get-in ~'context [:resource :available-media-types]) ~'context))))]
+                  
                   (str ~'media-type (when-let [~'charset (:charset ~'representation)] (str ";charset=" ~'charset)))))
                (set-header-maybe "Content-Language" (:language ~'representation))
                (set-header-maybe "Content-Encoding" (:encoding ~'representation)))}
@@ -419,7 +432,7 @@
              (when-let [type (liberator.conneg/best-allowed-content-type 
                               (get-in % [:request :headers "accept"]) 
                               ((get-in context [:resource :available-media-types]) context))]
-               {:representation {:media-type (reduce str (interpose "/" type))}}))
+               {:representation {:media-type (liberator.conneg/stringify type)}}))
 	  accept-language-exists?
 	  handle-not-acceptable
 	  context))
