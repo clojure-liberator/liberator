@@ -7,14 +7,14 @@
 
 ;; TODO: Ensure that we use compojure.response/Renderable underneath in any body function
 
-(facts
+(future-facts
  (->
-            (request :get "/users/10/display")
-            ((context "/users/:id" [id]
-                      (ANY "/display" []
-                           (resource
-                            :handle-ok {"text/plain" (format "User id is %s" id)}))))
-            :body)
+  (request :get "/users/10/display")
+  ((context "/users/:id" [id]
+            (ANY "/display" []
+                 (resource
+                  :handle-ok {"text/plain" (format "User id is %s" id)}))))
+  :body)
  => "User id is 10")  
 
 

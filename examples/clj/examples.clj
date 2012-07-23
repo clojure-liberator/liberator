@@ -3,7 +3,7 @@
             [clojure.java.io :as io]
             [clojure.data.json :as json])
   (:use [liberator.core :only [defresource wrap-trace-as-response-header]]
-        [liberatory.representation :only [Representation]]
+        [liberator.representation :only [Representation]]
         [compojure.core :only [context ANY routes defroutes]]
         [hiccup.page :only [html5]]
         [clojure.string :only [split]]
@@ -11,7 +11,8 @@
         [hiccup.element :only [javascript-tag]]))
 
 (defresource hello-world
-  :handle-ok "Hello World!")
+  :handle-ok "Hello World!"
+  :available-media-types ["text/plain"])
 
 ;; Language negotiation
 (defresource hello-george
@@ -53,7 +54,7 @@
                (case (get-in context [:representation :media-type])
                  ("text/html" "application/xhtml+xml")
                  (OlympicsHtmlPage. (str "examples.olympics.build_instance()"))
-                 (compojure_rest.representation.MapRepresentation.
+                 (liberator.representation.MapRepresentation.
                   (olympics/get-olympic-games (get-in context [:request ::id]))))))
 
 ;; Drag drop demo
