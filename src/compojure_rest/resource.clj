@@ -8,9 +8,8 @@
 
 (ns compojure-rest.resource
   (:require compojure-rest.conneg)
-  (:use
-   [compojure-rest.util :only [parse-http-date http-date]]
-   [compojure-rest.representation :only [Representation as-response]])
+  (:use [compojure-rest.util :only [parse-http-date http-date]]
+        [compojure-rest.representation :only [Representation as-response]])
   (:import (javax.xml.ws ProtocolException)))
 
 (defprotocol DateCoercions
@@ -507,18 +506,16 @@
       ;; language it is intended."
       :available-languages       ["*"]
       :available-charsets        []
-      :available-encodings       []
-      })
+      :available-encodings       []})
 
 ;; resources are a map of implementation methods
-
 (defn -resource [request kvs]
   (try
     (service-available? {:request request
                          :resource (map-values make-function (merge default-functions kvs))
                          :representation {}})
     
-    (catch ProtocolException e ; this indicates a client error
+    (catch ProtocolException e         ; this indicates a client error
       {:status 400
        :headers {"Content-Type" "text/plain"}
        :body (.getMessage e)
