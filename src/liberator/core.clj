@@ -124,10 +124,6 @@
     (assoc res name (str value))
     res))
 
-(liberator.conneg/best-allowed-content-type 
- "*/*"
- nil)
-
 (defmacro ^:private defhandler [name status message]
   `(defn ~name [{~'resource :resource
                  ~'request :request
@@ -516,7 +512,8 @@
       :delete!                   true
 
       ;; Directives
-      :available-media-types     ["*/*"]
+      :available-media-types     []
+
       ;; "If no Content-Language is specified, the default is that the
       ;; content is intended for all language audiences. This might mean
       ;; that the sender does not consider it to be specific to any

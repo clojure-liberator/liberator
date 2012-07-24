@@ -16,10 +16,11 @@
 
 ;; Language negotiation
 (defresource hello-george
-  :available-languages ["en" "bg"]
   :handle-ok (fn [context] (case (get-in context [:representation :language])
                              "en" "Hello George!"
-                             "bg" "Zdravej, Georgi")))
+                             "bg" "Zdravej, Georgi"
+                             "Hello!"))
+  :available-languages ["en" "bg"])
 
 (defresource olympic-games-index
   :handle-ok (fn [_] (olympics/get-olympic-games-index)))
