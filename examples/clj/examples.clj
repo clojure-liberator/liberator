@@ -2,7 +2,7 @@
   (:require [examples.olympics :as olympics]
             [clojure.java.io :as io]
             [clojure.data.json :as json])
-  (:use [liberator.core :only [defresource wrap-trace-as-response-header]]
+  (:use [liberator.core :only [defresource wrap-trace-as-response-header request-method-in]]
         [liberator.representation :only [Representation]]
         [compojure.core :only [context ANY routes defroutes]]
         [hiccup.page :only [html5]]
@@ -10,6 +10,7 @@
         [examples.util :only [wrap-binder static clojurescript-resource create-cljs-route]]
         [hiccup.element :only [javascript-tag]]))
 
+;; The classic 'Hello World' example.
 (defresource hello-world
   :handle-ok "Hello World!"
   :available-media-types ["text/plain"])
@@ -21,6 +22,15 @@
                              "bg" "Zdravej, Georgi"
                              "Hello!"))
   :available-languages ["en" "bg"])
+
+;; Here's a resource you can POST to.
+(def postbox-counter (atom 0))
+
+(defresource postbox
+  :method-allowed? (request-method-in :post)
+  :post! (swap! postbox-counter inc)
+  :handle-created "Your submission was accepted.")
+
 
 (defresource olympic-games-index
   :handle-ok (fn [_] (olympics/get-olympic-games-index)))
