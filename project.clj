@@ -1,5 +1,5 @@
 ;; Use leiningen 2
-(defproject liberator "0.3.2"
+(defproject liberator "0.3.1"
   :description "Liberator - A REST library for Clojure."
   :dependencies [[org.clojure/clojure "1.4.0"]
                  [org.clojure/tools.trace "0.7.3"]
