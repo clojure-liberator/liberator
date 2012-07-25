@@ -3,6 +3,22 @@ of compojure. It is loosely modeled after webmachine.
 It provides a bunch of decorates which can be combined to provide a
 sophisticated implementation of the HTTP RFC.
 
+# Getting started
+
+A set of examples is included.
+
+If you want to see the examples in a browser, run
+
+    lein examples
+    
+This will start a web server on port 8000 (but you can specify a alternative port with an argument, eg. ```lein examples 8001```). Alternatively you can run the web server with ```lein ring server```).
+
+## Ensuring the tests pass
+
+Liberator uses [Midje](https://github.com/marick/Midje/) for testing. You can run all the tests like this :-
+
+    lein midje
+
 # Defining resources
 
 Resources are created with ```resource``` taking keyword arguments.
@@ -108,7 +124,7 @@ If you don't set one of the entries it will be set to the appropriate
 default value.
 
 You can also return anything that can be coerced into a Ring response
-(by implementing ```compojure-rest.representation.Representation```
+(by implementing ```liberator.representation.Representation```
 protocol). Out-of-the-box this includes String, File and InputStream
 instances, plus the usual Clojure data types.
 
@@ -138,10 +154,8 @@ Decision points can be :-
 * available-languages (declaration)
 * available-media-types (declaration)
 * can-post-to-missing? (decision)
-* can-put-to-missing? (decision)
 * charset-available? (decision)
 * conflict? (decision)
-* create! (action)
 * delete! (action)
 * encoding-available? (decision)
 * etag (declaration)
@@ -172,15 +186,16 @@ Decision points can be :-
 * method-allowed? (decision)
 * multiple-representations? (decision)
 * new? (decision)
+* post! (action)
 * post-redirect? (decision)
 * post-to-existing? (decision)
+* put! (action)
 * put-to-different-url? (decision)
 * respond-with-entity? (decision)
 * see-other (declaration)
 * service-available? (decision)
 * unauthorized (handler)
 * unknown-method (handler)
-* update! (action)
 * uri-too-long? (decision)
 * valid-content-header? (decision)
 * valid-entity-length? (decision)

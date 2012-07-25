@@ -6,7 +6,7 @@
 ;; terms of this license. You must not remove this notice, or any other, from
 ;; this software.
 
-(ns compojure-rest.representation
+(ns liberator.representation
   (:require
    [clojure.data.json :as json]
    [clojure.data.csv :as csv])
@@ -109,7 +109,7 @@ preference."
   (render-map-csv \, 9))
 
 (defmethod render-map-generic "application/json" [data context]
-  (with-out-str json/print-json data))
+  (with-out-str (json/print-json data)))
 
 (defmethod render-map-generic "application/clojure" [data context]
   (with-out-str (pr data)))
@@ -146,10 +146,11 @@ preference."
     :keys [dictionary fields] :or {dictionary default-dictionary
                                    fields (keys (first data))}
     :as context} mode]
-  (let [content (html-table data fields language dictionary)]
-    (condp = mode
-      :html  (html content)
-      :xhtml (xhtml content))))
+  {:body
+   (let [content (html-table data fields language dictionary)]
+     (condp = mode
+       :html  (html content)
+       :xhtml (xhtml content)))})
 
 
 (defmethod render-seq-generic "text/html" [data context]
@@ -159,9 +160,10 @@ preference."
   (render-seq-html-table data context :html))
 
 (defmethod render-seq-generic "application/json" [data _]
-  (with-out-str
-    (json/print-json data)
-    (print "\r\n")))
+  {:body
+   (with-out-str
+     (json/print-json data)
+     (print "\r\n"))})
 
 (defn render-seq-csv
   [data
@@ -169,18 +171,19 @@ preference."
     :keys [dictionary fields] :or {dictionary default-dictionary
                                    fields (keys (first data))}
     :as context} sep]
-  (with-out-str
-    (csv/write-csv *out* [(map #(or (dictionary % language)
-                                    (default-dictionary % language)) fields)]
-                   :newline :cr+lf :separator sep)
-    (csv/write-csv *out* (map (apply juxt (map (fn [x] (fn [m] (get m x))) fields)) data)
-                   :newline :cr+lf :separator sep)))
+  {:body
+   (with-out-str
+     (csv/write-csv *out* [(map #(or (dictionary % language)
+                                     (default-dictionary % language)) fields)]
+                    :newline :cr+lf :separator sep)
+     (csv/write-csv *out* (map (apply juxt (map (fn [x] (fn [m] (get m x))) fields)) data)
+                    :newline :cr+lf :separator sep))})
 
 (defmethod render-seq-generic "text/csv" [data context]
    (render-seq-csv data context \,))
 
-(defmethod render-seq-generic "text/tab-seprarated-values" [data context]
-  (render-seq-csv data context \,))
+(defmethod render-seq-generic "text/tab-separated-values" [data context]
+  (render-seq-csv data context "\t"))
 
 (defmethod render-seq-generic "application/clojure"
   [data
@@ -194,7 +197,8 @@ preference."
                           :dictionary dictionary
                           :fields fields)))
    (interpose "\r\n")
-   (apply str)))
+   (apply str)
+   (hash-map :body)))
 
 (defmethod render-seq-generic :default
    [data {{:keys [language media-type] :as representation} :representation :as context}]

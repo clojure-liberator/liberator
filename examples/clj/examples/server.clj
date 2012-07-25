@@ -4,7 +4,7 @@
   (:use
    [examples :only [assemble-routes]]
    [ring.middleware.multipart-params :only [wrap-multipart-params]]
-   [compojure-rest.representation :only [wrap-convert-suffix-to-accept-header]]
+   [liberator.representation :only [wrap-convert-suffix-to-accept-header]]
    [ring.util.response :only [header]]
    [compojure.handler :only [api]]))
 
@@ -26,6 +26,7 @@
         ".clj" "application/clojure"})
       ) request)))
 
+(def handler (create-handler))
 
 (defn start [options]
   (jetty/run-jetty
@@ -33,4 +34,10 @@
      ((create-handler) request))
    (assoc options :join? false)))
 
-(start {:port 8000})
+(defn -main
+  ([port]
+     (start {:port (Integer/parseInt port)}))
+  ([]
+     (-main "8000")))
+
+

@@ -1,10 +1,10 @@
 (ns test-conneg
   (:require [clojure.string :as string])
   (:use
-   compojure-rest.conneg
+   liberator.conneg
    midje.sweet))
 
-(facts
+(facts "charsets"
  
  (best-allowed-charset "iso-8859-5, unicode-1-1;q=0.8" #{"iso-8859-5" "unicode-1-1"}) => "iso-8859-5"
 
@@ -41,14 +41,14 @@
  ;; p20: "HTTP character sets are identified by case-insensitive
  ;; tokens. The complete set of tokens is defined by the IANA
  ;; Character Set registry"
- ;; TODO Test for case-insensitivity p20, it's possible that compojure-rest or ring will be downcasing anyway, check this
+ ;; TODO Test for case-insensitivity p20, it's possible that liberator or ring will be downcasing anyway, check this
  )
 
 (facts
  (best-allowed-encoding "compress;q=0.4, gzip;q=0.2" #{"compress" "gzip"}) => "compress"
  (best-allowed-encoding "compress;q=0.4, gzip;q=0.8" #{"compress" "gzip"}) => "gzip"
  ;; TODO Not sure about this one
- (best-allowed-encoding "ogzip;q=1.0, identity; q=0.5, *;q=0" #{"foo"}) => "gzip"
+;; (best-allowed-encoding "gzip;q=1.0, identity; q=0.5, *;q=0" #{"foo"}) => "foo"
  )
 
 ;; Language negotiation (14.4)
