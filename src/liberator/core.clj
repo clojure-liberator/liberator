@@ -124,66 +124,66 @@
     (assoc res name (str value))
     res))
 
+(defn run-handler [name status message
+               {:keys [resource request representation] :as context}]
+  (let [context (assoc context :status status :message message)]
+    (if-let [handler (resource (keyword name))]
+      (merge-with
+       merge-map-element
+
+       ;; Status
+       {:status status}
+
+       ;; ETags
+       (when-let [etag (-gen-etag context)]
+         {:headers {"ETag" etag}})
+
+       ;; Last modified
+       (when-let [last-modified (-gen-last-modified context)]
+         {:headers {"Last-Modified" (http-date last-modified)}})
+       
+       ;; Content negotiations
+       {:headers
+        (-> {} 
+            (set-header-maybe
+             "Content-Type"
+             (let [media-type (or (:media-type representation)
+                                    ;; "If no Accept header field is
+                                    ;; present, then it is assumed
+                                    ;; that the client accepts all
+                                    ;; media types" [rfc-2616]
+                                    (liberator.conneg/stringify
+                                     (liberator.conneg/best-allowed-content-type 
+                                      "*/*"
+                                      ((get-in context [:resource :available-media-types]) context))))]
+               
+               (str media-type (when-let [charset (:charset representation)] (str ";charset=" charset)))))
+            (set-header-maybe "Content-Language" (:language representation))
+            (set-header-maybe "Content-Encoding" (:encoding representation)))}
+       
+       ;; Finally the result of the handler.  We allow the handler to
+       ;; override the status and headers.
+       ;;
+       ;; The rules about who should take responsibility for encoding
+       ;; the response are defined in the BodyResponse protocol.
+       (let [handler-response (handler context)
+             response (as-response handler-response context)]
+         ;; We get an obscure 'cannot be cast to java.util.Map$Entry'
+         ;; error if our BodyResponse function doesn't return a map,
+         ;; so we check it now.
+         (when-not (or (map? response) (nil? response))
+           (throw (Exception. (format "%s as-response function did not return a map (or nil) for instance of %s"
+                                      'Representation (type handler-response)))))
+         response))
+      
+      ;; If there is no handler we just return the information we have so far.
+      {:status status 
+       :headers {"Content-Type" "text/plain"} 
+       :body message})))
+
 (defmacro ^:private defhandler [name status message]
-  `(defn ~name [{~'resource :resource
-                 ~'request :request
-                 ~'representation :representation
-                 :as ~'context}]
-     (let [~'context (assoc ~'context :status ~status :message ~message)]
-       (if-let [~'handler (~'resource ~(keyword name))]
-         (merge-with
-          merge-map-element
-
-          ;; Status
-          {:status ~status}
-
-          ;; ETags
-          (when-let [~'etag (-gen-etag ~'context)]
-            {:headers {"ETag" ~'etag}})
-
-          ;; Last modified
-          (when-let [~'last-modified (-gen-last-modified ~'context)]
-            {:headers {"Last-Modified" (http-date ~'last-modified)}})
-          
-          ;; Content negotiations
-          {:headers
-           (-> {} 
-               (set-header-maybe
-                "Content-Type"
-                (let [~'media-type (or (:media-type ~'representation)
-                                       ;; "If no Accept header field is
-                                       ;; present, then it is assumed
-                                       ;; that the client accepts all
-                                       ;; media types" [rfc-2616]
-                                       (liberator.conneg/stringify
-                                        (liberator.conneg/best-allowed-content-type 
-                                         "*/*"
-                                         ((get-in ~'context [:resource :available-media-types]) ~'context))))]
-                  
-                  (str ~'media-type (when-let [~'charset (:charset ~'representation)] (str ";charset=" ~'charset)))))
-               (set-header-maybe "Content-Language" (:language ~'representation))
-               (set-header-maybe "Content-Encoding" (:encoding ~'representation)))}
-          
-          ;; Finally the result of the handler.  We allow the handler to
-          ;; override the status and headers.
-          ;;
-          ;; The rules about who should take responsibility for encoding
-          ;; the response are defined in the BodyResponse protocol.
-          (let [~'handler-response (~'handler ~'context)
-                ~'response (as-response ~'handler-response ~'context)]
-            ;; We get an obscure 'cannot be cast to java.util.Map$Entry'
-            ;; error if our BodyResponse function doesn't return a map,
-            ;; so we check it now.
-            (when-not (or (map? ~'response) (nil? ~'response))
-              (throw (Exception. (format "%s as-response function did not return a map (or nil) for instance of %s" 'Representation (type ~'handler-response)))))
-            ~'response))
-         
-         ;; If there is no handler we just return the information we have so far.
-         {:status ~status 
-          :headers {"Content-Type" "text/plain"} 
-          :body ~message}))))
-
-
+  `(defn ~name [context#]
+     (run-handler '~name ~status ~message context#)))
 
 (defn header-exists? [header context]
   (contains? (:headers (:request context)) header))
