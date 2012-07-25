@@ -31,7 +31,18 @@
   :post! (swap! postbox-counter inc)
   :handle-created "Your submission was accepted.")
 
+;; Content negotiation examples
+(defresource chameleon [mtypes]
+  :handle-ok
+  (fn [context]
+    (case (get-in context [:representation :media-type])
+      "text/html" (html5 [:body [:p "OK"]])
+      nil
+      ))
+  :available-media-types mtypes)
 
+
+;; Olympics
 (defresource olympic-games-index
   :handle-ok (fn [_] (olympics/get-olympic-games-index)))
 

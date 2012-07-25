@@ -542,8 +542,14 @@
   (fn [request] (-resource request (apply hash-map kvs))))
 
 (defmacro defresource [name & kvs]
-  `(defn ~name [request#] 
-     (-resource request# ~(apply hash-map kvs))))
+  (if (vector? (first kvs))
+    (let [args (first kvs)
+          kvs (rest kvs)]
+      `(defn ~name [~@args]
+         (fn [request#]
+           (-resource request# ~(apply hash-map kvs)))))
+    `(defn ~name [request#] 
+       (-resource request# ~(apply hash-map kvs)))))
 
 (defn wrap-trace-as-response-header [handler]
   (fn [request]

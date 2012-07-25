@@ -10,15 +10,15 @@
 (defchecker is-status [code]
   (contains {:status code}))
 
-(defchecker has-body [expected]
+(defchecker body [expected]
   (contains {:body expected}))
 
-(defchecker has-header-value [header expected]
+(defchecker header-value [header expected]
   (fn [actual]
     (= (get-in actual [:headers header]) expected)))
 
-(defchecker has-content-type [expected]
-  (has-header-value "Content-Type" expected))
+(defchecker content-type [expected]
+  (header-value "Content-Type" expected))
 
 (def OK (is-status 200))
 (def CREATED (is-status 201))
@@ -27,8 +27,8 @@
   (let [handler (ANY "/" [] examples/hello-world)
         response (handler (request :get "/"))]
     response => OK
-    response => (has-body "Hello World!")
-    response => (has-content-type "text/plain")
+    response => (body "Hello World!")
+    response => (content-type "text/plain")
     ))
 
 (facts "about language negotiation"
@@ -40,11 +40,11 @@
                     (->when ?lang (header "Accept-Language" ?lang)))) => ?expected)
      ?lang     ?expected
      nil       OK
-     nil       (has-body "Hello!")
+     nil       (body "Hello!")
      "en"      OK
-     "en"      (has-body "Hello George!")
+     "en"      (body "Hello George!")
      "bg"      OK
-     "bg"      (has-body "Zdravej, Georgi"))
+     "bg"      (body "Zdravej, Georgi"))
 
     (tabular
      (future-fact "about hello-george example"
@@ -52,15 +52,36 @@
                                (->when ?lang (header "Accept-Language" ?lang)))) => ?expected)
      ?lang     ?expected
      "en/gb"   OK
-     "en/gb"   (has-body "Hello George!")
+     "en/gb"   (body "Hello George!")
      "en/*"    OK
-     "en/*"    (has-body "Hello George!")
-     "*/*"     (has-body "(check rfc-2616)"))))
+     "en/*"    (body "Hello George!")
+     "*/*"     (body "(check rfc-2616)"))))
 
 (facts "about POST"
   (let [handler (ANY "/" [] examples/postbox)
         response (handler (request :post "/"))]
     response => CREATED
-    response => (has-body "Your submission was accepted.")
+    response => (body "Your submission was accepted.")
     @examples/postbox-counter => 1)
   (against-background (before :facts (reset! examples/postbox-counter 0))))
+
+;; TODO: Make defresource take arguments which produce resources
+
+(facts "about content negotiation"
+  (tabular
+   (facts "about chameleon example"
+     (let [handler (ANY "/" [] (examples/chameleon ?available))
+           req (-> (request :get "/")
+                   (->when ?accept (header "Accept" ?accept)))
+           response (handler req)]
+       (fact "has expected status"
+         response => (contains {:status ?status}))
+       (fact "has expected content-type"
+         response => (content-type ?content-type))))
+   
+   ?accept              ?available         ?status    ?content-type
+   "text/html"          ["text/html"]      200        "text/html"
+   "text/plain"         ["text/html"]      406         "text/plain"
+   )
+  )
+
