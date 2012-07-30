@@ -1,5 +1,13 @@
 ;; Use leiningen 2
-(defproject liberator "0.3.2"
+(require 'clojure.java.shell)
+
+(defn get-version []
+  (let [[major minor] (re-seq  #"[^-]+" (.trim (:out (clojure.java.shell/sh "git" "describe" "--tags" "--long" "HEAD"))))]
+    (if (zero? (Integer/parseInt minor))
+      major
+      (format "%s.%s" major minor))))
+
+(defproject liberator (get-version)
   :description "Liberator - A REST library for Clojure."
   :dependencies [[org.clojure/clojure "1.4.0"]
                  [org.clojure/tools.trace "0.7.3"]
