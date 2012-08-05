@@ -2,7 +2,10 @@
 (require 'clojure.java.shell)
 
 (defn get-version []
-  (let [[major minor] (re-seq  #"[^-]+" (.trim (:out (clojure.java.shell/sh "git" "describe" "--tags" "--long" "HEAD"))))]
+  (let [[major minor]
+        (re-seq  #"[^-]+"
+                 (.trim (:out (clojure.java.shell/sh
+                               "git" "describe" "--tags" "--long" "HEAD"))))]
     (if (zero? (Integer/parseInt minor))
       major
       (format "%s.%s" major minor))))
