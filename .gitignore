@@ -7,3 +7,4 @@ lib/
 /pom.xml
 .lein*
 /target
+_site
