@@ -7,9 +7,8 @@
 ;; this software.
 
 (ns test
-  (:use [compojure.core]
-        [compojure-rest]
-        [compojure-rest.resource]
+  (:use [liberator.core]
+        [compojure.core :only [context ANY routes defroutes]]
         [clojure.tools.trace]
         [hiccup.core]
         [ring.adapter.jetty]
@@ -103,7 +102,7 @@
   (ANY "/hello/*"      hello-resource)
   (ANY "/products/"    products-resource)
   (ANY "/products/:id" product-resource)
-  (GET "/echo/:foo"    [] (resource  
+  (ANY "/echo/:foo"    [] (resource  
                            :content-types-provided 
                            { "text/plain" 
                              (fn [_ req _] 
@@ -114,7 +113,7 @@
                                (html [:pre 
                                       (h (with-out-str (clojure.pprint/pprint
                                                         (dissoc req :servlet-request))))]))}))
-  (GET "*" [] {:status 404 :body "Resource not found"}))
+  (ANY "*" [] {:status 404 :body "Resource not found"}))
 
 (def handler
   (-> my-app

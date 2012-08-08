@@ -1,6 +1,6 @@
 (ns test-resource
   (:use clojure.test)
-  (:use liberator.code))
+  (:use liberator.core))
 
 (deftest test-handle-post
   (let [res (resource 
@@ -9,7 +9,7 @@
 	   :post-is-create? true
            :post-redirect? true
 	   :see-other "new-path")
-	resp (trace "resp" (res {:request-method :post :header {}}))]
+	resp (res {:request-method :post :header {}})]
     (testing "post creates path"
       (is (= 303 (resp :status)))
       (is (= "new-path" (get-in resp [:headers "Location"]))))))
