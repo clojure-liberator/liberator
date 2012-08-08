@@ -1,9 +1,22 @@
-Compojure-rest is a thin layer for building RESTful applications on top
-of compojure. It is loosely modeled after webmachine. 
-It provides a bunch of decorates which can be combined to provide a
-sophisticated implementation of the HTTP RFC.
+# Liberator
 
-# Getting started
+Liberator is a Clojure library for building RESTful applications. 
+
+### Similar projects
+
+Liberator used to be known as compojure-rest. It got renamed in July 2012. 
+
+Liberator is loosely modeled after webmachine and shares the same aims as Bishop.
+
+## Warming up
+
+### Dependencies
+
+The examples in this document rely on you installing [leiningen 2](http://leiningen.org).
+
+We'll also use ```curl``` for testing. If you don't have curl installed (ie. you're using Windows), there's some Clojure tests you can use instead.
+
+### Running the examples
 
 A set of examples is included.
 
@@ -13,11 +26,46 @@ If you want to see the examples in a browser, run
     
 This will start a web server on port 8000 (but you can specify a alternative port with an argument, eg. ```lein examples 8001```). Alternatively you can run the web server with ```lein ring server```).
 
-## Ensuring the tests pass
+### Ensuring the tests pass
 
 Liberator uses [Midje](https://github.com/marick/Midje/) for testing. You can run all the tests like this :-
 
     lein midje
+
+## Getting started
+
+Let's build our first REST service!
+
+For the purposes of this example, I'll call this project ```servalan``` but (obviously) you can invent your own name.
+
+    projects> lein new servalan
+    projects> cd !$
+    servalan> ls
+
+Notice that a new ```project.clj``` has been created - edit this and add
+the following entries in the ```dependencies``` vector.
+
+    [compojure "1.0.2"]
+    [ring/ring-jetty-adapter "1.1.0"]
+    [liberator "0.3.2"]
+
+Edit the file ```src/servalan/core.clj```, adding the code in bold :-
+
+<pre>
+(ns servalan.core
+   <span style="font-weight: bold">(:use [liberator.core :only [defresource]])</span>)
+
+<span style="font-weight: bold">
+(defresource my-first-resource
+  
+  :available-media-types ["text/html" "text/plain"])
+</span>
+
+(defn -main
+  "I don't do a whole lot."
+  [& args]
+  (println "Hello, World!"))
+</pre>
 
 # Defining resources
 
