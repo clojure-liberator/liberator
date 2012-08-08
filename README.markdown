@@ -3,6 +3,22 @@ of compojure. It is loosely modeled after webmachine.
 It provides a bunch of decorates which can be combined to provide a
 sophisticated implementation of the HTTP RFC.
 
+# Getting started
+
+A set of examples is included.
+
+If you want to see the examples in a browser, run
+
+    lein examples
+    
+This will start a web server on port 8000 (but you can specify a alternative port with an argument, eg. ```lein examples 8001```). Alternatively you can run the web server with ```lein ring server```).
+
+## Ensuring the tests pass
+
+Liberator uses [Midje](https://github.com/marick/Midje/) for testing. You can run all the tests like this :-
+
+    lein midje
+
 # Defining resources
 
 Resources are created with ```resource``` taking keyword arguments.

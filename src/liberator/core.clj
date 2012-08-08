@@ -6,7 +6,7 @@
 ;; terms of this license. You must not remove this notice, or any other, from
 ;; this software.
 
-(ns liberator.resource
+(ns liberator.core
   (:require liberator.conneg)
   (:use
    [liberator.util :only [parse-http-date http-date]]
@@ -124,57 +124,66 @@
     (assoc res name (str value))
     res))
 
+(defn build-vary-header [{:keys [media-type charset language encoding] :as represenation}]
+  (->> [(when-not (empty? media-type) "Accept")
+        (when-not (empty? charset) "Accept-Charset")
+        (when-not (empty? language) "Accept-Language")
+        (when-not (empty? encoding) "Accept-Encoding")]
+       (remove nil?)
+       (interpose ", ")
+       (apply str)))
+
+(defn run-handler [name status message
+               {:keys [resource request representation] :as context}]
+  (let [context (assoc context :status status :message message)]
+    (if-let [handler (resource (keyword name))]
+      (merge-with
+       merge-map-element
+
+       ;; Status
+       {:status status}
+
+       ;; ETags
+       (when-let [etag (-gen-etag context)]
+         {:headers {"ETag" etag}})
+
+       ;; Last modified
+       (when-let [last-modified (-gen-last-modified context)]
+         {:headers {"Last-Modified" (http-date last-modified)}})
+       
+       ;; Content negotiations
+       {:headers
+        (-> {} 
+            (set-header-maybe "Content-Type"
+                              (str (:media-type representation)
+                                   (when-let [charset (:charset representation)] (str ";charset=" charset))))
+            (set-header-maybe "Content-Language" (:language representation))
+            (set-header-maybe "Content-Encoding" (:encoding representation))
+            (set-header-maybe "Vary" (build-vary-header representation)))}
+
+       ;; Finally the result of the handler.  We allow the handler to
+       ;; override the status and headers.
+       ;;
+       ;; The rules about who should take responsibility for encoding
+       ;; the response are defined in the BodyResponse protocol.
+       (let [handler-response (handler context)
+             response (as-response handler-response context)]
+         ;; We get an obscure 'cannot be cast to java.util.Map$Entry'
+         ;; error if our BodyResponse function doesn't return a map,
+         ;; so we check it now.
+         (when-not (or (map? response) (nil? response))
+           (throw (Exception. (format "%s as-response function did not return a map (or nil) for instance of %s"
+                                      'Representation (type handler-response)))))
+         response))
+      
+      ;; If there is no handler we just return the information we have so far.
+      {:status status 
+       :headers {"Content-Type" "text/plain"} 
+       :body message})))
+
 (defmacro ^:private defhandler [name status message]
-  `(defn ~name [{~'resource :resource
-                 ~'request :request
-                 ~'representation :representation
-                 :as ~'context}]
-     (let [~'context (assoc ~'context :status ~status :message ~message)]
-       (if-let [~'handler (~'resource ~(keyword name))]
-         (merge-with
-          merge-map-element
-
-          ;; Status
-          {:status ~status}
-
-          ;; ETags
-          (when-let [~'etag (-gen-etag ~'context)]
-            {:headers {"ETag" ~'etag}})
-
-          ;; Last modified
-          (when-let [~'last-modified (-gen-last-modified ~'context)]
-            {:headers {"Last-Modified" (http-date ~'last-modified)}})
-          
-          ;; Content negotiations
-          {:headers
-           (-> {} 
-               (set-header-maybe
-                "Content-Type"
-                (when-let [~'media-type (:media-type ~'representation)]
-                  (str ~'media-type (when-let [~'charset (:charset ~'representation)] (str ";charset=" ~'charset)))))
-               (set-header-maybe "Content-Language" (:language ~'representation))
-               (set-header-maybe "Content-Encoding" (:encoding ~'representation)))}
-          
-          ;; Finally the result of the handler.  We allow the handler to
-          ;; override the status and headers.
-          ;;
-          ;; The rules about who should take responsibility for encoding
-          ;; the response are defined in the BodyResponse protocol.
-          (let [~'handler-response (~'handler ~'context)
-                ~'response (as-response ~'handler-response ~'context)]
-            ;; We get an obscure 'cannot be cast to java.util.Map$Entry'
-            ;; error if our BodyResponse function doesn't return a map,
-            ;; so we check it now.
-            (when-not (or (map? ~'response) (nil? ~'response))
-              (throw (Exception. (format "%s as-response function did not return a map (or nil) for instance of %s" 'Representation (type ~'handler-response)))))
-            ~'response))
-         
-         ;; If there is no handler we just return the information we have so far.
-         {:status ~status 
-          :headers {"Content-Type" "text/plain"} 
-          :body ~message}))))
-
-
+  `(defn ~name [context#]
+     (run-handler '~name ~status ~message context#)))
 
 (defn header-exists? [header context]
   (contains? (:headers (:request context)) header))
@@ -417,9 +426,9 @@
   (decide :media-type-available?
           #(try-header "Accept"
              (when-let [type (liberator.conneg/best-allowed-content-type 
-                              (get-in % [:request :headers "accept"]) 
+                              (get-in % [:request :headers "accept"] "*/*") 
                               ((get-in context [:resource :available-media-types]) context))]
-               {:representation {:media-type (reduce str (interpose "/" type))}}))
+               {:representation {:media-type (liberator.conneg/stringify type)}}))
 	  accept-language-exists?
 	  handle-not-acceptable
 	  context))
@@ -503,7 +512,8 @@
       :delete!                   true
 
       ;; Directives
-      :available-media-types     ["*/*"]
+      :available-media-types     []
+
       ;; "If no Content-Language is specified, the default is that the
       ;; content is intended for all language audiences. This might mean
       ;; that the sender does not consider it to be specific to any
@@ -530,8 +540,14 @@
   (fn [request] (-resource request (apply hash-map kvs))))
 
 (defmacro defresource [name & kvs]
-  `(defn ~name [request#] 
-     (-resource request# ~(apply hash-map kvs))))
+  (if (vector? (first kvs))
+    (let [args (first kvs)
+          kvs (rest kvs)]
+      `(defn ~name [~@args]
+         (fn [request#]
+           (-resource request# ~(apply hash-map kvs)))))
+    `(defn ~name [request#] 
+       (-resource request# ~(apply hash-map kvs)))))
 
 (defn wrap-trace-as-response-header [handler]
   (fn [request]

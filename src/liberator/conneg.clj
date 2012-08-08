@@ -134,6 +134,9 @@
                          y))
                x)))
 
+(defn stringify [type]
+  (reduce str (interpose "/" type)))
+
 (defn- first-fn
   "Return (f x) for the first item in coll for which (f x) is true."
   [f coll]
@@ -196,6 +199,7 @@
        reverse
        (map first) ; extract winning option
        first))
+
 
 ;; TODO Add tracing
 

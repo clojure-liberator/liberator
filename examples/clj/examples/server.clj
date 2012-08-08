@@ -26,6 +26,7 @@
         ".clj" "application/clojure"})
       ) request)))
 
+(def handler (create-handler))
 
 (defn start [options]
   (jetty/run-jetty
@@ -33,4 +34,10 @@
      ((create-handler) request))
    (assoc options :join? false)))
 
-(start {:port 8000})
+(defn -main
+  ([port]
+     (start {:port (Integer/parseInt port)}))
+  ([]
+     (-main "8000")))
+
+
