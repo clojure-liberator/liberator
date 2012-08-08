@@ -3,7 +3,7 @@
    midje.sweet
    [ring.mock.request :only [request header]]
    [compojure.core :only [context ANY]]
-   [liberator.core :only [defresource resource]]))
+   [liberator.core :only [defresource resource run-handler]]))
 
 ;; TODO: Ensure that we use compojure.response/Renderable underneath in any body function
 
@@ -36,3 +36,31 @@
 
 ;; TODO: Add tests for ETag.
 
+(facts "Vary header is added automatically"
+  (tabular "Parameter negotiation is added to vary header"
+    (-> (run-handler "handle-ok" 200 "ok"
+                     {:resource {:handle-ok (fn [c] {:body "foo"})}
+                      :representation ?representation})
+        (get-in [:headers "Vary"])) => ?vary
+        ?representation ?vary
+        {}                    nil
+        {:media-type "x"}     "Accept"
+        {:media-type ""}      nil
+        {:language "x"}       "Accept-Language"
+        {:language nil}       nil
+        {:charset "x"}        "Accept-Charset"
+        {:encoding "x"}       "Accept-Encoding"
+        {:media-type "m"
+         :language "l"
+         :charset "c"
+         :encoding "x"}       "Accept, Accept-Charset, Accept-Language, Accept-Encoding"
+        {:media-type "m"
+         :charset "c"
+         :encoding "x"}       "Accept, Accept-Charset, Accept-Encoding")
+  
+  
+  (fact "Vary header can be overriden by handler"
+    (-> (run-handler "handle-ok" 200 "ok" {:resource {:handle-ok (fn [c] {:body "ok" :headers {"Vary" "*"}})}
+                                           :representation {:media-type "text/plain"}})
+        (get-in [:headers "Vary"]))
+    => "*"))
