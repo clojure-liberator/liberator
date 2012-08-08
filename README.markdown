@@ -1,4 +1,11 @@
-Compojure-rest is a thin layer for building RESTful applications on top
+Liberator was renamed from compojure-rest. The renaming and the next
+release are in work. The current master branch is not stable. Please
+expect a stable release in the next weeks.
+
+billy.
+
+# About Liberator 
+Liberator is a thin layer for building RESTful applications on top
 of compojure. It is loosely modeled after webmachine. 
 It provides a bunch of decorates which can be combined to provide a
 sophisticated implementation of the HTTP RFC.
