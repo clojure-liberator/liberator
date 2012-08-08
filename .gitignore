@@ -3,6 +3,7 @@
 classes
 lib/
 /compojure-rest*.jar
+/liberator*.jar
 /pom.xml
 .lein*
 /target

@@ -6,10 +6,11 @@
 ;; terms of this license. You must not remove this notice, or any other, from
 ;; this software.
 
-(ns compojure-rest.resource
-  (:require compojure-rest.conneg)
-  (:use [compojure-rest.util :only [parse-http-date http-date]]
-        [compojure-rest.representation :only [Representation as-response]])
+(ns liberator.resource
+  (:require liberator.conneg)
+  (:use
+   [liberator.util :only [parse-http-date http-date]]
+   [liberator.representation :only [Representation as-response]])
   (:import (javax.xml.ws ProtocolException)))
 
 (defprotocol DateCoercions
@@ -104,14 +105,19 @@
     {:status 500 :body (str "No handler found for key " name ". Key defined for resource " 
                             (keys resource))}))
 
-(defn -defdecision [name test then else]
-  (let [key (keyword name)]
-    `(defn ~name [~'context]
-       (decide ~key ~test ~then ~else ~'context))))
+(defn -defdecision
+  [name test then else]
+  `(defn ~name [~'context]
+     (decide ~(keyword name) ~test ~then ~else ~'context)))
 
 (defmacro defdecision 
-  ([name then else] (-defdecision name nil then else))
-  ([name test then else] (-defdecision name test then else)))
+  ([name then else]
+     (-defdecision name nil then else))
+  ([name test then else]
+     (-defdecision name test then else)))
+
+(defmacro defaction [name next]
+  `(defdecision ~name ~next ~next))
 
 (defn set-header-maybe [res name value]
   (if (and value (not (empty? value)))
@@ -160,13 +166,15 @@
             ;; error if our BodyResponse function doesn't return a map,
             ;; so we check it now.
             (when-not (or (map? ~'response) (nil? ~'response))
-              (throw (Exception. (format "BodyResponse as-response function did not return a map (or nil) for instance of %s" (type ~'handler-response)))))
+              (throw (Exception. (format "%s as-response function did not return a map (or nil) for instance of %s" 'Representation (type ~'handler-response)))))
             ~'response))
          
          ;; If there is no handler we just return the information we have so far.
          {:status ~status 
           :headers {"Content-Type" "text/plain"} 
           :body ~message}))))
+
+
 
 (defn header-exists? [header context]
   (contains? (:headers (:request context)) header))
@@ -211,15 +219,15 @@
 
 (defdecision post-redirect? handle-see-other new?)
 
-(defdecision create! post-redirect? post-redirect?)
-
 (defhandler handle-not-found 404 "Resource not found.")
 
 (defhandler handle-gone 410 "Resouce is gone.")
 
-(defdecision can-post-to-missing? create! handle-not-found)
+(defaction post! post-redirect?)
 
-(defdecision post-to-missing? (partial =method :post)
+(defdecision ^{:step :M7} can-post-to-missing? post! handle-not-found)
+
+(defdecision ^{:step :L7} post-to-missing? (partial =method :post)
   can-post-to-missing? handle-not-found)
 
 (defn handle-moved-permamently [context]
@@ -228,7 +236,7 @@
 (defn handle-moved-temporarily [context]
   (-handle-moved :moved-temporarily 307 context))
 
-(defdecision can-post-to-gone? create! handle-gone)
+(defdecision ^{:step :N5} can-post-to-gone? post! handle-gone)
 
 (defdecision post-to-gone? (partial =method :post) can-post-to-gone? handle-gone)
 
@@ -238,13 +246,11 @@
 
 (defdecision existed? moved-permanently? post-to-missing?)
 
-(defdecision can-put-to-missing? respond-with-entity? handle-not-found)
-
 (defhandler handle-conflict 409 "Conflict.")
 
-(defdecision update! respond-with-entity? respond-with-entity?)
+(defaction put! new?)
 
-(defdecision conflict? handle-conflict update!)
+(defdecision ^{:step [:O14 :P3]} conflict? handle-conflict put!)
 
 (defdecision put-to-different-url? handle-moved-permamently conflict?)
 
@@ -268,13 +274,13 @@
   conflict? multiple-representations?)
 
 (defdecision ^{:step :N16} post-to-existing? (partial =method :post) 
-  create! put-to-existing?)
+  post! put-to-existing?)
 
 (defhandler handle-accepted 202 "Accepted")
 
 (defdecision delete-enacted? respond-with-entity? handle-accepted)
 
-(defdecision delete! delete-enacted? delete-enacted?)
+(defaction delete! delete-enacted?)
 
 (defdecision ^{:step :M16} method-delete?
   (partial =method :delete)
@@ -375,7 +381,7 @@
   (decide :charset-available?
           #(try-header "Accept-Charset"
                        (let [provs ((get-in context [:resource :available-charsets]) context)]
-                         (if-let [cs (or (compojure-rest.conneg/best-allowed-charset
+                         (if-let [cs (or (liberator.conneg/best-allowed-charset
                                             (get-in % [:request :headers "accept-charset"])
                                             provs)
                                            (first provs))]
@@ -396,7 +402,7 @@
 (defn language-available? [context]
   (decide :language-available?
           #(try-header "Accept-Language"
-                       (when-let [lang (compojure-rest.conneg/best-allowed-language
+                       (when-let [lang (liberator.conneg/best-allowed-language
                                         (get-in % [:request :headers "accept-language"]) 
                                         ((get-in context [:resource :available-languages]) context))]
                          (if (= lang "*")
@@ -410,7 +416,7 @@
 (defn media-type-available? [context]
   (decide :media-type-available?
           #(try-header "Accept"
-             (when-let [type (compojure-rest.conneg/best-allowed-content-type 
+             (when-let [type (liberator.conneg/best-allowed-content-type 
                               (get-in % [:request :headers "accept"]) 
                               ((get-in context [:resource :available-media-types]) context))]
                {:representation {:media-type (reduce str (interpose "/" type))}}))
@@ -481,7 +487,6 @@
       :put-to-different-url?     false
       :multiple-representations? false
       :conflict?                 false
-      :can-put-to-missing?       false
       :can-post-to-missing?      true
       :language-available?       true
       :moved-permanently?        false
@@ -493,8 +498,8 @@
 
       ;; Imperatives. Doesn't matter about decision outcome, both
       ;; outcomes follow the same route.
-      :create!                   true
-      :update!                   true
+      :post!                     true
+      :put!                      true
       :delete!                   true
 
       ;; Directives
@@ -534,7 +539,7 @@
               *-logger* var-logger]
       (let [resp (handler request)]
         (when resp
-          (assoc-in resp [:headers "X-Compojure-Rest-Trace"] (make-trace-headers @*-log*)))))))
+          (assoc-in resp [:headers "X-Liberator-Trace"] (make-trace-headers @*-log*)))))))
 
 (defn get-trace []
   (make-trace-headers @*-log*))

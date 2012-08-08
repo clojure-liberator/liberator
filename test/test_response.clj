@@ -3,8 +3,7 @@
    [clojure.test :only [deftest is are testing run-tests]]
    [ring.mock.request :only [request header]]
    [compojure.core :only [context ANY]]
-   [compojure-rest.resource :only [defresource resource]]
-   [clojure.tools.trace :onldy [trace]]))
+   [liberator.core :only [defresource resource]]))
 
 ;; TODO: Ensure that we use compojure.response/Renderable underneath in any body function
 

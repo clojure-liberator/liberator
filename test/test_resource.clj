@@ -1,14 +1,6 @@
 (ns test-resource
-  (:use clojure.test
-        [clojure.tools.trace :only (trace)]
-        [ring.mock.request :only [request header]]
-        compojure-rest.resource))
-
-(deftest test-simplest-get-ok
-  (testing "simplest case"
-    (let [res (resource)
-          response (res (request :get "/"))]
-      (is (= "OK" (:body (trace "R1" response)))))))
+  (:use clojure.test)
+  (:use liberator.code))
 
 (deftest test-handle-post
   (let [res (resource 

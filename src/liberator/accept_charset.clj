@@ -6,7 +6,7 @@
 ;; terms of this license. You must not remove this notice, or any other, from
 ;; this software.
 
-(ns compojure-rest.accept-charset
+(ns liberator.accept-charset
   (:require [clojure.string :as string]))
 
 ;; "iso-8859-1;q=0.5" -> ["iso-8859-1" 0.5]

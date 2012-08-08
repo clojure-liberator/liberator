@@ -1,5 +1,6 @@
-(ns compojure-rest.demo
-  (:use compojure.core compojure-rest.resource)
+(ns liberator.demo
+  (:use compojure.core
+        liberator.core)
   (:require [clout.core :as clout]
             [compojure.route :as route]
             compojure.handler

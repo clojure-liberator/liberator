@@ -3,7 +3,7 @@
    examples
    midje.sweet
    [hiccup.page :only [html5]]
-   [compojure-rest.resource :only [resource wrap-trace-as-response-header request-method-in]]
+   [liberator.core :only [resource wrap-trace-as-response-header request-method-in]]
    [ring.mock.request :only [request header]]))
 
 (def friends (ref []))

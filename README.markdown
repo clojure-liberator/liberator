@@ -108,7 +108,7 @@ If you don't set one of the entries it will be set to the appropriate
 default value.
 
 You can also return anything that can be coerced into a Ring response
-(by implementing ```compojure-rest.representation.Representation```
+(by implementing ```liberator.representation.Representation```
 protocol). Out-of-the-box this includes String, File and InputStream
 instances, plus the usual Clojure data types.
 
@@ -138,10 +138,8 @@ Decision points can be :-
 * available-languages (declaration)
 * available-media-types (declaration)
 * can-post-to-missing? (decision)
-* can-put-to-missing? (decision)
 * charset-available? (decision)
 * conflict? (decision)
-* create! (action)
 * delete! (action)
 * encoding-available? (decision)
 * etag (declaration)
@@ -172,15 +170,16 @@ Decision points can be :-
 * method-allowed? (decision)
 * multiple-representations? (decision)
 * new? (decision)
+* post! (action)
 * post-redirect? (decision)
 * post-to-existing? (decision)
+* put! (action)
 * put-to-different-url? (decision)
 * respond-with-entity? (decision)
 * see-other (declaration)
 * service-available? (decision)
 * unauthorized (handler)
 * unknown-method (handler)
-* update! (action)
 * uri-too-long? (decision)
 * valid-content-header? (decision)
 * valid-entity-length? (decision)
