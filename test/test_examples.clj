@@ -25,7 +25,9 @@
 
 (facts "about a simple GET"
   (let [handler (ANY "/" [] examples/hello-world)
-        response (handler (request :get "/"))]
+        response (-> (request :get "/")
+                     (header "Accept" "text/plain")
+                     handler)]
     response => OK
     response => (body "Hello World!")
     response => (content-type "text/plain")
