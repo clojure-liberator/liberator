@@ -60,7 +60,11 @@
         (if (and (is-browser? request)
                  (not (#{"text/html"
                          "application/xhtml+xml"
-                         "application/xml"}
+                         "application/xml"
+                         "image/svg+xml"
+                         "image/jpeg"
+                         "image/gif"
+                         "image/png"}
                        (get-in response [:headers "Content-Type"]))))
           (assoc-in response [:headers "Content-Type"] "text/plain")
           response)))))
