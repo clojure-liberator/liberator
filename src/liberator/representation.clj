@@ -87,10 +87,8 @@ preference."
         (-> request
             (assoc-in [:headers "accept"] media-type)
             (assoc :uri (.substring uri 0 (- (count uri) (count suffix))))
-            handler
-            (assoc-in [:headers "Content-Type"] media-type))
+            handler)
         (handler request)))))
-
 
 (defmulti render-map-generic "dispatch on media type"
   (fn [data context] (get-in context [:representation :media-type])))
