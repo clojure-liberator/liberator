@@ -18,6 +18,9 @@
 ;; This namespace provides default 'out-of-the-box' web representations
 ;; for many IANA mime-types.
 
+(defmacro ->when [form pred & term]
+  `(if ~pred (-> ~form ~@term) ~form))
+
 (defprotocol Representation
   (as-response [_ context]
     "Coerce to a standard Ring response (a map
@@ -49,8 +52,23 @@
                                s)
                              "")])])]]])
 
-(defmacro ->when [form pred & term]
-  `(if ~pred (-> ~form ~@term) ~form))
+(defn wrap-browser-safe-content-type [handler]
+  (fn [request]
+    (letfn [(is-browser? [request]
+              (if-let [ua (get-in request [:headers "user-agent"])]
+                (re-matches #"Mozilla/.*" ua)))]
+      (let [response (handler request)]
+        (if (and (is-browser? request)
+                 (not (#{"text/html"
+                         "application/xhtml+xml"
+                         "application/xml"
+                         "image/svg+xml"
+                         "image/jpeg"
+                         "image/gif"
+                         "image/png"}
+                       (get-in response [:headers "Content-Type"]))))
+          (assoc-in response [:headers "Content-Type"] "text/plain")
+          response)))))
 
 (defn wrap-convert-suffix-to-accept-header
   "A URI identifies a resource, not a representation. But conventional
@@ -65,25 +83,13 @@ from the URI and an Accept header is added to indicate the media-type
 preference."
   [handler media-type-map]
   (fn [request]
-    (let [uri (:uri request)
-          is-browser? (fn [request]
-                        (if-let [ua (get-in request [:headers "user-agent"])]
-                          (re-matches #"Mozilla/.*" ua)))]
-      
-      (if-let [[suffix media-type] (some (fn [[k v]] (if (.endsWith uri k) [k v])) media-type-map)]
-        (do
-          (-> request
-              (assoc-in [:headers "accept"] media-type)
-              (assoc :uri (.substring uri 0 (- (count uri) (count suffix))))
-              handler
-              ;; Since we did not properly give an accept header, this is still considered to be a browser-based hack.
-              ;; We set the content-type of the response to 'text/plain' so that the browser will render it for us.
-              ;; Unless we're a browser and not returning something the browser can already render.
-              (->when (and (is-browser? request)
-                           (not (#{"text/html"
-                                   "application/xhtml+xml"
-                                   "application/xml"} media-type)))
-                      (assoc-in [:headers "Content-Type"] "text/plain"))))
+    (let [uri (:uri request)]
+      (if-let [[suffix media-type] (some (fn [[k v]] (when (.endsWith uri k) [k v])) media-type-map)]
+        (-> request
+            (assoc-in [:headers "accept"] media-type)
+            (assoc :uri (.substring uri 0 (- (count uri) (count suffix))))
+            handler
+            (assoc-in [:headers "Content-Type"] media-type))
         (handler request)))))
 
 
