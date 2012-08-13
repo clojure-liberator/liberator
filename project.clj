@@ -8,6 +8,12 @@
                  [org.clojure/data.csv "0.1.2"]
                  [org.clojure/clojurescript "0.0-1236"]
                  [hiccup "1.0.0"]] ;; Used by code rendering default representations. 
+
+  :license {:name "Eclipse Public License - v 1.0"
+            :url "http://www.eclipse.org/legal/epl-v10.html"
+            :distribution :repo
+            :comments "same as Clojure"}
+
   :plugins [[lein-midje "2.0.0-SNAPSHOT"]
             [lein-ring "0.7.1"]]
 
@@ -25,4 +31,3 @@
          :adapter {:port 8000}}
 
   :aliases {"examples" ["run" "-m" "examples.server"]})
-
