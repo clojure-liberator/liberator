@@ -23,13 +23,22 @@
 (def OK (is-status 200))
 (def CREATED (is-status 201))
 
-(facts "about a simple GET"
+(facts "about a simple GET with an Accept header"
   (let [handler (ANY "/" [] examples/hello-world)
-        response (handler (request :get "/"))]
+        response (-> (request :get "/")
+                     (header "Accept" "text/plain")
+                     handler)]
     response => OK
     response => (body "Hello World!")
-    response => (content-type "text/plain")
-    ))
+    response => (content-type "text/plain")))
+
+(facts "about a simple GET without an Accept header"
+  (let [handler (ANY "/" [] examples/hello-world)
+        response (-> (request :get "/")
+                     handler)]
+    response => OK
+    response => (body "Hello World!")
+    response => (content-type "text/plain")))
 
 (facts "about language negotiation"
   (let [handler (ANY "/" [] examples/hello-george)]

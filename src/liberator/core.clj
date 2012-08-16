@@ -159,7 +159,8 @@
                                    (when-let [charset (:charset representation)] (str ";charset=" charset))))
             (set-header-maybe "Content-Language" (:language representation))
             (set-header-maybe "Content-Encoding" (:encoding representation))
-            (set-header-maybe "Vary" (build-vary-header representation)))}
+            (set-header-maybe "Vary" (build-vary-header representation)))
+        }
 
        ;; Finally the result of the handler.  We allow the handler to
        ;; override the status and headers.
@@ -426,15 +427,27 @@
   (decide :media-type-available?
           #(try-header "Accept"
              (when-let [type (liberator.conneg/best-allowed-content-type 
-                              (get-in % [:request :headers "accept"] "*/*") 
+                              (get-in % [:request :headers "accept"]) 
                               ((get-in context [:resource :available-media-types]) context))]
                {:representation {:media-type (liberator.conneg/stringify type)}}))
 	  accept-language-exists?
 	  handle-not-acceptable
 	  context))
 
-(defdecision accept-exists? (partial header-exists? "accept") 
-  media-type-available? accept-language-exists?)
+(defn accept-exists? [context]
+  (decide :accept-exists?
+          #(if (header-exists? "accept" %)
+             true
+             ;; "If no Accept header field is present, then it is assumed that the
+             ;; client accepts all media types" [p100]
+             (if-let [type (liberator.conneg/best-allowed-content-type 
+                            "*/*"
+                            ((get-in context [:resource :available-media-types]) context))]
+               [false {:representation {:media-type (liberator.conneg/stringify type)}}]
+               false))
+          media-type-available?
+          accept-language-exists?
+          context))
 
 (defn generate-options-header [{:keys [resource request]}]
   {:headers ((:generate-options-header resource) request)})
