@@ -52,45 +52,6 @@
                                s)
                              "")])])]]])
 
-(defn wrap-browser-safe-content-type [handler]
-  (fn [request]
-    (letfn [(is-browser? [request]
-              (if-let [ua (get-in request [:headers "user-agent"])]
-                (re-matches #"Mozilla/.*" ua)))]
-      (let [response (handler request)]
-        (if (and (is-browser? request)
-                 (not (#{"text/html"
-                         "application/xhtml+xml"
-                         "application/xml"
-                         "image/svg+xml"
-                         "image/jpeg"
-                         "image/gif"
-                         "image/png"}
-                       (get-in response [:headers "Content-Type"]))))
-          (assoc-in response [:headers "Content-Type"] "text/plain")
-          response)))))
-
-(defn wrap-convert-suffix-to-accept-header
-  "A URI identifies a resource, not a representation. But conventional
-practise often uses the suffix of a URI o indicate the media-type of the
-resource - this is understandable given that browsers don't allow uses
-control over the Accept header. However, if we drop the suffix from the
-URI prior to processing it we can support a rich variety of
-representations as well as allowing the user a degree of control by via
-the URL. This function matches the suffix of a URI to a mapping between
-suffixes and media-types. If a match is found, the suffix is dropped
-from the URI and an Accept header is added to indicate the media-type
-preference."
-  [handler media-type-map]
-  (fn [request]
-    (let [uri (:uri request)]
-      (if-let [[suffix media-type] (some (fn [[k v]] (when (.endsWith uri k) [k v])) media-type-map)]
-        (-> request
-            (assoc-in [:headers "accept"] media-type)
-            (assoc :uri (.substring uri 0 (- (count uri) (count suffix))))
-            handler)
-        (handler request)))))
-
 (defmulti render-map-generic "dispatch on media type"
   (fn [data context] (get-in context [:representation :media-type])))
 
