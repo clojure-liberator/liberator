@@ -23,7 +23,8 @@
   (as-date [millis-since-epoch]
     (java.util.Date. millis-since-epoch)))
 
-(defmulti coll-validator "Return a function that evaluaties of the give argument 
+(defmulti coll-validator
+  "Return a function that evaluaties if the give argument 
              a) is contained in a collection 
              b) equals an argument
              c) when applied to a function evaluates as true" 
