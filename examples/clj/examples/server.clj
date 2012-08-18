@@ -4,7 +4,6 @@
   (:use
    [examples :only [assemble-routes]]
    [ring.middleware.multipart-params :only [wrap-multipart-params]]
-   [liberator.representation :only [wrap-convert-suffix-to-accept-header]]
    [ring.util.response :only [header]]
    [compojure.handler :only [api]]))
 
@@ -14,17 +13,8 @@
      (->
       (assemble-routes)
       api
-      wrap-multipart-params
-      (wrap-convert-suffix-to-accept-header
-       {".html" "text/html"
-        ".csv" "text/csv"
-        ".tsv" "text/tab-separated-values"
-        ".txt" "text/plain"
-        ".xhtml" "application/xhtml+xml"
-        ".xml" "application/xml"
-        ".json" "application/json"
-        ".clj" "application/clojure"})
-      ) request)))
+      wrap-multipart-params)
+     request)))
 
 (def handler (create-handler))
 
