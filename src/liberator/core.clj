@@ -93,7 +93,7 @@
 
 (defn decide [name test then else {:keys [resource request] :as context}]
   (if (or (fn? test) (contains? resource name)) 
-    (let [ftest (if (fn? test) test (resource name))	  
+    (let [ftest (or (resource name) test)
 	  ftest (make-function ftest)
 	  fthen (make-function then)
 	  felse (make-function else)
@@ -409,30 +409,28 @@
                             )))
           charset-available? accept-encoding-exists? context))
 
-(defn language-available? [context]
-  (decide :language-available?
-          #(try-header "Accept-Language"
-                       (when-let [lang (liberator.conneg/best-allowed-language
-                                        (get-in % [:request :headers "accept-language"]) 
-                                        ((get-in context [:resource :available-languages]) context))]
-                         (if (= lang "*")
-                           true
-                           {:representation {:language lang}})))
-          accept-charset-exists? handle-not-acceptable context))
+(defdecision language-available?
+  #(try-header "Accept-Language"
+               (when-let [lang (log "LANG" (liberator.conneg/best-allowed-language
+                                            (get-in % [:request :headers "accept-language"]) 
+                                            ((get-in context [:resource :available-languages]) context)))]
+                 (if (= lang "*")
+                   true
+                   {:representation {:language lang}})))
+  accept-charset-exists? handle-not-acceptable)
 
 (defdecision accept-language-exists? (partial header-exists? "accept-language")
   language-available? accept-charset-exists?)
 
-(defn media-type-available? [context]
-  (decide :media-type-available?
-          #(try-header "Accept"
-             (when-let [type (liberator.conneg/best-allowed-content-type 
-                              (get-in % [:request :headers "accept"] "*/*") 
-                              ((get-in context [:resource :available-media-types]) context))]
-               {:representation {:media-type (liberator.conneg/stringify type)}}))
-	  accept-language-exists?
-	  handle-not-acceptable
-	  context))
+(defn negotiate-media-type [context]
+  (try-header "Accept"
+              (when-let [type (liberator.conneg/best-allowed-content-type 
+                               (get-in context [:request :headers "accept"] "*/*") 
+                               ((get-in context [:resource :available-media-types] "text/html") context))]
+                {:representation {:media-type (liberator.conneg/stringify type)}})))
+
+(defdecision media-type-available? negotiate-media-type
+  accept-language-exists? handle-not-acceptable)
 
 (defdecision accept-exists? (partial header-exists? "accept") 
   media-type-available? accept-language-exists?)
@@ -476,13 +474,13 @@
      {
       ;; Decisions
       :service-available?        true
-      :known-method?            (request-method-in :get :head :options
+      :known-method?             (request-method-in :get :head :options
 						   :put :post :delete :trace)
       :uri-too-long?             false
       :method-allowed?           (request-method-in :get :head)
       :malformed?                false
-      :encoding-available?       true
-      :charset-available?        true
+;      :encoding-available?       true
+;      :charset-available?        true
       :authorized?               true
       :allowed?                  true
       :valid-content-header?     true
@@ -498,7 +496,6 @@
       :multiple-representations? false
       :conflict?                 false
       :can-post-to-missing?      true
-      :language-available?       true
       :moved-permanently?        false
       :moved-temporarily?        false
       :delete-enacted?           true
@@ -521,8 +518,8 @@
       ;; natural language, or that the sender does not know for which
       ;; language it is intended."
       :available-languages       ["*"]
-      :available-charsets        []
-      :available-encodings       []})
+      :available-charsets        ["UTF-8"]
+      :available-encodings       ["*"]})
 
 ;; resources are a map of implementation methods
 (defn -resource [request kvs]

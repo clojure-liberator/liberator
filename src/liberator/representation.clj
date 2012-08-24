@@ -33,7 +33,9 @@
     "Encode the type into the given encoding (eg. gzip, compress)"))
 
 (defn default-dictionary [k lang]
-  (name k))
+  (if (instance? clojure.lang.Named k)
+    (name k)
+    (str k)))
 
 (defn html-table [data fields lang dictionary]
   [:div [:table 
@@ -140,7 +142,7 @@ preference."
 
 (defmulti render-seq-generic (fn [data context] (get-in context [:representation :media-type])))
 
-(defn- render-seq-html-table
+(defn render-seq-html-table
   [data
    {{:keys [media-type language] :as representation} :representation
     :keys [dictionary fields] :or {dictionary default-dictionary
@@ -230,8 +232,8 @@ preference."
     {:body
      (-> this
          (in-charset (:charset representation))
-         (encode (:encoding representation))
-         )})
+         (encode (:encoding representation)))
+     :headers {"Content-Type" (get representation :media-type "text/plain")}})
 
   (render-item [this context]
     this)
@@ -281,3 +283,6 @@ preference."
   Representation
   (as-response [this context]
     {:body (render-item m context)}))
+
+
+
