@@ -108,8 +108,8 @@
 	  context (if (map? context-update)
                     (merge-with merge-map-element context context-update) context)]
       ((if result fthen felse) context))
-    {:status 500 :body (str "No handler found for key " name ". Key defined for resource " 
-                            (keys resource))}))
+    {:status 500 :body (str "No handler found for key \""  name "\"."
+                            " Keys defined for resource are " (keys resource))}))
 
 (defn -defdecision
   [name test then else]
@@ -134,7 +134,7 @@
   (->> [(when-not (empty? media-type) "Accept")
         (when-not (empty? charset) "Accept-Charset")
         (when-not (empty? language) "Accept-Language")
-        (when-not (empty? encoding) "Accept-Encoding")]
+        (when-not (or (empty? encoding) (= "identity" encoding)) "Accept-Encoding")]
        (remove nil?)
        (interpose ", ")
        (apply str)))
@@ -164,7 +164,9 @@
                               (str (:media-type representation)
                                    (when-let [charset (:charset representation)] (str ";charset=" charset))))
             (set-header-maybe "Content-Language" (:language representation))
-            (set-header-maybe "Content-Encoding" (:encoding representation))
+            (set-header-maybe "Content-Encoding"
+                              (let [e (:encoding representation)]
+                                (if-not (= "identity" e) e)))
             (set-header-maybe "Vary" (build-vary-header representation)))}
 
        ;; Finally the result of the handler.  We allow the handler to
@@ -381,7 +383,14 @@
 
 (defhandler handle-not-acceptable 406 "No acceptable resource available.")
 
-(defdecision encoding-available? exists? handle-not-acceptable)
+(defdecision encoding-available? 
+  (fn [ctx]
+    (when-let [encoding (liberator.conneg/best-allowed-encoding
+                         (get-in ctx [:request :headers "accept-encoding"])
+                         ((get-in context [:resource :available-encodings]) context))]
+      {:representation {:encoding encoding}}))
+
+ exists? handle-not-acceptable)
 
 (defmacro try-header [header & body]
   `(try ~@body
@@ -515,7 +524,7 @@
       ;; language it is intended."
       :available-languages       ["*"]
       :available-charsets        ["UTF-8"]
-      :available-encodings       ["*"]})
+      :available-encodings       ["identity"]})
 
 ;; resources are a map of implementation methods
 (defn -resource [request kvs]

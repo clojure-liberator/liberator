@@ -26,17 +26,32 @@
      ["text/html" "text/plain"] "text/html,text/foo" "text/html"
      ["text/html" "text/plain"] "text/html;q=0.1,text/plain" "text/plain"
      ["text/html" "text/plain"] "text/html;q=0.3,text/plain;q=0.2" "text/html"))
-  
+
   (facts "Language negotitation"
-    (tabular
-     (negotiate "Accept-Language" :available-languages :language ?available ?accepted) => ?negotiated
-     ?available ?accepted ?negotiated
-     []          "en" 406
-     ["en"]      "en" "en"
-     ["en" "de"] "de" "de"
-     ["en" "de"] "de,fr" "de"
-     ["en" "de"] "de;q=0.1,en" "en"
-     ["en" "de"] "de;q=0.3,en;q=0.2;fr=0.9;la" "de"))
+   (facts "Only primary tag"
+     (tabular
+      (negotiate "Accept-Language" :available-languages :language ?available ?accepted) => ?negotiated
+      ?available ?accepted ?negotiated
+      []          "en" 406
+      ["en"]      "en" "en"
+      ["en" "de"] "de" "de"
+      ["en" "de"] "de,fr" "de"
+      ["en" "de"] "de;q=0.1,en" "en"
+      ["en" "de"] "de;q=0.3,en;q=0.2;fr=0.9;la" "de"
+      ["en" "de"] "de;q=0.3,en;q=0.2;fr=0.9;la" "de"))
+
+   (future-facts "with subtag"
+     (tabular 
+      (negotiate "Accept-Language" :available-languages :language ?available ?accepted) => ?negotiated
+      ?available ?accepted ?negotiated
+      []          "en-GB" 406
+      ["en"]      "en-GB" "en"
+      ["en-GB" "de"] "de" "de"
+      ["en" "de-AT"] "de,fr" "de"
+      ["en-US" "de"] "de;q=0.1,en" "en"
+      ["en-US" "en-GB"] "en-US" "en-US"
+      ["en-US" "en-GB"] "en" "en")))
+  
 
   (facts "Charset negotitation"
     (tabular
@@ -49,12 +64,13 @@
      ["ascii" "utf-8"] "utf-8;q=0.1,ascii" "ascii"
      ["ascii" "utf-8"] "utf-8;q=0.3,ascii;q=0.2;iso8859-1=0.9;iso-8859-2" "utf-8"))
   
-  (future-facts "Encoding negotitation"
+  (facts "Encoding negotitation"
     (tabular
      (negotiate "Accept-Encoding" :available-encodings :encoding ?available ?accepted) => ?negotiated
      ?available ?accepted ?negotiated
-     []          "gzip" 406
+     []            "gzip" "identity"
      ["gzip"]      "gzip" "gzip"
+     ["compress"]  "gzip" "identity"
      ["gzip" "compress"] "compress" "compress"
      ["gzip" "compress"] "compress,fr" "compress"
      ["gzip" "compress"] "compress;q=0.1,gzip" "gzip"
