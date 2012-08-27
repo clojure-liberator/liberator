@@ -395,9 +395,10 @@
 (defdecision charset-available?
   #(try-header "Accept-Charset"
                (when-let [charset (liberator.conneg/best-allowed-charset
-                                  (get-in % [:request :headers "accept-charset"])
-                                  ((get-in context [:resource :available-charsets]) context))]
-                 (if (= charset "*" true)
+                                   (get-in % [:request :headers "accept-charset"])
+                                   ((get-in context [:resource :available-charsets]) context))]
+                 (if (= charset "*")
+                   true
                    {:representation {:charset charset}})))
   accept-encoding-exists? handle-not-acceptable)
 

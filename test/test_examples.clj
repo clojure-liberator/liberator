@@ -37,9 +37,8 @@
     
     (tabular
      (fact "about hello-george example"
-       (with-console-logger
-         (handler (-> (request :get "/")
-                      (->when ?lang (header "Accept-Language" ?lang))))) => ?expected)
+       (handler (-> (request :get "/")
+                    (->when ?lang (header "Accept-Language" ?lang)))) => ?expected)
      ?lang     ?expected
      nil       OK
      nil       (body "Hello!")
@@ -48,16 +47,17 @@
      "bg"      OK
      "bg"      (body "Zdravej, Georgi"))
 
-    (tabular
-     (future-fact "about hello-george example"
-                  (handler (-> (request :get "/")
-                               (->when ?lang (header "Accept-Language" ?lang)))) => ?expected)
-     ?lang     ?expected
-     "en-gb"   OK
-     "en-gb"   (body "Hello George!")
-     "en"      OK
-     "en"      (body "Hello George!")
-     "*"       (body "(check rfc-2616)"))))
+    (future-facts
+     (tabular
+      (fact "about hello-george example"
+        (handler (-> (request :get "/")
+                     (->when ?lang (header "Accept-Language" ?lang)))) => ?expected)
+      ?lang     ?expected
+      "en-gb"   OK
+      "en-gb"   (body "Hello George!")
+      "en"      OK
+      "en"      (body "Hello George!")
+      "*"       (body "(check rfc-2616)")))))
 
 (facts "about POST"
   (let [handler (ANY "/" [] examples/postbox)
