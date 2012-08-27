@@ -10,7 +10,8 @@
   (:require liberator.conneg)
   (:use
    [liberator.util :only [parse-http-date http-date]]
-   [liberator.representation :only [Representation as-response]])
+   [liberator.representation :only [Representation as-response]]
+   [clojure.tools.trace :only [trace]])
   (:import (javax.xml.ws ProtocolException)))
 
 (defprotocol DateCoercions
@@ -58,6 +59,10 @@
 
 (defn make-trace-headers [log]
   log)
+
+(defmacro with-console-logger [& body]
+  `(binding [*-logger* console-logger]
+     ~@body))
 
 (declare if-none-match-exists?)
 
@@ -387,27 +392,18 @@
 (defdecision accept-encoding-exists? (partial header-exists? "accept-encoding")
   encoding-available? exists?)
 
-(defn charset-available? [context]
-  (decide :charset-available?
-          #(try-header "Accept-Charset"
-                       (let [provs ((get-in context [:resource :available-charsets]) context)]
-                         (if-let [cs (or (liberator.conneg/best-allowed-charset
-                                            (get-in % [:request :headers "accept-charset"])
-                                            provs)
-                                           (first provs))]
-                           {:representation {:charset cs}}
-                           true)))
-          accept-encoding-exists? handle-not-acceptable context))
+(defdecision charset-available?
+  #(try-header "Accept-Charset"
+               (when-let [charset (liberator.conneg/best-allowed-charset
+                                  (get-in % [:request :headers "accept-charset"])
+                                  ((get-in context [:resource :available-charsets]) context))]
+                 (if (= charset "*" true)
+                   {:representation {:charset charset}})))
+  accept-encoding-exists? handle-not-acceptable)
 
-(defn accept-charset-exists? [context]
-  (decide :accept-charset-exists?
-          (fn [context] (if (header-exists? "accept-charset" context)
-                          true
-                          (if-let [charset-provided (first ((get-in context [:resource :available-charsets]) context))]
-                            [false {:representation {:charset charset-provided}}]
-                            false
-                            )))
-          charset-available? accept-encoding-exists? context))
+(defdecision accept-charset-exists? (partial header-exists? "accept-charset")
+  charset-available? accept-encoding-exists?)
+
 
 (defdecision language-available?
   #(try-header "Accept-Language"
@@ -490,7 +486,6 @@
       :existed?                  false
       :respond-with-entity?      false
       :new?                      true
-      :post-to-existing?         false
       :post-redirect?            false
       :put-to-different-url?     false
       :multiple-representations? false

@@ -4,7 +4,7 @@
    [liberator.representation :only [->when]]
    [ring.mock.request :only [request header]]
    [compojure.core :only [ANY]]
-   [liberator.core  :only [resource]]
+   [liberator.core  :only [resource with-console-logger]]
    [midje.sweet :only [fact facts truthy against-background contains future-fact future-facts defchecker tabular before]]))
 
 (defchecker is-status [code]
@@ -23,6 +23,7 @@
 (def OK (is-status 200))
 (def CREATED (is-status 201))
 
+
 (facts "about a simple GET"
   (let [handler (ANY "/" [] examples/hello-world)
         response (handler (request :get "/"))]
@@ -36,8 +37,9 @@
     
     (tabular
      (fact "about hello-george example"
-       (handler (-> (request :get "/")
-                    (->when ?lang (header "Accept-Language" ?lang)))) => ?expected)
+       (with-console-logger
+         (handler (-> (request :get "/")
+                      (->when ?lang (header "Accept-Language" ?lang))))) => ?expected)
      ?lang     ?expected
      nil       OK
      nil       (body "Hello!")
@@ -51,11 +53,11 @@
                   (handler (-> (request :get "/")
                                (->when ?lang (header "Accept-Language" ?lang)))) => ?expected)
      ?lang     ?expected
-     "en/gb"   OK
-     "en/gb"   (body "Hello George!")
-     "en/*"    OK
-     "en/*"    (body "Hello George!")
-     "*/*"     (body "(check rfc-2616)"))))
+     "en-gb"   OK
+     "en-gb"   (body "Hello George!")
+     "en"      OK
+     "en"      (body "Hello George!")
+     "*"       (body "(check rfc-2616)"))))
 
 (facts "about POST"
   (let [handler (ANY "/" [] examples/postbox)
@@ -81,7 +83,5 @@
    
    ?accept              ?available         ?status    ?content-type
    "text/html"          ["text/html"]      200        "text/html"
-   "text/plain"         ["text/html"]      406         "text/plain"
-   )
-  )
+   "text/plain"         ["text/html"]      406         "text/plain"))
 

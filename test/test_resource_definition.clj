@@ -14,17 +14,23 @@
       => (contains {:body "text/html"})))
 
 (fact "custom media-type negotiation with :media-type-available?"
-  (binding [liberator.core/*-logger* clojure.tools.trace/trace]
-    (let [r (resource :media-type-available?
-                      (fn [ctx]
-                        {:representation {:media-type "text/html"}})
-                      :handle-ok (dump-representation :media-type))]
-      (r {:request-method :get :headers {"accept" "text/html"}})
-      => (contains {:body "text/html"}))))
+  (let [r (resource :media-type-available?
+                    (fn [ctx]
+                      {:representation {:media-type "text/html"}})
+                    :handle-ok (dump-representation :media-type))]
+    (r {:request-method :get :headers {"accept" "text/html"}})
+    => (contains {:body "text/html"})))
+
+(fact "custom media-type negotiation with :media-type-available?"
+  (let [r (resource :media-type-available?
+                    (fn [ctx]
+                      {:representation {:media-type "text/html"}})
+                    :handle-ok (dump-representation :media-type))]
+    (r {:request-method :get :headers {"accept" "text/html"}})
+    => (contains {:body "text/html"})))
 
 (fact "default language negotiation uses :available-languages"
-  (binding [liberator.core/*-logger* clojure.tools.trace/trace]
-    (let [r (resource :available-languages ["en" "de" "fr"]
-                      :handle-ok (dump-representation :language))]
-      (r {:request-method :get :headers {"accept-language" "fr"}})
-      => (contains {:body "fr"}))))
+  (let [r (resource :available-languages ["en" "de" "fr"]
+                    :handle-ok (dump-representation :language))]
+    (r {:request-method :get :headers {"accept-language" "fr"}})
+    => (contains {:body "fr"})))
