@@ -195,7 +195,7 @@
        (sort-by second)
        ;; If a parameter has a quality value of 0, then content with
        ;; this parameter is `not acceptable' for the client
-       (remove #(= 0 (second %))) 
+       (remove #(zero? (second %)))
        reverse
        (map first) ; extract winning option
        first))
@@ -221,7 +221,7 @@
                      (map split-qval)
                      (into {}))]
     (or
-     (select-best available
+     (select-best (concat available ["identity"])
                   (fn [encoding]
                     (or (get accepts encoding)
                         (get accepts "*"))))
@@ -233,8 +233,8 @@
      ;; explicitly include the "identity" content-coding. If the
      ;; Accept-Encoding field-value is empty, then only the "identity"
      ;; encoding is acceptable.
-     (if-not (or (= 0 (get accepts "identity"))
-                 (and (= 0 (get accepts "*"))
+     (if-not (or (zero? (get accepts "identity" 1))
+                 (and (zero? (get accepts "*" 1))
                       (not (contains? accepts "identity"))))
        "identity"))))
 

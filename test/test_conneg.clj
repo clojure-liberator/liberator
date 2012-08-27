@@ -44,12 +44,17 @@
  ;; TODO Test for case-insensitivity p20, it's possible that liberator or ring will be downcasing anyway, check this
  )
 
-(facts
- (best-allowed-encoding "compress;q=0.4, gzip;q=0.2" #{"compress" "gzip"}) => "compress"
- (best-allowed-encoding "compress;q=0.4, gzip;q=0.8" #{"compress" "gzip"}) => "gzip"
- ;; TODO Not sure about this one
-;; (best-allowed-encoding "gzip;q=1.0, identity; q=0.5, *;q=0" #{"foo"}) => "foo"
- )
+(facts "encoding negotiation"
+  (tabular (fact (best-allowed-encoding accept available) => negotiated)
+           accept available negotiated
+           "compress;q=0.4, gzip;q=0.2"           ["compress" "gzip"] "compress"
+           "compress;q=0.4, gzip;q=0.8"           ["compress" "gzip"] "gzip"
+           "identity, compress;q=0.4, gzip;q=0.8" ["compress" "gzip"] "identity"
+           "compress"                             ["gzip"]            "identity"
+           "identity"                             ["gzip"]            "identity"
+           "identity;q=0, bzip;q=0.1"             ["gzip"]            nil
+           "*;q=0, bzip;q=0.1"                    ["gzip"]            nil
+           "*;q=0, identity;q=0.1"                ["gzip"]            "identity"))
 
 ;; Language negotiation (14.4)
 (facts
