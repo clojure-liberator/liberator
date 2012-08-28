@@ -21,6 +21,7 @@
   (fn [actual]
     (fact actual => (is-status 303)) 
     (fact actual => (header-value "Location" location))))
+(def NOT-FOUND (is-status 404))
 
 
 (defchecker all [& checkers]

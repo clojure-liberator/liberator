@@ -75,12 +75,12 @@
 (defn request-method-in [& methods]
   #(some #{(:request-method (:request %))} methods))
 
-(defn -gen-etag [context]
+(defn gen-etag [context]
   (or (context ::etag)
       (if-let [f ((:resource context) :etag)]
 	(format "\"%s\"" (f context)))))
 
-(defn -gen-last-modified [context]
+(defn gen-last-modified [context]
   (or (::last-modified context)
       (if-let [f (get-in context [:resource :last-modified])]
 	(as-date (f context)))))
@@ -111,16 +111,16 @@
     {:status 500 :body (str "No handler found for key \""  name "\"."
                             " Keys defined for resource are " (keys resource))}))
 
-(defn -defdecision
+(defn defdecision*
   [name test then else]
   `(defn ~name [~'context]
      (decide ~(keyword name) ~test ~then ~else ~'context)))
 
 (defmacro defdecision 
   ([name then else]
-     (-defdecision name nil then else))
+     (defdecision* name nil then else))
   ([name test then else]
-     (-defdecision name test then else)))
+     (defdecision* name test then else)))
 
 (defmacro defaction [name next]
   `(defdecision ~name ~next ~next))
@@ -143,51 +143,54 @@
                    {:keys [resource request representation] :as context}]
   (let [context (assoc context :status status :message message)]
     (if-let [handler (resource (keyword name))]
-      (merge-with
-       merge-map-element
+      (do
+        (log "Handler" (keyword name))
+        (merge-with
+           merge-map-element
 
-       ;; Status
-       {:status status}
+           ;; Status
+           {:status status}
 
-       ;; ETags
-       (when-let [etag (-gen-etag context)]
-         {:headers {"ETag" etag}})
+           ;; ETags
+           (when-let [etag (gen-etag context)]
+             {:headers {"ETag" etag}})
 
-       ;; Last modified
-       (when-let [last-modified (-gen-last-modified context)]
-         {:headers {"Last-Modified" (http-date last-modified)}})
+           ;; Last modified
+           (when-let [last-modified (gen-last-modified context)]
+             {:headers {"Last-Modified" (http-date last-modified)}})
        
-       ;; Content negotiations
-       {:headers
-        (-> {} 
-            (set-header-maybe "Content-Type"
-                              (str (:media-type representation)
-                                   (when-let [charset (:charset representation)] (str ";charset=" charset))))
-            (set-header-maybe "Content-Language" (:language representation))
-            (set-header-maybe "Content-Encoding"
-                              (let [e (:encoding representation)]
-                                (if-not (= "identity" e) e)))
-            (set-header-maybe "Vary" (build-vary-header representation)))}
+           ;; Content negotiations
+           {:headers
+            (-> {} 
+                (set-header-maybe "Content-Type"
+                                  (str (:media-type representation)
+                                       (when-let [charset (:charset representation)] (str ";charset=" charset))))
+                (set-header-maybe "Content-Language" (:language representation))
+                (set-header-maybe "Content-Encoding"
+                                  (let [e (:encoding representation)]
+                                    (if-not (= "identity" e) e)))
+                (set-header-maybe "Vary" (build-vary-header representation)))}
 
-       ;; Finally the result of the handler.  We allow the handler to
-       ;; override the status and headers.
-       ;;
-       ;; The rules about who should take responsibility for encoding
-       ;; the response are defined in the BodyResponse protocol.
-       (let [handler-response (handler context)
-             response (as-response handler-response context)]
-         ;; We get an obscure 'cannot be cast to java.util.Map$Entry'
-         ;; error if our BodyResponse function doesn't return a map,
-         ;; so we check it now.
-         (when-not (or (map? response) (nil? response))
-           (throw (Exception. (format "%s as-response function did not return a map (or nil) for instance of %s"
-                                      'Representation (type handler-response)))))
-         response))
+           ;; Finally the result of the handler.  We allow the handler to
+           ;; override the status and headers.
+           ;;
+           ;; The rules about who should take responsibility for encoding
+           ;; the response are defined in the BodyResponse protocol.
+           (let [handler-response (handler context)
+                 response (as-response handler-response context)]
+             ;; We get an obscure 'cannot be cast to java.util.Map$Entry'
+             ;; error if our BodyResponse function doesn't return a map,
+             ;; so we check it now.
+             (when-not (or (map? response) (nil? response))
+               (throw (Exception. (format "%s as-response function did not return a map (or nil) for instance of %s"
+                                          'Representation (type handler-response)))))
+             response)))
       
       ;; If there is no handler we just return the information we have so far.
-      {:status status 
-       :headers {"Content-Type" "text/plain"} 
-       :body message})))
+      (do (log "Handler (default)" (keyword name))
+          {:status status 
+           :headers {"Content-Type" "text/plain"} 
+           :body message}))))
 
 (defmacro ^:private defhandler [name status message]
   `(defn ~name [context#]
@@ -196,7 +199,7 @@
 (defn header-exists? [header context]
   (contains? (:headers (:request context)) header))
 
-(defn -if-match-star [context]
+(defn if-match-star [context]
   (= "*" ((:headers (:request context)) "if-match")))
 
 (defn =method [method context]
@@ -218,7 +221,7 @@
 
 ;; Provide :see-other which returns a location or override :handle-see-other
 (defn handle-see-other [{:keys [resource request] :as context}]
-  (-handle-moved :see-other 303 context))
+  (handle-moved :see-other 303 context))
 
 (defhandler handle-ok 200 "OK")
 
@@ -248,10 +251,10 @@
   can-post-to-missing? handle-not-found)
 
 (defn handle-moved-permamently [context]
-  (-handle-moved :moved-permanently 301 context))
+  (handle-moved :moved-permanently 301 context))
 
 (defn handle-moved-temporarily [context]
-  (-handle-moved :moved-temporarily 307 context))
+  (handle-moved :moved-temporarily 307 context))
 
 (defdecision ^{:step :N5} can-post-to-gone? post! handle-gone)
 
@@ -276,7 +279,7 @@
 (defhandler handle-precondition-failed 412 "Precondition failed.")
 
 (defdecision if-match-star-exists-for-missing? 
-  -if-match-star
+  if-match-star
   handle-precondition-failed
   method-put?)
 
@@ -305,7 +308,7 @@
   post-to-existing?)
 
 (defn modified-since? [context]
-  (let [last-modified (-gen-last-modified context)]
+  (let [last-modified (gen-last-modified context)]
     (decide :modified-since?
             (fn [context] (and last-modified
                                (.after last-modified
@@ -328,7 +331,7 @@
   method-delete?)
 
 (defn ^{:step :K13} etag-matches-for-if-none? [context]
-  (let [etag (-gen-etag context)]
+  (let [etag (gen-etag context)]
     (decide :etag-matches-for-if-none?
 	    #(= (get-in % [:request :headers "if-none-match"]) etag)
 	    if-none-match
@@ -344,7 +347,7 @@
   if-none-match-star? if-modified-since-exists?)
 
 (defn ^{:step :H12} unmodified-since? [context]
-  (let [last-modified (-gen-last-modified context)]
+  (let [last-modified (gen-last-modified context)]
     (decide :unmodified-since?
             (fn [context] (and last-modified
                                (.after last-modified
@@ -365,7 +368,7 @@
   if-unmodified-since-valid-date? if-none-match-exists?)
 
 (defn ^{:step :G11} etag-matches-for-if-match? [context]
-  (let [etag (-gen-etag context)]
+  (let [etag (gen-etag context)]
     (decide
      :etag-matches-for-if-match?
      #(= ((% :headers) "if-match") etag)
@@ -374,7 +377,7 @@
      (assoc context ::etag etag))))
 
 (defdecision ^{:step :G9} if-match-star? 
-  -if-match-star if-unmodified-since-exists? etag-matches-for-if-match?)
+  if-match-star if-unmodified-since-exists? etag-matches-for-if-match?)
 
 (defdecision ^{:step :G8} if-match-exists? (partial header-exists? "if-match")
   if-match-star? if-unmodified-since-exists?)
@@ -527,7 +530,7 @@
       :available-encodings       ["identity"]})
 
 ;; resources are a map of implementation methods
-(defn -resource [request kvs]
+(defn run-resource [request kvs]
   (try
     (service-available? {:request request
                          :resource
@@ -541,7 +544,7 @@
        ::throwable e}))) ; ::throwable gets picked up by an error renderer
 
 (defn resource [& kvs]
-  (fn [request] (-resource request (apply hash-map kvs))))
+  (fn [request] (run-resource request (apply hash-map kvs))))
 
 (defmacro defresource [name & kvs]
   (if (vector? (first kvs))
@@ -549,9 +552,9 @@
           kvs (rest kvs)]
       `(defn ~name [~@args]
          (fn [request#]
-           (-resource request# ~(apply hash-map kvs)))))
+           (run-resource request# ~(apply hash-map kvs)))))
     `(defn ~name [request#] 
-       (-resource request# ~(apply hash-map kvs)))))
+       (run-resource request# ~(apply hash-map kvs)))))
 
 (defn wrap-trace-as-response-header [handler]
   (fn [request]
