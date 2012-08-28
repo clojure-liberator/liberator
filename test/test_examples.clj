@@ -5,24 +5,8 @@
    [ring.mock.request :only [request header]]
    [compojure.core :only [ANY]]
    [liberator.core  :only [resource with-console-logger]]
-   [midje.sweet :only [fact facts truthy against-background contains future-fact future-facts defchecker tabular before]]))
-
-(defchecker is-status [code]
-  (contains {:status code}))
-
-(defchecker body [expected]
-  (contains {:body expected}))
-
-(defchecker header-value [header expected]
-  (fn [actual]
-    (= (get-in actual [:headers header]) expected)))
-
-(defchecker content-type [expected]
-  (header-value "Content-Type" expected))
-
-(def OK (is-status 200))
-(def CREATED (is-status 201))
-
+   [midje.sweet :only [fact facts truthy against-background contains future-fact future-facts defchecker tabular before]]
+   [checkers]))
 
 (facts "about a simple GET"
   (let [handler (ANY "/" [] examples/hello-world)

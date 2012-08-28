@@ -140,7 +140,7 @@
        (apply str)))
 
 (defn run-handler [name status message
-               {:keys [resource request representation] :as context}]
+                   {:keys [resource request representation] :as context}]
   (let [context (assoc context :status status :message message)]
     (if-let [handler (resource (keyword name))]
       (merge-with
@@ -210,13 +210,13 @@
 
 (defmethod to-location nil [this] this)
 
-(defn -handle-moved [k status {:keys [resource] :as context}]
+(defn- handle-moved [k status {:keys [resource] :as context}]
   (if-let [f (k resource)]
     (merge {:status status} (to-location (f context)))
     {:status 500
      :body (format "Internal Server error: no location specified for status %d." status)}))
 
-;; Provide :set-other which returns a location or override :handle-see-other
+;; Provide :see-other which returns a location or override :handle-see-other
 (defn handle-see-other [{:keys [resource request] :as context}]
   (-handle-moved :see-other 303 context))
 
@@ -417,9 +417,9 @@
 
 (defdecision language-available?
   #(try-header "Accept-Language"
-               (when-let [lang (log "LANG" (liberator.conneg/best-allowed-language
-                                            (get-in % [:request :headers "accept-language"]) 
-                                            ((get-in context [:resource :available-languages]) context)))]
+               (when-let [lang (liberator.conneg/best-allowed-language
+                                (get-in % [:request :headers "accept-language"]) 
+                                ((get-in context [:resource :available-languages]) context))]
                  (if (= lang "*")
                    true
                    {:representation {:language lang}})))
@@ -530,7 +530,8 @@
 (defn -resource [request kvs]
   (try
     (service-available? {:request request
-                         :resource (map-values make-function (merge default-functions kvs))
+                         :resource
+                         (map-values make-function (merge default-functions kvs))
                          :representation {}})
     
     (catch ProtocolException e         ; this indicates a client error
