@@ -4,13 +4,51 @@
         checkers
         [ring.mock.request :only [request header]]))
 
-(let [r (resource :method-allowed? (request-method-in :post)
-                    :exists? true
-                    :handle-created "Created")
-        resp (r(request :post "/"))]
-    (fact "Post to existing" resp => CREATED)
-    (fact resp => (body "Created")))
 
+
+(facts "get existing resource"
+  (let [resp ((resource :exists? true :handle-ok "OK") (request :get "/"))]
+    (fact resp => OK)
+    (fact resp => (body "OK"))))
+
+(facts "get unexisting resource"
+  (let [resp ((resource :exists? false :handle-not-found "NOT-FOUND") (request :get "/"))]
+    (fact resp => NOT-FOUND)
+    (fact resp => (body "NOT-FOUND"))))
+
+(facts "get on moved temporarily"
+  (let [resp ((resource :exists? false :existed? true
+                        :moved-temporarily? (fn [ctx] (assoc ctx :location "http://new.example.com/")))
+              (request :get "/"))]
+    (fact resp => (MOVED-TEMPORARILY "http://new.example.com/"))))
+
+(facts "get on moved permantently"
+  (let [resp ((resource :exists? false :existed? true
+                        :moved-permanently? (fn [ctx] (assoc ctx :location "http://other.example.com/")))
+              (request :get "/"))]
+    (fact resp => (MOVED-PERMANENTLY "http://other.example.com/"))))
+
+(facts "get on moved permantently with custom response"
+  (let [resp ((resource :exists? false :existed? true
+                        :moved-permanently? true
+                        :handle-moved-permanently {:body "Not here, there!"
+                                                   :headers {"Location" "http://other.example.com/"}})
+              (request :get "/"))]
+    (fact resp => (MOVED-PERMANENTLY "http://other.example.com/"))
+    (fact resp => (body "Not here, there!"))))
+
+(facts "get on moved permantently with automatic response"
+  (let [resp ((resource :exists? false :existed? true
+                        :moved-permanently? (fn [ctx] (assoc ctx :location "http://other.example.com/")))
+              (request :get "/"))]
+    (fact resp => (MOVED-PERMANENTLY "http://other.example.com/"))))
+
+(let [r (resource :method-allowed? (request-method-in :post)
+                  :exists? true
+                  :handle-created "Created")
+      resp (r (request :post "/"))]
+  (fact "Post to existing" resp => CREATED)
+  (fact "Body of 201" resp => (body "Created")))
 
 (let [r (resource :method-allowed? (request-method-in :post)
                   :exists? true
@@ -35,9 +73,11 @@
 
 (let [r (resource :method-allowed? (request-method-in :post)
                   :exists? false
-                  :can-post-to-missing? false)
+                  :can-post-to-missing? false
+                  :handle-not-found "not-found")
       resp (r (request :post "/")) ]
-  (fact "Post to missing can give 404" resp => NOT-FOUND))
+  (fact "Post to missing can give 404" resp => NOT-FOUND)
+  (fact "Body of 404" resp => (body "not-found")))
 
 (let [r (resource :method-allowed? (request-method-in :post)
                   :exists? true

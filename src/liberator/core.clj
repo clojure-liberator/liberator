@@ -213,14 +213,14 @@
 
 (defmethod to-location nil [this] this)
 
-(defn- handle-moved [k status {:keys [resource] :as context}]
-  (if-let [f (k resource)]
+(defn- handle-moved [name status {:keys [resource] :as context}]
+  (if-let [f (or (get resource name) (make-function (get context :location)))]
     (merge {:status status} (to-location (f context)))
     {:status 500
-     :body (format "Internal Server error: no location specified for status %d." status)}))
+     :body (format "Internal Server error: no location specified for status %d. Provide %s" status name)}))
 
 ;; Provide :see-other which returns a location or override :handle-see-other
-(defn handle-see-other [{:keys [resource request] :as context}]
+(defn handle-see-other [context]
   (handle-moved :see-other 303 context))
 
 (defhandler handle-ok 200 "OK")
@@ -251,10 +251,10 @@
   can-post-to-missing? handle-not-found)
 
 (defn handle-moved-permamently [context]
-  (handle-moved :moved-permanently 301 context))
+  (handle-moved :handle-moved-permanently 301 context))
 
 (defn handle-moved-temporarily [context]
-  (handle-moved :moved-temporarily 307 context))
+  (handle-moved :handle-moved-temporarily 307 context))
 
 (defdecision ^{:step :N5} can-post-to-gone? post! handle-gone)
 
