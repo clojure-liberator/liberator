@@ -200,7 +200,7 @@
   (contains? (:headers (:request context)) header))
 
 (defn if-match-star [context]
-  (= "*" ((:headers (:request context)) "if-match")))
+  (= "*" (get-in context [:request :headers "if-match"])))
 
 (defn =method [method context]
   (= (get-in context [:request :request-method]) method))
@@ -371,7 +371,7 @@
   (let [etag (gen-etag context)]
     (decide
      :etag-matches-for-if-match?
-     #(= ((% :headers) "if-match") etag)
+     #(= etag (get-in % [:request :headers "if-match"]))
      if-unmodified-since-exists?
      handle-precondition-failed
      (assoc context ::etag etag))))
@@ -390,7 +390,7 @@
   (fn [ctx]
     (when-let [encoding (liberator.conneg/best-allowed-encoding
                          (get-in ctx [:request :headers "accept-encoding"])
-                         ((get-in context [:resource :available-encodings]) context))]
+                         ((get-in ctx [:resource :available-encodings]) ctx))]
       {:representation {:encoding encoding}}))
 
  exists? handle-not-acceptable)
