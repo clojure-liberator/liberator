@@ -20,6 +20,7 @@
 
 (def OK (is-status 200))
 (def CREATED (is-status 201))
+(def ACCEPTED (is-status 202))
 
 (defn status-location [status location]
   (all (is-status status) 
@@ -30,3 +31,4 @@
 (defn MOVED-PERMANENTLY [location] (status-location 301 location))
 
 (def NOT-FOUND (is-status 404))
+(def GONE (is-status 410))
