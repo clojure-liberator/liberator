@@ -6,8 +6,7 @@
                  [org.clojure/tools.logging "0.2.3"]
                  [org.clojure/data.json "0.1.2"]
                  [org.clojure/data.csv "0.1.2"]
-                 [org.clojure/clojurescript "0.0-1236"]
-                 [hiccup "1.0.0"]] ;; Used by code rendering default representations. 
+                 [hiccup "1.0.0"]] ;; Used by code rendering default representations.
   :plugins [[lein-midje "2.0.0-SNAPSHOT"]
             [lein-ring "0.7.1"]]
 
@@ -16,9 +15,10 @@
                                   [ring/ring-devel "1.1.0"]
                                   [compojure "1.0.2"] ;; only for examples
                                   [midje "1.4.0"]
-                                  ]}}
+                                  [org.clojure/clojurescript "0.0-1450"]]
+                    :source-paths [ "src" "examples/clj"]}}
 
-  :source-paths ["src" "examples/clj"]
+  :source-paths ["src"]
   :test-paths ["test"]
 
   :ring {:handler examples.server/handler
