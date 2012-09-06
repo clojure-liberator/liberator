@@ -21,7 +21,7 @@
 (def OK (is-status 200))
 (def CREATED (is-status 201))
 (def ACCEPTED (is-status 202))
-(def NO-CONTENT (all (is-status 202) (body nil?)))
+(def NO-CONTENT (all (is-status 204) (body nil?)))
 
 (defn status-location [status location]
   (all (is-status status) 
