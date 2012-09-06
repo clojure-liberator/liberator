@@ -2,29 +2,29 @@
   (:use
    midje.sweet
    [ring.mock.request :only [request header]]
-   [compojure.core :only [context ANY]]
    [liberator.core :only [defresource resource]]))
 
 (defn ^:private negotiate [header-key resource-key representation-key available accepted]
   (-> (request :get "")
-      (header header-key accepted)
+      (#(if accepted (header % header-key accepted) %))
       ((resource resource-key available
                  :handle-ok (fn [{representation :representation}]
                               {:body (representation representation-key)})))
       ((fn [resp] (if (= 200 (:status resp))
-                     (:body resp)
-                     (:status resp))))))
+                    (:body resp)
+                    (:status resp))))))
 
 (facts "Single header negotiation"
   (facts "Media type negotitation"
     (tabular
      (negotiate "Accept" :available-media-types :media-type ?available ?accepted) => ?negotiated
      ?available ?accepted ?negotiated
-     []                         "text/html" 406
-     ["text/html"]              "text/html" "text/html"
-     ["text/html" "text/plain"] "text/html" "text/html"
-     ["text/html" "text/plain"] "text/html,text/foo" "text/html"
-     ["text/html" "text/plain"] "text/html;q=0.1,text/plain" "text/plain"
+     []                         "text/html"                        406
+     ["text/html" "text/plain"] nil                                "text/html"
+     ["text/html"]              "text/html"                        "text/html"
+     ["text/html" "text/plain"] "text/html"                        "text/html"
+     ["text/html" "text/plain"] "text/html,text/foo"               "text/html"
+     ["text/html" "text/plain"] "text/html;q=0.1,text/plain"       "text/plain"
      ["text/html" "text/plain"] "text/html;q=0.3,text/plain;q=0.2" "text/html"))
 
   (facts "Language negotitation"

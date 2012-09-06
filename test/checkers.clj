@@ -27,9 +27,11 @@
   (all (is-status status) 
        (header-value "Location" location)))
 
-(defn SEE-OTHER [location] (status-location 303 location))
-(defn MOVED-TEMPORARILY [location] (status-location 307 location))
 (defn MOVED-PERMANENTLY [location] (status-location 301 location))
+(defn SEE-OTHER [location] (status-location 303 location))
+(def  NOT-MODIFIED (is-status 304))
+(defn MOVED-TEMPORARILY [location] (status-location 307 location))
 
 (def NOT-FOUND (is-status 404))
 (def GONE (is-status 410))
+(def PRECONDITION-FAILED (is-status 412))

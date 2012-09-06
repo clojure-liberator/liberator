@@ -7,7 +7,7 @@
 ;; this software.
 
 (ns liberator.core
-  (:require liberator.conneg)
+  (:require [liberator.conneg :as conneg])
   (:use
    [liberator.util :only [parse-http-date http-date]]
    [liberator.representation :only [Representation as-response]]
@@ -200,7 +200,7 @@
   (contains? (:headers (:request context)) header))
 
 (defn if-match-star [context]
-  (= "*" ((:headers (:request context)) "if-match")))
+  (= "*" (get-in context [:request :headers "if-match"])))
 
 (defn =method [method context]
   (= (get-in context [:request :request-method]) method))
@@ -371,7 +371,7 @@
   (let [etag (gen-etag context)]
     (decide
      :etag-matches-for-if-match?
-     #(= ((% :headers) "if-match") etag)
+     #(= etag (get-in % [:request :headers "if-match"]))
      if-unmodified-since-exists?
      handle-precondition-failed
      (assoc context ::etag etag))))
@@ -388,9 +388,9 @@
 
 (defdecision encoding-available? 
   (fn [ctx]
-    (when-let [encoding (liberator.conneg/best-allowed-encoding
+    (when-let [encoding (conneg/best-allowed-encoding
                          (get-in ctx [:request :headers "accept-encoding"])
-                         ((get-in context [:resource :available-encodings]) context))]
+                         ((get-in ctx [:resource :available-encodings]) ctx))]
       {:representation {:encoding encoding}}))
 
  exists? handle-not-acceptable)
@@ -406,7 +406,7 @@
 
 (defdecision charset-available?
   #(try-header "Accept-Charset"
-               (when-let [charset (liberator.conneg/best-allowed-charset
+               (when-let [charset (conneg/best-allowed-charset
                                    (get-in % [:request :headers "accept-charset"])
                                    ((get-in context [:resource :available-charsets]) context))]
                  (if (= charset "*")
@@ -420,7 +420,7 @@
 
 (defdecision language-available?
   #(try-header "Accept-Language"
-               (when-let [lang (liberator.conneg/best-allowed-language
+               (when-let [lang (conneg/best-allowed-language
                                 (get-in % [:request :headers "accept-language"]) 
                                 ((get-in context [:resource :available-languages]) context))]
                  (if (= lang "*")
@@ -433,16 +433,28 @@
 
 (defn negotiate-media-type [context]
   (try-header "Accept"
-              (when-let [type (liberator.conneg/best-allowed-content-type 
-                               (get-in context [:request :headers "accept"] "*/*") 
+              (when-let [type (conneg/best-allowed-content-type 
+                               (get-in context [:request :headers "accept"]) 
                                ((get-in context [:resource :available-media-types] "text/html") context))]
-                {:representation {:media-type (liberator.conneg/stringify type)}})))
+                {:representation {:media-type (conneg/stringify type)}})))
 
 (defdecision media-type-available? negotiate-media-type
   accept-language-exists? handle-not-acceptable)
 
-(defdecision accept-exists? (partial header-exists? "accept") 
-  media-type-available? accept-language-exists?)
+(defn accept-exists? [context]
+  (decide :accept-exists?
+          #(if (header-exists? "accept" %)
+             true
+             ;; "If no Accept header field is present, then it is assumed that the
+             ;; client accepts all media types" [p100]
+             (if-let [type (liberator.conneg/best-allowed-content-type 
+                            "*/*"
+                            ((get-in context [:resource :available-media-types]) context))]
+               [false {:representation {:media-type (liberator.conneg/stringify type)}}]
+               false))
+          media-type-available?
+          accept-language-exists?
+          context))
 
 (defn generate-options-header [{:keys [resource request]}]
   {:headers ((:generate-options-header resource) request)})
