@@ -18,6 +18,9 @@
 ;; This namespace provides default 'out-of-the-box' web representations
 ;; for many IANA mime-types.
 
+(defmacro ->when [form pred & term]
+  `(if ~pred (-> ~form ~@term) ~form))
+
 (defprotocol Representation
   (as-response [_ context]
     "Coerce to a standard Ring response (a map
