@@ -140,10 +140,11 @@
 (defn run-handler [name status message
                    {:keys [resource request representation] :as context}]
   (let [context (assoc context :status status :message message)]
-    (if-let [handler (resource (keyword name))]
+    (if-let [handler (if (fn? message) message (resource (keyword name)))]
       (do
         (log! :handler (keyword name))
         (->> 
+
          (merge-with combine
 
                      ;; Status
@@ -185,6 +186,7 @@
                                    (if-not (= "identity" e) e)))
                (set-header-maybe "Vary" (build-vary-header representation)))})))
 
+
       ;; If there is no handler we just return the information we have so far.
       (do (log! :handler (keyword name) "(default implementation)")
           {:status status 
@@ -219,7 +221,8 @@
      :body (format "Internal Server error: no location specified for status %d. Provide %s" status name)}))
 
 ;; Provide :see-other which returns a location or override :handle-see-other
-(defn handle-see-other [context]
+(defhandler handle-see-other 303 #(handle-moved :see-other 303 %))
+(defn x-handle-see-other [context]
   (handle-moved :see-other 303 context))
 
 (defhandler handle-ok 200 "OK")
@@ -249,10 +252,12 @@
 (defdecision ^{:step :L7} post-to-missing? (partial =method :post)
   can-post-to-missing? handle-not-found)
 
-(defn handle-moved-permamently [context]
+(defhandler handle-moved-permamently 301 #(handle-moved :moved-permanently 301 %))
+(defn x-handle-moved-permamently [context]
   (handle-moved :handle-moved-permanently 301 context))
 
-(defn handle-moved-temporarily [context]
+(defhandler handle-moved-temporarily 307 #(handle-moved :moved-temporarily 307 %))
+(defn x-handle-moved-temporarily [context]
   (handle-moved :handle-moved-temporarily 307 context))
 
 (defdecision ^{:step :N5} can-post-to-gone? post! handle-gone)
@@ -310,36 +315,33 @@
   delete!
   post-to-existing?)
 
-(defn modified-since? [context]
-  (let [last-modified (gen-last-modified context)]
-    (decide :modified-since?
-            (fn [context] (and last-modified
-                               (.after last-modified
-                                       (::if-modified-since-date context))))
-            method-delete?
-            handle-not-modified
-            (assoc context ::last-modified last-modified))))
+(defdecision modified-since?
+  (fn [context]
+    (let [last-modified (gen-last-modified context)]
+      [(and last-modified (.after last-modified (::if-modified-since-date context)))
+       (assoc context ::last-modified last-modified)]))
+  method-delete?
+  handle-not-modified)
 
-(defn if-modified-since-valid-date? [context]
-  (let [date (parse-http-date (get-in context [:request :headers "if-modified-since"]))]
-    (decide :if-modified-since-valid-date?
-            (fn [_] date)
-            modified-since?
-            method-delete?
-            (if date (assoc context ::if-modified-since-date date) context))))
+(defdecision if-modified-since-valid-date?
+  (fn [context] 
+    (if-let [date (parse-http-date (get-in context [:request :headers "if-modified-since"]))]
+      (assoc context ::if-modified-since-date date)))
+  modified-since?
+  method-delete?)
 
 (defdecision ^{:step :L13} if-modified-since-exists?
   (partial header-exists? "if-modified-since")
   if-modified-since-valid-date?
   method-delete?)
 
-(defn ^{:step :K13} etag-matches-for-if-none? [context]
-  (let [etag (gen-etag context)]
-    (decide :etag-matches-for-if-none?
-	    #(= (get-in % [:request :headers "if-none-match"]) etag)
-            if-none-match
-	    if-modified-since-exists?
-	    (assoc context ::etag etag))))
+(defdecision etag-matches-for-if-none?
+  (fn [context]
+    (let [etag (gen-etag context)]
+      [(= (get-in context [:request :headers "if-none-match"]) etag)
+       (assoc context ::etag etag)]))
+  if-none-match
+  if-modified-since-exists?)
 
 (defdecision ^{:step :I13} if-none-match-star? 
   #(= "*" (get-in % [:request :headers "if-none-match"]))
@@ -349,35 +351,33 @@
 (defdecision ^{:step :I12} if-none-match-exists? (partial header-exists? "if-none-match")
   if-none-match-star? if-modified-since-exists?)
 
-(defn ^{:step :H12} unmodified-since? [context]
-  (let [last-modified (gen-last-modified context)]
-    (decide :unmodified-since?
-            (fn [context] (and last-modified
-                               (.after last-modified
-                                       (::if-unmodified-since-date context))))
-            handle-precondition-failed
-            if-none-match-exists?
-            (assoc context ::last-modified last-modified))))
+(defdecision unmodified-since?
+  (fn [context]
+    (let [last-modified (gen-last-modified context)]
+      [(and last-modified
+             (.after last-modified
+                     (::if-unmodified-since-date context)))
+       (assoc context ::last-modified last-modified)]))
+  handle-precondition-failed
+  if-none-match-exists?)
 
-(defn ^{:step :H11} if-unmodified-since-valid-date? [context]
-  (let [date (parse-http-date (get-in context [:request :headers  "if-unmodified-since"]))]
-    (decide :if-unmodified-since-valid-date?
-            (fn [context] date)
-            unmodified-since?
-            if-none-match-exists?
-            (if date (assoc context ::if-unmodified-since-date date) context))))
+(defdecision  if-unmodified-since-valid-date?
+  (fn [context]   
+    (if-let [date (parse-http-date (get-in context [:request :headers  "if-unmodified-since"]))]
+      (assoc context ::if-unmodified-since-date date) context))
+  unmodified-since?
+  if-none-match-exists?)
 
 (defdecision ^{:step :H10} if-unmodified-since-exists? (partial header-exists? "if-unmodified-since")
   if-unmodified-since-valid-date? if-none-match-exists?)
 
-(defn ^{:step :G11} etag-matches-for-if-match? [context]
-  (let [etag (gen-etag context)]
-    (decide
-     :etag-matches-for-if-match?
-     #(= etag (get-in % [:request :headers "if-match"]))
-     if-unmodified-since-exists?
-     handle-precondition-failed
-     (assoc context ::etag etag))))
+(defdecision etag-matches-for-if-match?
+  (fn [context]
+    (let [etag (gen-etag context)]
+      [(= etag (get-in context [:request :headers "if-match"]))
+       (assoc context ::etag etag)]))
+  if-unmodified-since-exists?
+  handle-precondition-failed)
 
 (defdecision ^{:step :G9} if-match-star? 
   if-match-star if-unmodified-since-exists? etag-matches-for-if-match?)
@@ -445,22 +445,21 @@
   accept-language-exists? handle-not-acceptable)
 
 (defdecision accept-exists?
-  #(or (header-exists? "accept" %)
-       ;; "If no Accept header field is present, then it is assumed that the
-       ;; client accepts all media types" [p100]
-       (if-let [type (liberator.conneg/best-allowed-content-type 
-                      "*/*"
-                      ((get-in context [:resource :available-media-types]) context))]
-         [false {:representation {:media-type (liberator.conneg/stringify type)}}]
-         false))
+  #(if (header-exists? "accept" %)
+     true
+     ;; "If no Accept header field is present, then it is assumed that the
+     ;; client accepts all media types" [p100]
+     (if-let [type (liberator.conneg/best-allowed-content-type 
+                    "*/*"
+                    ((get-in context [:resource :available-media-types]) context))]
+       [false {:representation {:media-type (liberator.conneg/stringify type)}}]
+       false))
   media-type-available?
-  accept-language-exists?
-  context))
+  accept-language-exists?)
 
-(defn generate-options-header [{:keys [resource request]}]
-  {:headers ((:generate-options-header resource) request)})
+(defhandler handle-options 201 nil)
 
-(defdecision is-options? #(= :options (:request-method (:request %))) generate-options-header accept-exists?)
+(defdecision is-options? #(= :options (:request-method (:request %))) handle-options accept-exists?)
 
 (defhandler handle-request-entity-too-large 413 "Request entity too large.")
 (defdecision valid-entity-length? is-options? handle-request-entity-too-large)
