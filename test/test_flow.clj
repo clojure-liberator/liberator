@@ -37,6 +37,15 @@
     (fact resp => (MOVED-PERMANENTLY "http://other.example.com/"))
     (fact resp => (body "Not here, there!"))))
 
+(facts "get on moved permantently with custom response"
+  (let [resp ((resource :exists? false :existed? true
+                        :moved-permanently? true
+                        :handle-moved-permanently (fn [ctx] {:body "Not here, there!"
+                                                             :headers {"Location" "http://other.example.com/"}}))
+              (request :get "/"))]
+    (fact resp => (MOVED-PERMANENTLY "http://other.example.com/"))
+    (fact resp => (body "Not here, there!"))))
+
 (facts "get on moved permantently with automatic response"
   (let [resp ((resource :exists? false :existed? true
                         :moved-permanently? (fn [ctx] (assoc ctx :location "http://other.example.com/")))

@@ -140,11 +140,10 @@
 (defn run-handler [name status message
                    {:keys [resource request representation] :as context}]
   (let [context (assoc context :status status :message message)]
-    (if-let [handler (if (fn? message) message (resource (keyword name)))]
+    (if-let [handler (get resource (keyword name))]
       (do
         (log! :handler (keyword name))
         (->> 
-
          (merge-with combine
 
                      ;; Status
@@ -186,12 +185,11 @@
                                    (if-not (= "identity" e) e)))
                (set-header-maybe "Vary" (build-vary-header representation)))})))
 
-
       ;; If there is no handler we just return the information we have so far.
       (do (log! :handler (keyword name) "(default implementation)")
           {:status status 
            :headers {"Content-Type" "text/plain"} 
-           :body message}))))
+           :body (if (fn? message) (message context) message)}))))
 
 (defmacro ^:private defhandler [name status message]
   `(defn ~name [context#]
@@ -214,16 +212,15 @@
 
 (defmethod to-location nil [this] this)
 
-(defn- handle-moved [name status {:keys [resource] :as context}]
-  (if-let [f (or (get resource name) (make-function (get context :location)))]
-    (merge {:status status} (to-location (f context)))
-    {:status 500
-     :body (format "Internal Server error: no location specified for status %d. Provide %s" status name)}))
+(defn- handle-moved [name]
+  (fn [{:keys [resource] :as context}]
+    (if-let [f (or (get resource name) (make-function (get context :location)))]
+      (to-location (f context))
+      {:status 500
+       :body (format "Internal Server error: no location specified. Provide %s" name)})))
 
 ;; Provide :see-other which returns a location or override :handle-see-other
-(defhandler handle-see-other 303 #(handle-moved :see-other 303 %))
-(defn x-handle-see-other [context]
-  (handle-moved :see-other 303 context))
+(defhandler handle-see-other 303 nil)
 
 (defhandler handle-ok 200 "OK")
 
@@ -247,26 +244,22 @@
 
 (defaction post! post-redirect?)
 
-(defdecision ^{:step :M7} can-post-to-missing? post! handle-not-found)
+(defdecision can-post-to-missing? post! handle-not-found)
 
-(defdecision ^{:step :L7} post-to-missing? (partial =method :post)
+(defdecision post-to-missing? (partial =method :post)
   can-post-to-missing? handle-not-found)
 
-(defhandler handle-moved-permamently 301 #(handle-moved :moved-permanently 301 %))
-(defn x-handle-moved-permamently [context]
-  (handle-moved :handle-moved-permanently 301 context))
+(defhandler handle-moved-permanently 301 nil)
 
-(defhandler handle-moved-temporarily 307 #(handle-moved :moved-temporarily 307 %))
-(defn x-handle-moved-temporarily [context]
-  (handle-moved :handle-moved-temporarily 307 context))
+(defhandler handle-moved-temporarily 307 nil)
 
-(defdecision ^{:step :N5} can-post-to-gone? post! handle-gone)
+(defdecision can-post-to-gone? post! handle-gone)
 
 (defdecision post-to-gone? (partial =method :post) can-post-to-gone? handle-gone)
 
 (defdecision moved-temporarily? handle-moved-temporarily post-to-gone?)
 
-(defdecision moved-permanently? handle-moved-permamently moved-temporarily?)
+(defdecision moved-permanently? handle-moved-permanently moved-temporarily?)
 
 (defdecision existed? moved-permanently? post-to-missing?)
 
@@ -274,13 +267,13 @@
 
 (defaction put! new?)
 
-(defdecision ^{:step [:O14 :P3]} conflict? handle-conflict put!)
+(defdecision conflict? handle-conflict put!)
 
 (defhandler handle-not-implemented 501 "Not implemented.")
 
 (defdecision can-put-to-missing? conflict? handle-not-implemented)
 
-(defdecision put-to-different-url? handle-moved-permamently can-put-to-missing?)
+(defdecision put-to-different-url? handle-moved-permanently can-put-to-missing?)
 
 (defdecision method-put? (partial =method :put) put-to-different-url? existed?)
 
@@ -293,15 +286,15 @@
 
 (defhandler handle-not-modified 304 nil)
 
-(defdecision ^{:step :J18} if-none-match 
+(defdecision if-none-match 
   #(#{ :head :get} (get-in % [:request :request-method]))
   handle-not-modified
   handle-precondition-failed)
 
-(defdecision ^{:step :O16} put-to-existing? (partial =method :put)
+(defdecision put-to-existing? (partial =method :put)
   conflict? multiple-representations?)
 
-(defdecision ^{:step :N16} post-to-existing? (partial =method :post) 
+(defdecision post-to-existing? (partial =method :post) 
   post! put-to-existing?)
 
 (defhandler handle-accepted 202 "Accepted")
@@ -310,7 +303,7 @@
 
 (defaction delete! delete-enacted?)
 
-(defdecision ^{:step :M16} method-delete?
+(defdecision method-delete?
   (partial =method :delete)
   delete!
   post-to-existing?)
@@ -330,7 +323,7 @@
   modified-since?
   method-delete?)
 
-(defdecision ^{:step :L13} if-modified-since-exists?
+(defdecision if-modified-since-exists?
   (partial header-exists? "if-modified-since")
   if-modified-since-valid-date?
   method-delete?)
@@ -343,12 +336,12 @@
   if-none-match
   if-modified-since-exists?)
 
-(defdecision ^{:step :I13} if-none-match-star? 
+(defdecision if-none-match-star? 
   #(= "*" (get-in % [:request :headers "if-none-match"]))
   if-none-match
   etag-matches-for-if-none?)
 
-(defdecision ^{:step :I12} if-none-match-exists? (partial header-exists? "if-none-match")
+(defdecision if-none-match-exists? (partial header-exists? "if-none-match")
   if-none-match-star? if-modified-since-exists?)
 
 (defdecision unmodified-since?
@@ -368,7 +361,7 @@
   unmodified-since?
   if-none-match-exists?)
 
-(defdecision ^{:step :H10} if-unmodified-since-exists? (partial header-exists? "if-unmodified-since")
+(defdecision if-unmodified-since-exists? (partial header-exists? "if-unmodified-since")
   if-unmodified-since-valid-date? if-none-match-exists?)
 
 (defdecision etag-matches-for-if-match?
@@ -379,10 +372,10 @@
   if-unmodified-since-exists?
   handle-precondition-failed)
 
-(defdecision ^{:step :G9} if-match-star? 
+(defdecision if-match-star? 
   if-match-star if-unmodified-since-exists? etag-matches-for-if-match?)
 
-(defdecision ^{:step :G8} if-match-exists? (partial header-exists? "if-match")
+(defdecision if-match-exists? (partial header-exists? "if-match")
   if-match-star? if-unmodified-since-exists?)
 
 (defdecision exists? if-match-exists? if-match-star-exists-for-missing?)
@@ -491,55 +484,59 @@
 (defdecision service-available? known-method? handle-service-not-available)
 
 (def default-functions 
-  {
-   ;; Decisions
-   :service-available?        true
-   :known-method?             (request-method-in :get :head :options
-                                                 :put :post :delete :trace)
-   :uri-too-long?             false
-   :method-allowed?           (request-method-in :get :head)
-   :malformed?                false
-                                        ;      :encoding-available?       true
-                                        ;      :charset-available?        true
-   :authorized?               true
-   :allowed?                  true
-   :valid-content-header?     true
-   :known-content-type?       true
-   :valid-entity-length?      true
-   :exists?                   true
-   :existed?                  false
-   :respond-with-entity?      false
-   :new?                      true
-   :post-redirect?            false
-   :put-to-different-url?     false
-   :multiple-representations? false
-   :conflict?                 false
-   :can-post-to-missing?      true
-   :can-put-to-missing?       true
-   :moved-permanently?        false
-   :moved-temporarily?        false
-   :delete-enacted?           true
+     {
+      ;; Decisions
+      :service-available?        true
+      :known-method?             (request-method-in :get :head :options
+						   :put :post :delete :trace)
+      :uri-too-long?             false
+      :method-allowed?           (request-method-in :get :head)
+      :malformed?                false
+;;      :encoding-available?       true
+;;      :charset-available?        true
+      :authorized?               true
+      :allowed?                  true
+      :valid-content-header?     true
+      :known-content-type?       true
+      :valid-entity-length?      true
+      :exists?                   true
+      :existed?                  false
+      :respond-with-entity?      false
+      :new?                      true
+      :post-redirect?            false
+      :put-to-different-url?     false
+      :multiple-representations? false
+      :conflict?                 false
+      :can-post-to-missing?      true
+      :can-put-to-missing?       true
+      :moved-permanently?        false
+      :moved-temporarily?        false
+      :delete-enacted?           true
 
-   ;; Handlers
-   :handle-ok                 "OK"
-   
-   ;; Imperatives. Doesn't matter about decision outcome, both
-   ;; outcomes follow the same route.
-   :post!                     true
-   :put!                      true
-   :delete!                   true
+      ;; Handlers
+      :handle-ok                 "OK"
+      :handle-see-other          (handle-moved :see-other)
+      :handle-moved-temporarily  (handle-moved :moved-temporarily)
+      :handle-moved-permanently  (handle-moved :moved-permanently)
+      
 
-   ;; Directives
-   :available-media-types     []
+      ;; Imperatives. Doesn't matter about decision outcome, both
+      ;; outcomes follow the same route.
+      :post!                     true
+      :put!                      true
+      :delete!                   true
 
-   ;; "If no Content-Language is specified, the default is that the
-   ;; content is intended for all language audiences. This might mean
-   ;; that the sender does not consider it to be specific to any
-   ;; natural language, or that the sender does not know for which
-   ;; language it is intended."
-   :available-languages       ["*"]
-   :available-charsets        ["UTF-8"]
-   :available-encodings       ["identity"]})
+      ;; Directives
+      :available-media-types     []
+
+      ;; "If no Content-Language is specified, the default is that the
+      ;; content is intended for all language audiences. This might mean
+      ;; that the sender does not consider it to be specific to any
+      ;; natural language, or that the sender does not know for which
+      ;; language it is intended."
+      :available-languages       ["*"]
+      :available-charsets        ["UTF-8"]
+      :available-encodings       ["identity"]})
 
 ;; resources are a map of implementation methods
 (defn run-resource [request kvs]
