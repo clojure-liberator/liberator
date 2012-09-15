@@ -1,5 +1,5 @@
 ;; Use leiningen 2
-(defproject liberator "0.5.0"
+(defproject liberator "0.6.0"
   :description "Liberator - A REST library for Clojure."
   :dependencies [[org.clojure/clojure "1.4.0"]
                  [org.clojure/tools.trace "0.7.3"]
@@ -12,6 +12,9 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"
             :distribution :repo
             :comments "same as Clojure"}
+
+  :scm {:connection "scm:git:https://github.com/clojure-liberator/liberator.git"
+        :url "https://github.com/clojure-liberator/liberator"}
 
   :plugins [[lein-midje "2.0.0-SNAPSHOT"]
             [lein-ring "0.7.1"]]
