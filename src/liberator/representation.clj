@@ -18,6 +18,9 @@
 ;; This namespace provides default 'out-of-the-box' web representations
 ;; for many IANA mime-types.
 
+(defmacro ->when [form pred & term]
+  `(if ~pred (-> ~form ~@term) ~form))
+
 (defprotocol Representation
   (as-response [_ context]
     "Coerce to a standard Ring response (a map
@@ -50,44 +53,6 @@
                                [:a {:href s} s]
                                s)
                              "")])])]]])
-
-(defmacro ->when [form pred & term]
-  `(if ~pred (-> ~form ~@term) ~form))
-
-(defn wrap-convert-suffix-to-accept-header
-  "A URI identifies a resource, not a representation. But conventional
-practise often uses the suffix of a URI o indicate the media-type of the
-resource - this is understandable given that browsers don't allow uses
-control over the Accept header. However, if we drop the suffix from the
-URI prior to processing it we can support a rich variety of
-representations as well as allowing the user a degree of control by via
-the URL. This function matches the suffix of a URI to a mapping between
-suffixes and media-types. If a match is found, the suffix is dropped
-from the URI and an Accept header is added to indicate the media-type
-preference."
-  [handler media-type-map]
-  (fn [request]
-    (let [uri (:uri request)
-          is-browser? (fn [request]
-                        (if-let [ua (get-in request [:headers "user-agent"])]
-                          (re-matches #"Mozilla/.*" ua)))]
-      
-      (if-let [[suffix media-type] (some (fn [[k v]] (if (.endsWith uri k) [k v])) media-type-map)]
-        (do
-          (-> request
-              (assoc-in [:headers "accept"] media-type)
-              (assoc :uri (.substring uri 0 (- (count uri) (count suffix))))
-              handler
-              ;; Since we did not properly give an accept header, this is still considered to be a browser-based hack.
-              ;; We set the content-type of the response to 'text/plain' so that the browser will render it for us.
-              ;; Unless we're a browser and not returning something the browser can already render.
-              (->when (and (is-browser? request)
-                           (not (#{"text/html"
-                                   "application/xhtml+xml"
-                                   "application/xml"} media-type)))
-                      (assoc-in [:headers "Content-Type"] "text/plain"))))
-        (handler request)))))
-
 
 (defmulti render-map-generic "dispatch on media type"
   (fn [data context] (get-in context [:representation :media-type])))
