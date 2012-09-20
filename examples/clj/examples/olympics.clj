@@ -12,7 +12,7 @@
     (map #(zipmap header %) rows)))
 
 (def dataset
-  (parse-dataset (file (System/getProperty "user.home") "Downloads/olympic_games.tsv")))
+  (parse-dataset (file "examples/data/olympic_games.tsv")))
 
 (defn get-olympic-games-index []
   (->> dataset
@@ -29,7 +29,7 @@
       (update-in ["competitions"] #(split % #","))))
 
 (def athletes
-  (parse-dataset (file (System/getProperty "user.home") "Downloads/olympic_athlete.tsv")))
+  (parse-dataset (file "examples/data/olympic_athlete.tsv")))
 
 (defn get-athletes-sample []
   (map #(get % "name") (map #(select-keys % ["name"]) (take 10 athletes))))
