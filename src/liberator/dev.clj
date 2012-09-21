@@ -34,7 +34,7 @@
 (defresource log-handler [id]
   :available-media-types ["text/html"]
   :exists? (fn [ctx] (if-let [l (first (filter (fn [[aid _]] (= id aid)) @logs))]
-                       (trace "CTX" (assoc ctx ::log l))))
+                      (assoc ctx ::log l)))
   :handle-ok (fn [{[_ [d r log]] ::log}]
                (html5
                 [:head
@@ -42,7 +42,11 @@
                 [:body
                  [:a {:href mount-url} "List of all traces"]
                  [:h1 "Liberator Request Trace #" id " at " d " (" (date-ago d) "s ago)"]
-                 [:p [:span (:request-method r)] " " [:span (:uri r)]]
+                 [:h2 "Request was &quot;" [:span {:style "text-transform: uppercase"}
+                                            (:request-method r)] " " [:span (:uri r)] "&quot;"]
+                 [:h3 "Headers"]
+                 [:dl (mapcat (fn [[k v]] [[:dt k] [:dd v]]) (:headers r))]
+                 [:h3 "Trace"]
                  [:ol (map (fn [l] [:li (h l)]) @log)]]))
   :handle-not-found (fn [ctx]
                       (html5 [:head [:title "Liberator Request Trace #" id " not found."]]
@@ -100,8 +104,7 @@
   border: 1px solid #999;
   border-radius: .3em;
   text-align: center;
-}"
-  )
+}")
 
 (defn wrap-trace [handler]
   (let [base-url (with-slash mount-url)]
@@ -117,7 +120,7 @@
            (let [resp (handler request)]
              (if-not (empty? @log) 
                (do
-                 (pushlog! *current-id* [(Date.) (select-keys request [:request-method :uri]) log])
+                 (pushlog! *current-id* [(Date.) (select-keys request [:request-method :uri :headers]) log])
                  (-> resp (update-in [:headers "Link"]
                                      #(str % (str "\n</" base-url *current-id* ">"
                                                   "; rel=x-liberator-trace")))))
