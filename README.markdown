@@ -255,4 +255,4 @@ available-* = option
 
 # License
 
-Compojure-rest is licensed under EPL 1.0 (see file epl-v10.html).
+Liberator is licensed under EPL 1.0 (see file epl-v10.html).
