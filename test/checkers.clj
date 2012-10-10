@@ -1,7 +1,8 @@
 (ns checkers
   "contains midje checkers to test ring responses"
   (:use midje.sweet
-        [clojure.string :only (lower-case)]))
+        [clojure.string :only (lower-case)]
+        [clojure.tools.trace :only (trace)]))
 
 (defchecker ignore-case [expected]
   (fn [actual] (or (and (nil? actual) (nil? expected))

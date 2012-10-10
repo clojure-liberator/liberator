@@ -10,8 +10,7 @@
   (:require [liberator.conneg :as conneg])
   (:use
    [liberator.util :only [parse-http-date http-date]]
-   [liberator.representation :only [Representation as-response]]
-   [clojure.tools.trace :only [trace]])
+   [liberator.representation :only [Representation as-response ring-response]])
   (:import (javax.xml.ws ProtocolException)))
 
 (defprotocol DateCoercions
@@ -206,7 +205,7 @@
 
 (defmulti to-location type)
 
-(defmethod to-location String [uri] {:headers {"Location" uri}})
+(defmethod to-location String [uri] (ring-response {:headers {"Location" uri}}))
 
 (defmethod to-location clojure.lang.APersistentMap [this] this)
 
@@ -564,3 +563,15 @@
            (run-resource request# ~(apply hash-map kvs)))))
     `(defn ~name [request#] 
        (run-resource request# ~(apply hash-map kvs)))))
+
+(defn by-method
+  "returns a handler function that uses the request method to
+   lookup a function from the map and delegates to it.
+
+   Example:
+
+   (by-method {:get \"This is the entity\"
+               :delete \"Entity was deleted successfully.\"})"
+  [map]
+  (fn [ctx] ((make-function (get map (get-in ctx [:request :request-method]) ctx)) ctx)))
+

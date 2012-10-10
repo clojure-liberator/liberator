@@ -1,5 +1,6 @@
 (ns test-flow
   (:use liberator.core
+        [liberator.representation :only (ring-response)]
         midje.sweet
         checkers
         [ring.mock.request :only [request header]]))
@@ -17,22 +18,23 @@
     (fact resp => (body "NOT-FOUND"))))
 
 (facts "get on moved temporarily"
-  (let [resp ((resource :exists? false :existed? true
-                        :moved-temporarily? (fn [ctx] (assoc ctx :location "http://new.example.com/")))
+       (let [resp ((resource :exists? false
+                             :existed? true
+                             :moved-temporarily? {:location "http://new.example.com/"})
               (request :get "/"))]
     (fact resp => (MOVED-TEMPORARILY "http://new.example.com/"))))
 
 (facts "get on moved permantently"
   (let [resp ((resource :exists? false :existed? true
-                        :moved-permanently? (fn [ctx] (assoc ctx :location "http://other.example.com/")))
+                        :moved-permanently? {:location "http://other.example.com/"})
               (request :get "/"))]
     (fact resp => (MOVED-PERMANENTLY "http://other.example.com/"))))
 
 (facts "get on moved permantently with custom response"
   (let [resp ((resource :exists? false :existed? true
                         :moved-permanently? true
-                        :handle-moved-permanently {:body "Not here, there!"
-                                                   :headers {"Location" "http://other.example.com/"}})
+                        :handle-moved-permanently (ring-response {:body "Not here, there!"
+                                                                  :headers {"Location" "http://other.example.com/"}}))
               (request :get "/"))]
     (fact resp => (MOVED-PERMANENTLY "http://other.example.com/"))
     (fact resp => (body "Not here, there!"))))
@@ -40,7 +42,7 @@
 (facts "get on moved permantently with custom response"
   (let [resp ((resource :exists? false :existed? true
                         :moved-permanently? true
-                        :handle-moved-permanently (fn [ctx] {:body "Not here, there!"
+                        :handle-moved-permanently (ring-response {:body "Not here, there!"
                                                              :headers {"Location" "http://other.example.com/"}}))
               (request :get "/"))]
     (fact resp => (MOVED-PERMANENTLY "http://other.example.com/"))
@@ -48,7 +50,7 @@
 
 (facts "get on moved permantently with automatic response"
   (let [resp ((resource :exists? false :existed? true
-                        :moved-permanently? (fn [ctx] (assoc ctx :location "http://other.example.com/")))
+                        :moved-permanently? {:location "http://other.example.com/"})
               (request :get "/"))]
     (fact resp => (MOVED-PERMANENTLY "http://other.example.com/"))))
 

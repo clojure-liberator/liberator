@@ -1,13 +1,13 @@
 (ns doc)
 
-(defn destructure 
+(defn extract
   ([_ name then else] [name then else])
   ([_ name test then else] [name then else]))
 
 (defn to-graph [[& args]]
   (condp = (first args)
     'defdecision
-    (let [[name then else] (apply destructure args)]
+    (let [[name then else] (apply extract args)]
       (format (str "\"%s\" -> \"%s\" [label = \"true\"] \n"
                    "\"%s\" -> \"%s\" [label=\"false\"]\n")
               name then name else))
