@@ -34,7 +34,9 @@
             "iso-8859-15;q=0.6, *;q=0.8, utf-16;q=0.9" ["iso-8859-15" "ASCII"] "ASCII"
 
             ;; Nothing is returned because ASCII is gets a score of 0
-            "iso-8859-15;q=0.6, utf-16;q=0.9" ["ASCII"] nil)
+            "iso-8859-15;q=0.6, utf-16;q=0.9" ["ASCII"] nil
+
+            "iso-8859-15,\nASCII\n" ["ASCII"] "ASCII")
 
   ;; p20: "HTTP character sets are identified by case-insensitive
   ;; tokens. The complete set of tokens is defined by the IANA

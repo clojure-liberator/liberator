@@ -1,5 +1,4 @@
 (ns liberator.conneg
-  (:use clojure.tools.trace)
   (:require [clojure.string :as string])
   (:import (javax.xml.ws ProtocolException)))
 
@@ -13,10 +12,10 @@
 ;;;   
 
 (def accept-fragment-re
-  #"^(\*|[^()<>@,;:\"/\[\]?={}         ]+)/(\*|[^()<>@,;:\"/\[\]?={}         ]+)$")
+  #"^\s*(\*|[^()<>@,;:\"/\[\]?={}         ]+)/(\*|[^()<>@,;:\"/\[\]?={}         ]+)$")
 
 (def accept-fragment-param-re
-  #"^([^()<>@,;:\"/\[\]?={} 	]+)=([^()<>@,;:\"/\[\]?={} 	]+|\"[^\"]*\")$")
+  #"([^()<>@,;:\"/\[\]?={} 	]+)=([^()<>@,;:\"/\[\]?={} 	]+|\"[^\"]*\")$")
 
 (defn- clamp [minimum maximum val]
   (min maximum
@@ -118,7 +117,7 @@
    (sort-by (juxt #(get %1 :q 1) #(get %1 :sq 1))
             (map (assoc-server-weight-fn allowed-types)
                  (map accept-fragment
-                      (string/split accepts-header #"\s*,\s*"))))))
+                      (string/split accepts-header #"[\s\n\r]*,[\s\n\r]*"))))))
 
 (defn allowed-types-filter [allowed-types]
   (fn [accept]
@@ -168,9 +167,9 @@
         (first-fn (allowed-types-filter (enpair allowed-types)) sorted)))))
 
 (defn split-qval [caq]
-  (let [[charset & params] (string/split caq #"\s*;\s*")
+  (let [[charset & params] (string/split caq #"[\s\r\n]*;[\s\r\n]*")
         q (first (reverse (sort (filter (comp not nil?)
-                                        (map #(let [[param value] (string/split % #"\s*=")] 
+                                        (map #(let [[param value] (string/split % #"[\s\r\n]*=")]
                                                 (if (= "q" param) (Float/parseFloat value)))
                                              params)))))]
     (when (and
@@ -184,7 +183,7 @@
     [charset (or q 1)]))
 
 (defn parse-accepts-header [accepts-header]
-  (->> (string/split accepts-header #"\s*,\s*")
+  (->> (string/split accepts-header #"[\s\r\n]*,[\s\r\n]*")
        (map split-qval)
        (into {})))
 
@@ -203,7 +202,7 @@
 ;; TODO Add tracing
 
 (defn best-allowed-charset [accepts-header available]
-  (let [accepts (->> (string/split accepts-header #"\s*,\s*")
+  (let [accepts (->> (string/split accepts-header #"[\s\r\n]*,[\s\r\n]*")
                      (map split-qval)
                      (into {}))]
     (select-best available
@@ -216,7 +215,7 @@
                        )))))
 
 (defn best-allowed-encoding [accepts-header available]
-  (let [accepts (->> (string/split accepts-header #"\s*,\s*")
+  (let [accepts (->> (string/split accepts-header #"[\s\r\n]*,[\s\r\n]*")
                      (map split-qval)
                      (into {}))]
     (or
@@ -251,7 +250,7 @@
 ;;    "If no Content-Language is specified, the default is that the content is intended for all language audiences. This might mean that the sender does not consider it to be specific to any natural language, or that the sender does not know for which language it is intended."
 
 (defn best-allowed-language [accepts-header available]
-  (let [accepts (->> (string/split accepts-header #"\s*,\s*")
+  (let [accepts (->> (string/split accepts-header #"[\s\r\n]*,[\s\r\n]*")
                      (map split-qval)
                      (into {}))
         
