@@ -4,13 +4,19 @@
   ([_ name then else] [name then else])
   ([_ name test then else] [name then else]))
 
+(defn clean-id [str]
+  (clojure.string/replace str #"[^a-zA-Z0-9]+" ""))
+
 (defn to-graph [[& args]]
   (condp = (first args)
     'defdecision
-    (let [[name then else] (apply extract args)]
-      (format (str "\"%s\" -> \"%s\" [label = \"true\"] \n"
-                   "\"%s\" -> \"%s\" [label=\"false\"]\n")
-              name then name else))
+    (let [[name then else] (apply destructure args)]
+      (format (str "\"%s\" [id = \"%s\"] \n "
+                   "\"%s\" -> \"%s\" [label = \"true\", id = \"%s\"] \n"
+                   "\"%s\" -> \"%s\" [label=\"false\", id = \"%s\"]\n")
+              name (clean-id name)
+              name then (clean-id (str name "-" then)) 
+              name else (clean-id (str name "-" else ))))
     'defaction
     (let [[_ name then] args]
       (format "\"%s\"[shape=\"ellipse\"];\n\"%s\"-> \"%s\"\n" name name then))
@@ -23,7 +29,8 @@
                  (>= status 200) "#b2df8a"
                  (>= status 100) "#a6cee3"
                  :else "#ffffff")]
-      (format "\"%s\"[label=\"%s\\n%s\" style=\"filled\" fillcolor=\"%s\"];\n" name status name color))
+      (format "\"%s\"[id=\"%s\" label=\"%s\\n%s\" style=\"filled\" fillcolor=\"%s\"];\n"
+              (clean-id name) name status name color))
     nil)
   
   )
@@ -56,3 +63,6 @@
          (concat (rank-same actions))
          (apply str)
          (format "digraph {\nnode[shape=\"box\", splines=ortho]\n\"start\"[shape=circle];\n\"start\" -> \"service-available?\"\n%s\n}"))))
+
+(defn generate-graph-file [f]
+  (spit f (generate-graph)))
