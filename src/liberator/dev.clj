@@ -10,7 +10,8 @@
 
 (defonce logs (atom nil))
 
-(defn next-id [] (apply str (take 5 (repeatedly #(rand-nth "abcdefghijklmnopqrstuvwzxy0123456789")))))
+(defn next-id [] (apply str (take 5 (repeatedly
+                                     #(rand-nth "abcdefghijklmnopqrstuvwzxy0123456789")))))
 
 (def log-size 50)
 
@@ -44,10 +45,14 @@
                  [:h1 "Liberator Request Trace #" id " at " d " (" (date-ago d) "s ago)"]
                  [:h2 "Request was &quot;" [:span {:style "text-transform: uppercase"}
                                             (:request-method r)] " " [:span (:uri r)] "&quot;"]
+                 [:h3 "Parameters"]
+                 [:dl (mapcat (fn [[k v]] [[:dt (h k)] [:dd (h v)]]) (:params r))]
                  [:h3 "Headers"]
-                 [:dl (mapcat (fn [[k v]] [[:dt k] [:dd v]]) (:headers r))]
+                 [:dl (mapcat (fn [[k v]] [[:dt (h k)] [:dd (h v)]]) (:headers r))]
                  [:h3 "Trace"]
-                 [:ol (map (fn [l] [:li (h l)]) @log)]]))
+                 [:ol (map (fn [l] [:li (h l)]) @log)]
+                 [:h3 "Full Request"]
+                 [:pre [:tt (h (with-out-str (clojure.pprint/pprint r)))]]]))
   :handle-not-found (fn [ctx]
                       (html5 [:head [:title "Liberator Request Trace #" id " not found."]]
                              [:body [:h1 "Liberator Request Trace #" id " not found."]
@@ -120,7 +125,10 @@
            (let [resp (handler request)]
              (if-not (empty? @log) 
                (do
-                 (pushlog! *current-id* [(Date.) (select-keys request [:request-method :uri :headers]) log])
+                 (pushlog! *current-id* [(Date.)
+                                         (if true
+                                           request
+                                             (select-keys request [:request-method :uri :headers])) log])
                  (-> resp (update-in [:headers "Link"]
                                      #(str % (str "\n</" base-url *current-id* ">"
                                                   "; rel=x-liberator-trace")))))
