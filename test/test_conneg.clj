@@ -1,12 +1,11 @@
 (ns test-conneg
   (:require [clojure.string :as string])
-  (:use
-   liberator.conneg
-   midje.sweet))
+  (:use liberator.conneg
+        checkers
+        midje.sweet))
 
 (facts "charsets"
-
-  (tabular (fact (best-allowed-charset accept available) => negotiated)
+       (tabular (fact (best-allowed-charset accept available) => (ignore-case negotiated))
 
            accept                            available                   negotiated
 
@@ -33,16 +32,17 @@
             ;; ASCII should be returned because it matches *, which gives it a 0.8 score, higher than iso-8859-15
             "iso-8859-15;q=0.6, *;q=0.8, utf-16;q=0.9" ["iso-8859-15" "ASCII"] "ASCII"
 
+            ;; iso-8859-1 is always available unless score set to 0
+            "ascii;q=0.5" ["ascii" "ISO-8859-1"] "ISO-8859-1"
+
             ;; Nothing is returned because ASCII is gets a score of 0
             "iso-8859-15;q=0.6, utf-16;q=0.9" ["ASCII"] nil
 
-            "iso-8859-15,\nASCII\n" ["ASCII"] "ASCII")
+            ;; test some exotic formatting variants, not complete, though.
+            "iso-8859-15,\n\rASCII" ["ASCII"] "ASCII"
 
-  ;; p20: "HTTP character sets are identified by case-insensitive
-  ;; tokens. The complete set of tokens is defined by the IANA
-  ;; Character Set registry"
-  ;; TODO Test for case-insensitivity p20, it's possible that liberator or ring will be downcasing anyway, check this
-  )
+            ;; charset must be compared case insensitively
+            "ASCII" ["ascii"] "ascii"))
 
 (facts "encoding negotiation"
   (tabular (fact (best-allowed-encoding accept available) => negotiated)

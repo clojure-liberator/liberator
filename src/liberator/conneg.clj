@@ -202,17 +202,17 @@
 ;; TODO Add tracing
 
 (defn best-allowed-charset [accepts-header available]
-  (let [accepts (->> (string/split accepts-header #"[\s\r\n]*,[\s\r\n]*")
+  (let [accepts (->> (string/split (string/lower-case accepts-header) #"[\s\r\n]*,[\s\r\n]*")
                      (map split-qval)
                      (into {}))]
     (select-best available
                  (fn [charset]
-                   (or (get accepts charset)
-                       (get accepts "*")
-                       ;; "except for ISO-8859-1, which gets a quality
-                       ;; value of 1 if not explicitly mentioned"
-                       (if (= charset "iso-8859-1") 1 0)
-                       )))))
+                   (let [charset (string/lower-case charset)]
+                     (or (get accepts charset)
+                         (get accepts "*")
+                         ;; "except for ISO-8859-1, which gets a quality
+                         ;; value of 1 if not explicitly mentioned"
+                         (if (= charset "iso-8859-1") 1 0)))))))
 
 (defn best-allowed-encoding [accepts-header available]
   (let [accepts (->> (string/split accepts-header #"[\s\r\n]*,[\s\r\n]*")

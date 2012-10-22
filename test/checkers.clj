@@ -1,6 +1,11 @@
 (ns checkers
   "contains midje checkers to test ring responses"
-  (:use midje.sweet))
+  (:use midje.sweet
+        [clojure.string :only (lower-case)]))
+
+(defchecker ignore-case [expected]
+  (fn [actual] (or (and (nil? actual) (nil? expected))
+                  (= (lower-case actual) (lower-case expected)))))
 
 (defchecker all [& checkers]
   (fn [actual] (every? #(% actual) checkers)))
@@ -35,3 +40,4 @@
 (def NOT-FOUND (is-status 404))
 (def GONE (is-status 410))
 (def PRECONDITION-FAILED (is-status 412))
+
