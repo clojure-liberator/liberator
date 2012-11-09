@@ -168,9 +168,12 @@
    (hash-map :body)))
 
 (defmethod render-seq-generic :default
-   [data {{:keys [language media-type] :as representation} :representation :as context}]
-   {:status 500 :body
-    (format "Failure to provide negotiated media-type and language (type=%s, lang=%s)" media-type language)})
+  [data {{:keys [language media-type] :as representation} :representation :as context}]
+  (if media-type
+    {:status 500 :body
+     (format "Cannot render sequential data as %s" media-type language)}
+    (render-seq-generic data (assoc-in context [:representation :media-type]
+                                       "application/json"))))
 
 
 ;; Representation embodies all the rules as to who should encode the content.
