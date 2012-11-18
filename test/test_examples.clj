@@ -13,7 +13,7 @@
         response (handler (request :get "/"))]
     response => OK
     response => (body "Hello World!")
-    response => (content-type "text/plain")
+    response => (content-type "text/plain;charset=UTF-8")
     ))
 
 (facts "about language negotiation"
@@ -66,6 +66,6 @@
          response => (content-type ?content-type))))
    
    ?accept              ?available         ?status    ?content-type
-   "text/html"          ["text/html"]      200        "text/html"
+   "text/html"          ["text/html"]      200        "text/html;charset=UTF-8"
    "text/plain"         ["text/html"]      406         "text/plain"))
 

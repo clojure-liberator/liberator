@@ -196,18 +196,22 @@
 
   ;; If a string is returned, we should carry out the conversion of both the charset and the encoding.
   String
-  (as-response [this {:keys [representation]}]
-    {:body
-     (-> this
-         (in-charset (:charset representation))
-         (encode (:encoding representation)))
-     :headers {"Content-Type" (get representation :media-type "text/plain")}})
+  (as-response [this {:keys [representation resource] :as context}]
+    (let [charset (or (:charset representation)
+                         (if-let [ac (resource :available-charsets)]
+                           (first (ac context))))]
+      {:body
+       (-> this
+           (in-charset charset)
+           (encode (:encoding representation)))
+       :headers {"Content-Type" (str (get representation :media-type "text/plain")
+                                     ";charset=" charset)}}))
 
   (render-item [this context]
     this)
   
   (in-charset [this charset]
-    (if charset
+    (if (and charset (not (.equalsIgnoreCase charset "UTF-8")))
       (java.io.ByteArrayInputStream.
        (.getBytes this (java.nio.charset.Charset/forName charset)))
       
