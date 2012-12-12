@@ -17,6 +17,7 @@
 
 ;; Language negotiation
 (defresource hello-george
+  :available-media-types ["text/plain"] 
   :handle-ok (fn [context] (case (get-in context [:representation :language])
                              "en" "Hello George!"
                              "bg" "Zdravej, Georgi"
