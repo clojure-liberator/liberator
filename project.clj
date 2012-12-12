@@ -4,7 +4,7 @@
   :dependencies [[org.clojure/clojure "1.4.0"]
                  [org.clojure/tools.trace "0.7.3"]
                  [org.clojure/tools.logging "0.2.3"]
-                 [org.clojure/data.json "0.1.2"]
+                 [org.clojure/data.json "0.2.1"]
                  [org.clojure/data.csv "0.1.2"]
                  [hiccup "1.0.0"]] ;; Used by code rendering default representations.
 

@@ -106,7 +106,7 @@
   :method-allowed? #(some #{(get-in % [:request :request-method])} [:get :post])
   :available-media-types ["text/html" "application/json" "text/plain"]
   :available-charsets ["utf-8"]
-  :create! (fn [context] (swap! athletes conj {:name (:name (json/read-json (io/reader (get-in context [:request :body]))))}))
+  :create! (fn [context] (swap! athletes conj {:name (:name (json/read (io/reader (get-in context [:request :body]))))}))
   :handle-ok (fn [context]
                (case (get-in context [:representation :media-type])
                  ;; If HTML, some presentation.

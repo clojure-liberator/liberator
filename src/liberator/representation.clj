@@ -76,7 +76,7 @@
   (render-map-csv \, 9))
 
 (defmethod render-map-generic "application/json" [data context]
-  (with-out-str (json/print-json data)))
+  (json/write-str data))
 
 (defmethod render-map-generic "application/clojure" [data context]
   (with-out-str (pr data)))
@@ -129,7 +129,7 @@
 (defmethod render-seq-generic "application/json" [data _]
   {:body
    (with-out-str
-     (json/print-json data)
+     (json/write *out* data)
      (print "\r\n"))})
 
 (defn render-seq-csv
