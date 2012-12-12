@@ -40,29 +40,29 @@
 (defmethod coll-validator :default [x]
   (partial = x))
 
-;; todos
-;; make authorized handler returning single value (not map) as identifier of a principal
+(defn console-logger [category value] 
+  #(println "LOG " category " " value))
 
-(def console-logger #(println (str "LOG " %)))
-(def no-logger (constantly nil))
+(def ^:dynamic *loggers* nil) 
 
-(declare ^:dynamic *-log*)
-
-(def ^:dynamic *-logger* no-logger)
-
-(def var-logger (fn [msg] (dosync (alter *-log* #(conj % msg)))))
-
-(defn log [name value]
-  (do
-    (*-logger* (str name ": " (pr-str value)))
-    value))
-
-(defn make-trace-headers [log]
-  log)
+(defmacro with-logger [logger & body]
+  `(binding [*loggers* (conj (or *loggers* []) ~logger)]
+     ~@body))
 
 (defmacro with-console-logger [& body]
-  `(binding [*-logger* console-logger]
+  `(with-logger console-logger
      ~@body))
+
+(defn atom-logger [atom]
+  (fn [& args]
+    (swap! atom conj args)))
+
+(defn log! [category value]
+  (doseq [l *loggers*]
+    (l category value)))
+
+(defn make-trace-headers [log] log)
+
 
 (declare if-none-match-exists?)
 
@@ -102,11 +102,12 @@
 	  ftest (make-function ftest)
 	  fthen (make-function then)
 	  felse (make-function else)
-	  decision (log (str "Decision " name) (ftest context))
+	  decision (ftest context)
 	  result (if (vector? decision) (first decision) decision)
 	  context-update (if (vector? decision) (second decision) decision)
 	  context (if (map? context-update)
                     (combine context context-update) context)]
+      (log! :decision (str name ": " decision))
       ((if result fthen felse) context))
     {:status 500 :body (str "No handler found for key \""  name "\"."
                             " Keys defined for resource are " (keys resource))}))
@@ -144,7 +145,7 @@
   (let [context (assoc context :status status :message message)]
     (if-let [handler (resource (keyword name))]
       (do
-        (log "Handler" (keyword name))
+        (log! :handler (keyword name))
         (->> 
          (merge
 
@@ -188,7 +189,7 @@
                (set-header-maybe "Vary" (build-vary-header representation)))})))
       
       ;; If there is no handler we just return the information we have so far.
-      (do (log "Handler (default)" (keyword name))
+      (do (log! :handler (str (keyword name) " (default implementation)"))
           {:status status 
            :headers {"Content-Type" "text/plain"} 
            :body message}))))
@@ -572,15 +573,3 @@
            (run-resource request# ~(apply hash-map kvs)))))
     `(defn ~name [request#] 
        (run-resource request# ~(apply hash-map kvs)))))
-
-(defn wrap-trace-as-response-header [handler]
-  (fn [request]
-    (binding [*-log* (ref [])
-              *-logger* var-logger]
-      (let [resp (handler request)]
-        (when resp
-          (assoc-in resp
-                    [:headers "X-Liberator-Trace"] (make-trace-headers @*-log*)))))))
-
-(defn get-trace []
-  (make-trace-headers @*-log*))

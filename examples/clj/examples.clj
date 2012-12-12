@@ -2,8 +2,9 @@
   (:require [examples.olympics :as olympics]
             [clojure.java.io :as io]
             [clojure.data.json :as json])
-  (:use [liberator.core :only [defresource wrap-trace-as-response-header request-method-in]]
+  (:use [liberator.core :only [defresource request-method-in]]
         [liberator.representation :only [Representation]]
+        [liberator.dev :only [wrap-trace-ui]]
         [compojure.core :only [context ANY routes defroutes]]
         [hiccup.page :only [html5]]
         [clojure.string :only [split]]
@@ -22,7 +23,7 @@
                              "en" "Hello George!"
                              "bg" "Zdravej, Georgi"
                              "Hello!"))
-  :available-languages ["en" "bg"])
+  :available-languages ["en" "bg" "*"])
 
 ;; Here's a resource you can POST to.
 (def postbox-counter (atom 0))
@@ -120,11 +121,26 @@
   :available-charsets ["utf-8"]
   :handle-ok (olympics/get-athletes-sample))
 
+(defresource index 
+  :available-media-types ["text/html"]
+  :handle-ok (fn [context]
+               (html5 [:head [:title "Liberator examples"]] 
+                      [:body
+                       [:h1 "Liberator Examples"]
+                       [:ul
+                        [:li [:a {:href "/hello-world"} "Hello World"]]
+                        [:li [:a {:href "/hello-george"} "Hello George (with negotiation)"]]
+                        [:li [:a {:href "/olympics/index"} "Olympic Games"]]
+                        [:li [:a {:href "/olympics/index-fancy"} "Olympic Games, fancy"]]
+                        [:li [:a {:href "/drag-drop"} "Drag and Drop (featuring clojure script)"]]
+                        [:li [:a {:href "/drag-drop/athletes"} "Athletes"]]
+                        [:li [:a {:href "/x-liberator/requests/"} "Liberator request dump"]]]]))) 
 ;; Routes
 
 (defn assemble-routes []
   (->
    (routes
+    (ANY "/" [] index)
     (create-cljs-route "/cljs")
     (ANY "/hello-world" [] hello-world)
     (ANY "/hello-george" [] hello-george)
@@ -132,11 +148,12 @@
     (ANY "/olympics/index-fancy" [] olympic-games-index-fancy)
     (ANY "/drag-drop" [] drag-drop)
     (ANY "/drag-drop/athletes" [] athletes-resource)
-
     (ANY "/static/*" [] static)
     (ANY ["/olympics/:stem" :stem #"m/.*"] [stem]
          (-> olympic-games
              (wrap-binder ::id (str "/" stem)))))
-   (wrap-trace-as-response-header)))
+   ;; wrap-trace-ui and wrap-trace-as-response-header currently collide
+   ;; also unify with with decision logging for graph creation
+   (wrap-trace-ui)))
 
 
