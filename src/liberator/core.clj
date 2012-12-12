@@ -89,9 +89,9 @@
 ;; provides.  This allows decisions to return maps which modify the
 ;; original request in the way most probably intended rather than the
 ;; over-destructive default merge.
-(defn merge-map-element [curr newval]
+(defn combine [curr newval]
   (cond
-   (and (map? curr) (map? newval)) (merge-with merge-map-element curr newval)
+   (and (map? curr) (map? newval)) (merge-with combine curr newval)
    (and (list? curr) (list? newval)) (concat curr newval)
    (and (vector? curr) (vector? newval)) (vec (concat curr newval))
    :otherwise newval))
@@ -106,7 +106,7 @@
 	  result (if (vector? decision) (first decision) decision)
 	  context-update (if (vector? decision) (second decision) decision)
 	  context (if (map? context-update)
-                    (merge-with merge-map-element context context-update) context)]
+                    (combine context context-update) context)]
       ((if result fthen felse) context))
     {:status 500 :body (str "No handler found for key \""  name "\"."
                             " Keys defined for resource are " (keys resource))}))
@@ -145,8 +145,7 @@
     (if-let [handler (resource (keyword name))]
       (do
         (log "Handler" (keyword name))
-        (merge-with
-           merge-map-element
+        (merge
 
            ;; Status
            {:status status}
