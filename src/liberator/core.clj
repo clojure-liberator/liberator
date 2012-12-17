@@ -61,9 +61,6 @@
   (doseq [l *loggers*]
     (l category value)))
 
-(defn make-trace-headers [log] log)
-
-
 (declare if-none-match-exists?)
 
 (defn map-values [f m]
@@ -146,7 +143,7 @@
     (if-let [handler (resource (keyword name))]
       (do
         (log! :handler (keyword name))
-        (->> 
+        (->>
          (merge
 
           ;; Status
@@ -159,7 +156,7 @@
           ;; Last modified
           (when-let [last-modified (gen-last-modified context)]
             {:headers {"Last-Modified" (http-date last-modified)}})
-       
+          
           ;; Finally the result of the handler.  We allow the handler to
           ;; override the status and headers.
           ;;

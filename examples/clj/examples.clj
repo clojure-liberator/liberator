@@ -1,7 +1,8 @@
 (ns examples
   (:require [examples.olympics :as olympics]
             [clojure.java.io :as io]
-            [clojure.data.json :as json])
+            [clojure.data.json :as json]
+            [liberator.dev :as dev])
   (:use [liberator.core :only [defresource request-method-in]]
         [liberator.representation :only [Representation]]
         [liberator.dev :only [wrap-trace-ui]]
@@ -59,10 +60,12 @@
              [:script {:type "text/javascript" :src "/cljs/goog/base.js"}]
              [:script {:type "text/javascript" :src "/cljs/deps.js"}]
              (javascript-tag (format "goog.require('%s');"
-                                     (reduce str (interpose "." (butlast (split main #"\."))))))]
+                                     (reduce str (interpose "." (butlast (split main #"\."))))))
+             (dev/include-trace-css)]
             [:body
              [:h1 "Olympics"]
              [:div#content]
+             (dev/include-trace-panel)
              (javascript-tag main)])}))
 
 (defresource olympic-games-index-fancy

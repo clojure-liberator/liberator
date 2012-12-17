@@ -15,9 +15,9 @@
 (defn next-id [] (apply str (take 5 (repeatedly
                                      #(rand-nth "abcdefghijklmnopqrstuvwzxy0123456789")))))
 
-(def log-size 50)
+(def log-size 100)
 
-(defn log! [id msg]
+(defn save-log! [id msg]
   (swap! logs #(->> (conj % [id msg])
                     (take log-size))))
 
@@ -25,7 +25,7 @@
 
 (def ^:dynamic *current-id* nil)
 
-(defn date-ago [d]
+(defn seconds-ago [d]
   (int  (/ (- ( System/currentTimeMillis) (.getTime d)) 1000)))
 
 (defresource log-handler [id]
@@ -40,7 +40,7 @@
                    [:title "Liberator Request Trace #" id " at " d]]
                   [:body
                    [:a {:href mount-url} "List of all traces"]
-                   [:h1 "Liberator Request Trace #" id " at " d " (" (date-ago d) "s ago)"]
+                   [:h1 "Liberator Request Trace #" id " at " d " (" (seconds-ago d) "s ago)"]
                    [:h2 "Request was &quot;" [:span {:style "text-transform: uppercase"}
                                               (:request-method r)] " " [:span (:uri r)] "&quot;"]
                    [:h3 "Parameters"]
@@ -76,17 +76,21 @@
                                [:ul
                                 [:a {:href (h (str (with-slash mount-url) id))}
                                  [:span (h request-method)] " " [:span (h uri)]]
-                                [:span " at " [:span (h d)] " " [:span "(" (date-ago d) "s ago)"]]]) @logs)])])))
+                                [:span " at " [:span (h d)] " " [:span "(" (seconds-ago d) "s ago)"]]]) @logs)])])))
 
 (defn css-url [] (str (with-slash mount-url) "styles.css"))
 
 (defn include-trace-css []
   (include-css (css-url)))
 
-(defn current-trace-url []
+(defn current-trace-url
+  "Return the url under with the trace of the current request can be accessed"
+  []
   (str (with-slash mount-url) *current-id*))
 
-(defn include-liberator-trace []
+(defn include-trace-panel
+  "Create a html snippet with a link to the current requests' trace"
+  []
   (html
    [:div {:id "x-liberator-trace"}
     [:a {:href (current-trace-url)} (str  "Liberator Request Trace #" *current-id*)]]))
@@ -125,10 +129,10 @@
              (let [resp (handler request)]
                (if-not (empty? @request-log)
                  (do
-                   (log! *current-id* [(Date.)
+                   (save-log! *current-id* [(Date.)
                                        (select-keys request [:request-method :uri :headers])
                                        @request-log])
                    (-> resp (update-in [:headers "Link"]
-                                       #(str % (str "\n</" base-url *current-id* ">"
+                                       #(str % (str "\n</" (current-trace-url) ">"
                                                     "; rel=x-liberator-trace")))))
                  resp)))))))))
