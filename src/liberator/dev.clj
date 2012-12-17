@@ -5,6 +5,7 @@
         clojure.tools.trace
         [liberator.core :only [defresource]])
   (:require [liberator.core :as core]
+            [clojure.string :as string]
             [clojure.data.json :as json])
   (:import java.util.Date))
 
@@ -48,7 +49,7 @@
                    [:h3 "Headers"]
                    [:dl (mapcat (fn [[k v]] [[:dt (h k)] [:dd (h v)]]) (:headers r))]
                    [:h3 "Trace"]
-                   [:ol (map (fn [l] [:li (h l)]) log)]
+                   [:ol (map (fn [[l r]] [:li (h l) ": " (h (string/join " " r))]) log)]
                    [:h3 "Full Request"]
                    [:pre [:tt (h (with-out-str (clojure.pprint/pprint r)))]]])
                  "application/json"

@@ -40,8 +40,8 @@
 (defmethod coll-validator :default [x]
   (partial = x))
 
-(defn console-logger [category value] 
-  #(println "LOG " category " " value))
+(defn console-logger [category values] 
+  #(apply println "LOG " category " " values))
 
 (def ^:dynamic *loggers* nil) 
 
@@ -57,9 +57,9 @@
   (fn [& args]
     (swap! atom conj args)))
 
-(defn log! [category value]
+(defn log! [category & values]
   (doseq [l *loggers*]
-    (l category value)))
+    (l category values)))
 
 (declare if-none-match-exists?)
 
@@ -104,7 +104,7 @@
 	  context-update (if (vector? decision) (second decision) decision)
 	  context (if (map? context-update)
                     (combine context context-update) context)]
-      (log! :decision (str name ": " decision))
+      (log! :decision name decision)
       ((if result fthen felse) context))
     {:status 500 :body (str "No handler found for key \""  name "\"."
                             " Keys defined for resource are " (keys resource))}))
@@ -186,7 +186,7 @@
                (set-header-maybe "Vary" (build-vary-header representation)))})))
       
       ;; If there is no handler we just return the information we have so far.
-      (do (log! :handler (str (keyword name) " (default implementation)"))
+      (do (log! :handler (keyword name) "(default implementation)")
           {:status status 
            :headers {"Content-Type" "text/plain"} 
            :body message}))))
