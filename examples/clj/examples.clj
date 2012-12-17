@@ -157,6 +157,6 @@
              (wrap-binder ::id (str "/" stem)))))
    ;; wrap-trace-ui and wrap-trace-as-response-header currently collide
    ;; also unify with with decision logging for graph creation
-   (wrap-trace-ui)))
+   (dev/wrap-trace-ui)))
 
 
