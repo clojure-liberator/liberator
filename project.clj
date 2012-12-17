@@ -6,7 +6,7 @@
                  [org.clojure/tools.logging "0.2.3"]
                  [org.clojure/data.json "0.2.1"]
                  [org.clojure/data.csv "0.1.2"]
-                 [hiccup "1.0.0"]] ;; Used by code rendering default representations.
+                 [hiccup "1.0.2"]] ;; Used by code rendering default representations.
 
   :license {:name "Eclipse Public License - v 1.0"
             :url "http://www.eclipse.org/legal/epl-v10.html"
@@ -16,7 +16,7 @@
   :scm {:connection "scm:git:https://github.com/clojure-liberator/liberator.git"
         :url "https://github.com/clojure-liberator/liberator"}
 
-  :plugins [[lein-midje "2.0.0-SNAPSHOT"]
+  :plugins [[lein-midje "2.0.3"]
             [lein-ring "0.7.1"]]
 
   :profiles {:dev {:dependencies [[ring/ring-jetty-adapter "1.1.0"]
