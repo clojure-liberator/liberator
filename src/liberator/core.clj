@@ -271,7 +271,11 @@
 
 (defdecision ^{:step [:O14 :P3]} conflict? handle-conflict put!)
 
-(defdecision put-to-different-url? handle-moved-permamently conflict?)
+(defhandler handle-not-implemented 501 "Not implemented.")
+
+(defdecision can-put-to-missing? conflict? handle-not-implemented)
+
+(defdecision put-to-different-url? handle-moved-permamently can-put-to-missing?)
 
 (defdecision method-put? (partial =method :put) put-to-different-url? existed?)
 
@@ -392,7 +396,7 @@
                          ((get-in ctx [:resource :available-encodings]) ctx))]
       {:representation {:encoding encoding}}))
 
- exists? handle-not-acceptable)
+  exists? handle-not-acceptable)
 
 (defmacro try-header [header & body]
   `(try ~@body
@@ -466,7 +470,6 @@
 (defhandler handle-unsupported-media-type 415 "Unsupported media type.")
 (defdecision known-content-type? valid-entity-length? handle-unsupported-media-type)
 
-(defhandler handle-not-implemented 501 "Not implemented.")
 (defdecision valid-content-header? known-content-type? handle-not-implemented)
 
 (defhandler handle-forbidden 403 "Forbidden.")
@@ -515,6 +518,7 @@
       :multiple-representations? false
       :conflict?                 false
       :can-post-to-missing?      true
+      :can-put-to-missing?       true
       :moved-permanently?        false
       :moved-temporarily?        false
       :delete-enacted?           true
@@ -573,7 +577,8 @@
               *-logger* var-logger]
       (let [resp (handler request)]
         (when resp
-          (assoc-in resp [:headers "X-Liberator-Trace"] (make-trace-headers @*-log*)))))))
+          (assoc-in resp
+                    [:headers "X-Liberator-Trace"] (make-trace-headers @*-log*)))))))
 
 (defn get-trace []
   (make-trace-headers @*-log*))

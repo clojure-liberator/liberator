@@ -41,3 +41,5 @@
 (def GONE (is-status 410))
 (def PRECONDITION-FAILED (is-status 412))
 
+(def NOT-IMPLEMENTED (is-status 501))
+

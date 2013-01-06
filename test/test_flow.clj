@@ -85,3 +85,14 @@
       resp (r (request :post "/")) ]
   (fact "Post to existing if post to missing forbidden is allowed" resp => CREATED))
 
+(let [r (resource :method-allowed? [:put]
+                  :exists? false
+                  :can-put-to-missing? false)
+      resp (r (request :put "/"))]
+  (fact "Put to missing can give 501" resp => NOT-IMPLEMENTED))
+
+(let [r (resource :method-allowed? [:put]
+                  :exists? false
+                  :can-put-to-missing? true)
+      resp (r (request :put "/"))]
+  (fact "Put to missing can give 201" resp => CREATED))
