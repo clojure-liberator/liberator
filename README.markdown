@@ -45,27 +45,26 @@ For the purposes of this example, I'll call this project ```servalan``` but (obv
 Notice that a new ```project.clj``` has been created - edit this and add
 the following entries in the ```dependencies``` vector.
 
-    [compojure "1.0.2"]
-    [ring/ring-jetty-adapter "1.1.0"]
-    [liberator "0.3.2"]
+```clojure
+[compojure "1.0.2"]
+[ring/ring-jetty-adapter "1.1.0"]
+[liberator "0.3.2"]
+```
 
 Edit the file ```src/servalan/core.clj```, adding the code in bold :-
 
-<pre>
+```clojure
 (ns servalan.core
-   <span style="font-weight: bold">(:use [liberator.core :only [defresource]])</span>)
+  (:use [liberator.core :only [defresource]]))
 
-<span style="font-weight: bold">
 (defresource my-first-resource
-  
   :available-media-types ["text/html" "text/plain"])
-</span>
 
 (defn -main
   "I don't do a whole lot."
   [& args]
   (println "Hello, World!"))
-</pre>
+```
 
 # Defining resources
 
@@ -73,7 +72,9 @@ Resources are created with ```resource``` taking keyword arguments.
 
 Here's the classic 'Hello World' example :-
 
-    (resource :handle-ok "Hello World!")
+```clojure
+(resource :handle-ok "Hello World!")
+```
 
 # Ring compatibility
 
@@ -86,26 +87,32 @@ Resources do not define routes but are compatible with routing libraries.
 
 For example, to route a request with Compojure, wrap your resource in a ```routes``` wrapper :-
 
-    (ns example
-      (:use [compojure.core :only [routes]]))
+```clojure
+(ns example
+  (:use [compojure.core :only [routes]]))
 
-    (routes 
-      (ANY "/greeting" [] 
-        (resource :handle-ok "Hello World!")))
+(routes 
+  (ANY "/greeting" [] 
+    (resource :handle-ok "Hello World!")))
+```
 
 To route a request with Moustache, declare your resource as the handler :-
 
-    (ns example
-        (:use [net.cgrand.moustache :only [app]]))
+```clojure
+(ns example
+    (:use [net.cgrand.moustache :only [app]]))
 
-    (app 
-      ["/greeting"] (resource :handle-ok "Hello World!"))
+(app 
+  ["/greeting"] (resource :handle-ok "Hello World!"))
+```
 
 # Named resources
 
 You may want to separate your routes from their target resources. There's a macro to provide a shorthand for this :-
 
-    (defresource greeting :handle-ok "Hello World!")
+```clojure
+(defresource greeting :handle-ok "Hello World!")
+```
 
 # Resource maps
 
@@ -126,9 +133,11 @@ When handling a web request, numerous decisions are made which determine the res
 
 For example, the ```method-allowed?``` decision dictates where a given request method should be accepted :-
 
-    (resource :handle-ok "Hello World!"
-              :service-available? true
-              :method-allowed? #(#{:get :put :post} (get-in % [:request :request-method])))
+```clojure
+(resource :handle-ok "Hello World!"
+          :service-available? true
+          :method-allowed? #(#{:get :put :post} (get-in % [:request :request-method])))
+```
 
 Decision values can be either constants evaluated at compile time or functions evaluated at runtime.
 
