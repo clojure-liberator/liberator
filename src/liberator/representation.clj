@@ -70,10 +70,10 @@
     (csv/write-csv *out* (seq data) :newline :cr+lf :separator sep)))
 
 (defmethod render-map-generic "text/csv" [data context]
-  (render-map-csv \, data))
+  (render-map-csv data \,))
 
 (defmethod render-map-generic "text/tab-separated-values" [data context]
-  (render-map-csv \, 9))
+  (render-map-csv data \tab))
 
 (defmethod render-map-generic "application/json" [data context]
   (json/write-str data))
