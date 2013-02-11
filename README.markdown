@@ -48,7 +48,7 @@ the following entries in the ```dependencies``` vector.
 ```clojure
 [compojure "1.0.2"]
 [ring/ring-jetty-adapter "1.1.0"]
-[liberator "0.3.2"]
+[liberator "0.8.0"]
 ```
 
 Edit the file ```src/servalan/core.clj```, adding the code in bold :-
