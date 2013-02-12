@@ -12,8 +12,7 @@
    [clojure.data.csv :as csv])
   (:use
    [hiccup.core :only [html]]
-   [hiccup.page :only [html5 xhtml]]
-   [clojure.tools.logging :only [logf]]))
+   [hiccup.page :only [html5 xhtml]]))
 
 ;; This namespace provides default 'out-of-the-box' web representations
 ;; for many IANA mime-types.
@@ -22,18 +21,13 @@
   `(if ~pred (-> ~form ~@term) ~form))
 
 (defprotocol Representation
-  (as-response [_ context]
+  (as-response [_ {represenation :represenation :as context}]
     "Coerce to a standard Ring response (a map
     containing :status, :headers and :body). Developers can call
     as-response directly, usually when they need to augment the context. It
     does all the charset conversion and encoding and returns are Ring
     response map so no further post-processing of the response will be
-    carried out.")
-  (render-item [_ context])
-  (in-charset [_ charset]
-    "Output characters of the type under a given charset encoding")
-  (encode [_ encoding]
-    "Encode the type into the given encoding (eg. gzip, compress)"))
+    carried out."))
 
 (defn default-dictionary [k lang]
   (if (instance? clojure.lang.Named k)
@@ -129,7 +123,7 @@
 (defmethod render-seq-generic "application/json" [data _]
   {:body
    (with-out-str
-     (json/write *out* data)
+     (json/write data *out*)
      (print "\r\n"))})
 
 (defn render-seq-csv
@@ -151,6 +145,15 @@
 
 (defmethod render-seq-generic "text/tab-separated-values" [data context]
   (render-seq-csv data context "\t"))
+
+
+(defmulti render-item (fn [m media-type] (type m)))
+
+(defmethod render-item clojure.lang.Associative [m media-type]
+  (render-map-generic m media-type))
+
+(defmethod render-item clojure.lang.Seqable [m media-type]
+  (render-seq-generic m media-type))
 
 (defmethod render-seq-generic "application/clojure"
   [data
@@ -175,6 +178,15 @@
     (render-seq-generic data (assoc-in context [:representation :media-type]
                                        "application/json"))))
 
+(defn in-charset [string charset]
+  (if (and charset (not (.equalsIgnoreCase charset "UTF-8")))
+    (java.io.ByteArrayInputStream.
+     (.getBytes string (java.nio.charset.Charset/forName charset)))
+      
+    ;; "If no Accept-Charset header is present, the default is that
+    ;; any character set is acceptable." (p101). In the case of Strings, it is unnecessary to convert to a byte stream now, and doing so might even make things harder for test-suites, so we just return the string.
+    string))
+
 
 ;; Representation embodies all the rules as to who should encode the content.
 ;; The aim is to do more for developer's who don't want to, while seeding control for developers who need it.
@@ -188,61 +200,26 @@
   (as-response [this _] nil) ; accept defaults
 
   ;; Maps are what we are trying to coerce into.
-  clojure.lang.APersistentMap
-  (as-response [this _] this)
-
-  (render-item [data context]
-    (render-map-generic data context))
+  clojure.lang.Associative
+  (as-response [this context] (render-map-generic this context))
 
   ;; If a string is returned, we should carry out the conversion of both the charset and the encoding.
   String
-  (as-response [this {:keys [representation resource] :as context}]
-    (let [charset (or (:charset representation)
-                         (if-let [ac (resource :available-charsets)]
-                           (first (ac context))))]
+  (as-response [this {representation :representation}]
+    (let [charset (get representation :charset "iso-8859-1")]
       {:body
-       (-> this
-           (in-charset charset)
-           (encode (:encoding representation)))
-       :headers {"Content-Type" (str (get representation :media-type "text/plain")
-                                     ";charset=" charset)}}))
-
-  (render-item [this context]
-    this)
-  
-  (in-charset [this charset]
-    (if (and charset (not (.equalsIgnoreCase charset "UTF-8")))
-      (java.io.ByteArrayInputStream.
-       (.getBytes this (java.nio.charset.Charset/forName charset)))
-      
-      ;; "If no Accept-Charset header is present, the default is that
-      ;; any character set is acceptable." (p101). In the case of Strings, it is unnecessary to convert to a byte stream now, and doing so might even make things harder for test-suites, so we just return the string.
-      this))
-
-  ;; TODO Convert strings to their encoded equivalents.
-  (encode [this encoding] this)
+       (in-charset this charset)
+       :headers {"Content-Type" (format "%s;charset=%s" (get representation :media-type "text/plain") charset)}}))
   
   ;; If an input-stream is returned, we have no way of telling whether it's been encoded properly (charset and encoding), so we have to assume it is, given that we told the developer what representation was negotiated.
   java.io.File
   (as-response [this _] {:body this})
   
-  java.io.InputStream
-  (as-response [this _] {:body this})
   ;; We assume the input stream is already in the requested
   ;; charset. Decoding and encoding an existing charset unnecessarily
   ;; would be expensive.
-  (in-charset [this charset] this)
-  (encode [this encoding]
-    (case encoding
-      "gzip" (java.util.zip.GZIPInputStream. this)
-      "identity" this
-      ;; "If no Accept-Encoding field is present in a request, the server
-      ;; MAY assume that the client will accept any content coding. In
-      ;; this case, if "identity" is one of the available content-codings,
-      ;; then the server SHOULD use the "identity" content-coding, unless
-      ;; it has additional information that a different content-coding is
-      ;; meaningful to the client." (p102)
-      nil this))
+  java.io.InputStream
+  (as-response [this _] {:body this})
 
   clojure.lang.PersistentVector
   (as-response [data context] (as-response (seq data) context))
@@ -251,10 +228,11 @@
   (as-response [data context]
     (render-seq-generic data context)))
 
-(defrecord MapRepresentation [m]
+;; define a wrapper to tell a generic Map from a Ring response map
+;; to return a ring response as the representation
+(defrecord RingResponse [m]
   Representation
   (as-response [this context]
-    {:body (render-item m context)}))
+    {:body this}))
 
-
-
+(defn ring-response [m] (->RingResponse m))
