@@ -211,6 +211,7 @@ Decision points can be :-
 * available-languages (declaration)
 * available-media-types (declaration)
 * can-post-to-missing? (decision)
+* can-put-to-missing? (decision)
 * charset-available? (decision)
 * conflict? (decision)
 * delete! (action)
