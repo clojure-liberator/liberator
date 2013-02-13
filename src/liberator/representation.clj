@@ -202,7 +202,7 @@
   ;; If a string is returned, we should carry out the conversion of both the charset and the encoding.
   String
   (as-response [this {representation :representation}]
-    (let [charset (get representation :charset "iso-8859-1")]
+    (let [charset (get representation :charset "UTF-8")]
       {:body
        (in-charset this charset)
        :headers {"Content-Type" (format "%s;charset=%s" (get representation :media-type "text/plain") charset)}}))
@@ -216,7 +216,7 @@
   ;; would be expensive.
   java.io.InputStream
   (as-response [this {representation :representation}]
-    (let [charset (get representation :charset "iso-8859-1")]
+    (let [charset (get representation :charset "UTF-8")]
       {:body this
        :headers {"Content-Type" (format "%s;charset=%s" (get representation :media-type "text/plain") charset)}})))
 
@@ -225,7 +225,7 @@
 (defrecord RingResponse [response]
   Representation
   (as-response [this context]
-    {:body response}))
+    response))
 
 (defn ring-response [map] (->RingResponse map))
 

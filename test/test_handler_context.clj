@@ -2,14 +2,15 @@
   (:use
    midje.sweet
    [ring.mock.request :only [request header]]
-   [liberator.core :only [defresource resource]]))
+   [liberator.core :only [defresource resource]]
+   [liberator.representation :only [ring-response]]))
 
 (defn ^:private negotiate [header-key resource-key representation-key available accepted]
   (-> (request :get "")
       (#(if accepted (header % header-key accepted) %))
       ((resource resource-key available
                  :handle-ok (fn [{representation :representation}]
-                              {:body (representation representation-key)})))
+                              (representation representation-key))))
       ((fn [resp] (if (= 200 (:status resp))
                     (:body resp)
                     (:status resp))))))
@@ -58,10 +59,11 @@
      (negotiate "Accept-Charset" :available-charsets :charset ?available ?accepted) => ?negotiated
      ?available ?accepted ?negotiated
      []          "ascii" 406
-     ["ascii"]     "ascii" "ascii"
+     ["utf-8"]     "ascii" 406
+     ["utf-8"]     "utf-8" "utf-8"
      ["ascii" "utf-8"] "utf-8" "utf-8"
      ["ascii" "utf-8"] "utf-8,fr" "utf-8"
-     ["ascii" "utf-8"] "utf-8;q=0.1,ascii" "ascii"
+     ["ascii" "utf-8"] "ascii;q=0.1,utf-8" "utf-8"
      ["ascii" "utf-8"] "utf-8;q=0.3,ascii;q=0.2;iso8859-1=0.9;iso-8859-2" "utf-8"))
   
   (facts "Encoding negotitation"

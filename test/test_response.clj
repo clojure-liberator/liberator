@@ -3,7 +3,8 @@
    midje.sweet
    [ring.mock.request :only [request header]]
    [compojure.core :only [context ANY]]
-   [liberator.core :only [defresource resource run-handler]]))
+   [liberator.core :only [defresource resource run-handler]]
+   [liberator.representation :only [ring-response]]))
 
 ;; TODO: Ensure that we use compojure.response/Renderable underneath in any body function
 
@@ -39,7 +40,7 @@
 (facts "Vary header is added automatically"
   (tabular "Parameter negotiation is added to vary header"
     (-> (run-handler "handle-ok" 200 "ok"
-                     {:resource {:handle-ok (fn [c] {:body "foo"})}
+                     {:resource {:handle-ok (fn [_] "body")}
                       :representation ?representation})
         (get-in [:headers "Vary"])) => ?vary
         ?representation ?vary
@@ -48,19 +49,19 @@
         {:media-type ""}      nil
         {:language "x"}       "Accept-Language"
         {:language nil}       nil
-        {:charset "x"}        "Accept-Charset"
+        {:charset "ASCII"}        "Accept-Charset"
         {:encoding "x"}       "Accept-Encoding"
         {:media-type "m"
          :language "l"
-         :charset "c"
+         :charset "ASCII"
          :encoding "x"}       "Accept, Accept-Charset, Accept-Language, Accept-Encoding"
         {:media-type "m"
-         :charset "c"
+         :charset "ASCII"
          :encoding "x"}       "Accept, Accept-Charset, Accept-Encoding")
   
   
   (fact "Vary header can be overriden by handler"
-    (-> (run-handler "handle-ok" 200 "ok" {:resource {:handle-ok (fn [c] {:body "ok" :headers {"Vary" "*"}})}
+        (-> (run-handler "handle-ok" 200 "ok" {:resource {:handle-ok (fn [c] (ring-response {:body "ok" :headers {"Vary" "*"}}))}
                                            :representation {:media-type "text/plain"}})
-        (get-in [:headers "Vary"]))
+            (get-in [:headers "Vary"]))
     => "*"))

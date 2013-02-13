@@ -77,8 +77,7 @@
                (case (get-in context [:representation :media-type])
                  ("text/html" "application/xhtml+xml")
                  (OlympicsHtmlPage. (str "examples.olympics.build_instance()"))
-                 (liberator.representation.MapRepresentation.
-                  (olympics/get-olympic-games (get-in context [:request ::id]))))))
+                 (olympics/get-olympic-games (get-in context [:request ::id])))))
 
 ;; Drag drop demo
 

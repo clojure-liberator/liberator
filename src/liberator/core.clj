@@ -145,45 +145,47 @@
     (if-let [handler (resource (keyword name))]
       (do
         (log "Handler" (keyword name))
-        (merge
+        (->> 
+         (merge
 
-           ;; Status
-           {:status status}
+          ;; Status
+          {:status status}
 
-           ;; ETags
-           (when-let [etag (gen-etag context)]
-             {:headers {"ETag" etag}})
+          ;; ETags
+          (when-let [etag (gen-etag context)]
+            {:headers {"ETag" etag}})
 
-           ;; Last modified
-           (when-let [last-modified (gen-last-modified context)]
-             {:headers {"Last-Modified" (http-date last-modified)}})
+          ;; Last modified
+          (when-let [last-modified (gen-last-modified context)]
+            {:headers {"Last-Modified" (http-date last-modified)}})
        
-           ;; Content negotiations
-           {:headers
-            (-> {} 
-                (set-header-maybe "Content-Type"
-                                  (str (:media-type representation)
-                                       (when-let [charset (:charset representation)] (str ";charset=" charset))))
-                (set-header-maybe "Content-Language" (:language representation))
-                (set-header-maybe "Content-Encoding"
-                                  (let [e (:encoding representation)]
-                                    (if-not (= "identity" e) e)))
-                (set-header-maybe "Vary" (build-vary-header representation)))}
-
-           ;; Finally the result of the handler.  We allow the handler to
-           ;; override the status and headers.
-           ;;
-           ;; The rules about who should take responsibility for encoding
-           ;; the response are defined in the BodyResponse protocol.
-           (let [handler-response (handler context)
-                 response (as-response handler-response context)]
-             ;; We get an obscure 'cannot be cast to java.util.Map$Entry'
-             ;; error if our BodyResponse function doesn't return a map,
-             ;; so we check it now.
-             (when-not (or (map? response) (nil? response))
-               (throw (Exception. (format "%s as-response function did not return a map (or nil) for instance of %s"
-                                          'Representation (type handler-response)))))
-             response)))
+          ;; Finally the result of the handler.  We allow the handler to
+          ;; override the status and headers.
+          ;;
+          ;; The rules about who should take responsibility for encoding
+          ;; the response are defined in the BodyResponse protocol.
+          (let [handler-response (handler context)
+                response (as-response handler-response context)]
+            ;; We get an obscure 'cannot be cast to java.util.Map$Entry'
+            ;; error if our BodyResponse function doesn't return a map,
+            ;; so we check it now.
+            (when-not (or (map? response) (nil? response))
+              (throw (Exception. (format "%s as-response function did not return a map (or nil) for instance of %s"
+                                         'Representation (type handler-response)))))
+            response))
+         ;; Content negotiations
+         (merge-with
+          merge
+          {:headers
+           (-> {} 
+               (set-header-maybe "Content-Type"
+                                 (str (:media-type representation)
+                                      (when-let [charset (:charset representation)] (str ";charset=" charset))))
+               (set-header-maybe "Content-Language" (:language representation))
+               (set-header-maybe "Content-Encoding"
+                                 (let [e (:encoding representation)]
+                                   (if-not (= "identity" e) e)))
+               (set-header-maybe "Vary" (build-vary-header representation)))})))
       
       ;; If there is no handler we just return the information we have so far.
       (do (log "Handler (default)" (keyword name))
