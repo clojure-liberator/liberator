@@ -37,13 +37,14 @@
 (defn html-table [data fields lang dictionary]
   [:div [:table 
          [:thead
-          (for [field fields] [:th (or (dictionary field lang)
-                                       (default-dictionary field lang))])]
+          [:tr 
+           (for [field fields] [:th (or (dictionary field lang)
+                                        (default-dictionary field lang))])]]
          [:tbody (for [row data]
                    [:tr
                     (for [field fields]
                       [:td (if-let [s (get row field)]
-                             (if (re-matches #"https?://.*" s)
+                             (if (re-matches #"https?://.*" (str s))
                                [:a {:href s} s]
                                s)
                              "")])])]]])
@@ -72,8 +73,12 @@
 (defmethod render-map-generic "application/json" [data context]
   (json/write-str data))
 
+(defn render-as-clojure [data]
+  (binding [*print-dup* true]
+    (with-out-str (pr data))))
+
 (defmethod render-map-generic "application/clojure" [data context]
-  (with-out-str (pr data)))
+  (render-as-clojure data))
 
 (defn- render-map-html-table
   [data
@@ -98,7 +103,6 @@
 (defmethod  render-map-generic "application/xhtml+xml" [data context]
   (render-map-html-table data context :html))
 
-
 (defmulti render-seq-generic (fn [data context] (get-in context [:representation :media-type])))
 
 (defn render-seq-html-table
@@ -107,11 +111,10 @@
     :keys [dictionary fields] :or {dictionary default-dictionary
                                    fields (keys (first data))}
     :as context} mode]
-  {:body
-   (let [content (html-table data fields language dictionary)]
-     (condp = mode
-       :html  (html content)
-       :xhtml (xhtml content)))})
+  (let [content (html-table data fields language dictionary)]
+    (condp = mode
+      :html  (html content)
+      :xhtml (xhtml content))))
 
 
 (defmethod render-seq-generic "text/html" [data context]
@@ -121,10 +124,10 @@
   (render-seq-html-table data context :html))
 
 (defmethod render-seq-generic "application/json" [data _]
-  {:body
-   (with-out-str
-     (json/write data *out*)
-     (print "\r\n"))})
+  (json/write-str data))
+
+(defmethod render-seq-generic "application/clojure" [data _]
+  (render-as-clojure data))
 
 (defn render-seq-csv
   [data
@@ -132,20 +135,23 @@
     :keys [dictionary fields] :or {dictionary default-dictionary
                                    fields (keys (first data))}
     :as context} sep]
-  {:body
-   (with-out-str
-     (csv/write-csv *out* [(map #(or (dictionary % language)
-                                     (default-dictionary % language)) fields)]
-                    :newline :cr+lf :separator sep)
-     (csv/write-csv *out* (map (apply juxt (map (fn [x] (fn [m] (get m x))) fields)) data)
-                    :newline :cr+lf :separator sep))})
+  (with-out-str
+    (csv/write-csv *out* [(map #(or (dictionary % language)
+                                    (default-dictionary % language)) fields)]
+                   :newline :cr+lf :separator sep)
+    (csv/write-csv *out* (map (apply juxt (map (fn [x] (fn [m] (get m x))) fields)) data)
+                   :newline :cr+lf :separator sep)))
 
 (defmethod render-seq-generic "text/csv" [data context]
    (render-seq-csv data context \,))
 
 (defmethod render-seq-generic "text/tab-separated-values" [data context]
-  (render-seq-csv data context "\t"))
+  (render-seq-csv data context \tab))
 
+(defmethod render-seq-generic "text/plain" [data context]
+  (clojure.string/join "\r\n\r\n"
+                       (map #(render-map-generic % context)
+                            data)))
 
 (defmulti render-item (fn [m media-type] (type m)))
 
@@ -155,26 +161,11 @@
 (defmethod render-item clojure.lang.Seqable [m media-type]
   (render-seq-generic m media-type))
 
-(defmethod render-seq-generic "application/clojure"
-  [data
-   {{:keys [language] :as representation} :representation
-    :keys [dictionary fields] :or {dictionary default-dictionary
-                                   fields (keys (first data))}
-    :as context}]
-  (->>
-   data
-   (map #(render-item % (assoc context
-                          :dictionary dictionary
-                          :fields fields)))
-   (interpose "\r\n")
-   (apply str)
-   (hash-map :body)))
-
 (defmethod render-seq-generic :default
   [data {{:keys [language media-type] :as representation} :representation :as context}]
   (if media-type
     {:status 500 :body
-     (format "Cannot render sequential data as %s" media-type language)}
+     (format "Cannot render sequential data as %s (language: %s)" media-type language)}
     (render-seq-generic data (assoc-in context [:representation :media-type]
                                        "application/json"))))
 
@@ -188,6 +179,7 @@
     string))
 
 
+
 ;; Representation embodies all the rules as to who should encode the content.
 ;; The aim is to do more for developer's who don't want to, while seeding control for developers who need it.
 ;;
@@ -199,9 +191,13 @@
   nil
   (as-response [this _] nil) ; accept defaults
 
-  ;; Maps are what we are trying to coerce into.
-  clojure.lang.Associative
-  (as-response [this context] (render-map-generic this context))
+  clojure.lang.Sequential
+  (as-response [data context]
+    (as-response (render-seq-generic data context) context))
+
+  clojure.lang.ILookup
+  (as-response [this context]
+    (as-response (render-map-generic this context) context))
 
   ;; If a string is returned, we should carry out the conversion of both the charset and the encoding.
   String
@@ -219,20 +215,17 @@
   ;; charset. Decoding and encoding an existing charset unnecessarily
   ;; would be expensive.
   java.io.InputStream
-  (as-response [this _] {:body this})
-
-  clojure.lang.PersistentVector
-  (as-response [data context] (as-response (seq data) context))
-
-  clojure.lang.ISeq
-  (as-response [data context]
-    (render-seq-generic data context)))
+  (as-response [this {representation :representation}]
+    (let [charset (get representation :charset "iso-8859-1")]
+      {:body this
+       :headers {"Content-Type" (format "%s;charset=%s" (get representation :media-type "text/plain") charset)}})))
 
 ;; define a wrapper to tell a generic Map from a Ring response map
 ;; to return a ring response as the representation
-(defrecord RingResponse [m]
+(defrecord RingResponse [response]
   Representation
   (as-response [this context]
-    {:body this}))
+    {:body response}))
 
-(defn ring-response [m] (->RingResponse m))
+(defn ring-response [map] (->RingResponse map))
+
