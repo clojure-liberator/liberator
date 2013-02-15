@@ -187,14 +187,22 @@ instances, plus the usual Clojure data types.
 
 ## Actions
 
-Actions work the same way as handlers but cannot return
-anything. Actions presume some side-effect will occur. They are called
-when some underlying resource state is to be mutated during the POST,
-PUT and DELETE methods of the HTTP protocol.
+Actions work the same way as decisions but to not branch to different
+ongoing decisions. Actions presume some side-effect will occur. They 
+are called when some underlying resource state is to be mutated during
+the POST, PUT and DELETE methods of the HTTP protocol. Actions can
+return an updated context the same way decisions do. However the boolean
+intepretation is ignored. 
+
+You can think of an action as a decision point where both branches lead
+to the same next decision.
 
 ## Declarations
 
-Declarations work the same way as decisions but return a value rather than a boolean. Resources indicate their capabilities via declarations. What each declaration should provide depends on the declaration type so you should check examples and documentation.
+Declarations work the same way as decisions but return a value rather
+than a boolean. Resources indicate their capabilities via declarations. 
+What each declaration should provide depends on the declaration type so 
+you should check examples and documentation.
 
 # Examples
 
