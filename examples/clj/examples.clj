@@ -28,9 +28,11 @@
 (def postbox-counter (atom 0))
 
 (defresource postbox
-  :method-allowed? (request-method-in :post)
+  :available-media-types ["text/plain"]
+  :method-allowed? (request-method-in :post :get )
   :post! (swap! postbox-counter inc)
-  :handle-created "Your submission was accepted.")
+  :handle-created (fn [_] (str "Your submission was accepted. The counter is now " @postbox-counter))
+  :handle-ok (fn [_] (str "The counter is " @postbox-counter)))
 
 ;; Content negotiation examples
 (defresource chameleon [mtypes]
@@ -45,6 +47,7 @@
 
 ;; Olympics
 (defresource olympic-games-index
+  :available-media-types ["text/html" "text/plain"]
   :handle-ok (fn [_] (olympics/get-olympic-games-index)))
 
 ;; We define a view that will pull in 
@@ -105,10 +108,14 @@
   :method-allowed? #(some #{(get-in % [:request :request-method])} [:get :post])
   :available-media-types ["text/html" "application/json" "text/plain"]
   :available-charsets ["utf-8"]
-  :create! (fn [context] (swap! athletes conj {:name (:name (json/read (io/reader (get-in context [:request :body]))))}))
+  :post! (fn [context] (swap! athletes conj {:name (get-in context [:request :params :name])}))
   :handle-ok (fn [context]
                (case (get-in context [:representation :media-type])
                  ;; If HTML, some presentation.
+                 ;; TODO: The drag-drop works, but is not quite right.
+                 ;; The clojurescript get request completes before the
+                 ;; post request completes, returning the state of the
+                 ;; atom right before the new athlete has been added.
                  ("text/html" "application/xhtml+xml")
                  (DragDropPage. "examples.dragdrop.build_page()")
                  ;; Otherwise 'just the data please'.
@@ -135,7 +142,8 @@
     (ANY "/static/*" [] static)
     (ANY ["/olympics/:stem" :stem #"m/.*"] [stem]
          (-> olympic-games
-             (wrap-binder ::id (str "/" stem)))))
+             (wrap-binder ::id (str "/" stem))))
+    (ANY "/postbox" [] postbox))
    (wrap-trace-as-response-header)))
 
 

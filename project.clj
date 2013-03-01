@@ -20,6 +20,7 @@
             [lein-ring "0.7.1" :exclusions [org.clojure/clojure]]]
 
   :profiles {:dev {:dependencies [[ring/ring-jetty-adapter "1.1.0"]
+                                  [ring/ring-json "0.2.0"]
                                   [ring-mock "0.1.2"]
                                   [ring/ring-devel "1.1.0"]
                                   [compojure "1.0.2" :exclusions [org.clojure/tools.macro]] ;; only for examples
