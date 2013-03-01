@@ -47,7 +47,7 @@
   (let [handler (ANY "/" [] examples/postbox)
         response (handler (request :post "/"))]
     response => CREATED
-    response => (body "Your submission was accepted.")
+    response => (body (contains "Your submission was accepted."))
     @examples/postbox-counter => 1)
   (against-background (before :facts (reset! examples/postbox-counter 0))))
 

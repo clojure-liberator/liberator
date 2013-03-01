@@ -28,9 +28,10 @@
 (def postbox-counter (atom 0))
 
 (defresource postbox
-  :method-allowed? (request-method-in :post)
-  :post! (swap! postbox-counter inc)
-  :handle-created "Your submission was accepted.")
+  :method-allowed? (request-method-in :post :get)
+  :post! (fn [_] (swap! postbox-counter inc))
+  :handle-created (fn [_] (str "Your submission was accepted. The counter is now " @postbox-counter))
+  :handle-ok (fn [_] (str "The counter is " @postbox-counter)))
 
 ;; Content negotiation examples
 (defresource chameleon [mtypes]
