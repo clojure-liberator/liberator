@@ -3,6 +3,7 @@
    [ring.adapter.jetty :as jetty])
   (:use
    [examples :only [assemble-routes]]
+   [ring.middleware.json :only [wrap-json-params]]
    [ring.middleware.multipart-params :only [wrap-multipart-params]]
    [ring.util.response :only [header]]
    [compojure.handler :only [api]]))
@@ -13,6 +14,7 @@
      (->
       (assemble-routes)
       api
+      wrap-json-params
       wrap-multipart-params)
      request)))
 
