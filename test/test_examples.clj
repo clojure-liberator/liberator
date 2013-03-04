@@ -43,12 +43,27 @@
       "en"      (body "Hello George!")
       "*"       (body "(check rfc-2616)")))))
 
-(facts "about POST"
+(facts "about postbox resource"
+  (let [handler (ANY "/" [] examples/postbox)
+        response (handler (request :get "/"))]
+    response => OK
+    response => (body "The counter is 0")
+    @examples/postbox-counter => 0)
   (let [handler (ANY "/" [] examples/postbox)
         response (handler (request :post "/"))]
     response => CREATED
-    response => (body "Your submission was accepted. Current value of postbox-counter: 0")
+    response => (body "Your submission was accepted. The counter is now 1")
     @examples/postbox-counter => 1)
+  (let [handler (ANY "/" [] examples/postbox)
+        response (handler (request :get "/"))]
+    response => OK
+    response => (body "The counter is 1")
+    @examples/postbox-counter => 1)
+  (let [handler (ANY "/" [] examples/postbox)
+        response (handler (request :post "/"))]
+    response => CREATED
+    response => (body "Your submission was accepted. The counter is now 2")
+    @examples/postbox-counter => 2)
   (against-background (before :facts (reset! examples/postbox-counter 0))))
 
 ;; TODO: Make defresource take arguments which produce resources
