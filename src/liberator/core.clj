@@ -230,15 +230,15 @@
 
 (defhandler handle-multiple-representations 310 nil) ; nil body because the body is reserved to reveal the actual representations available.
 
-(defdecision multiple-representations? handle-multiple-representations handle-ok)
+(defdecision ^{:step :O18} multiple-representations? handle-multiple-representations handle-ok)
 
-(defdecision respond-with-entity? multiple-representations? handle-no-content)
+(defdecision ^{:step :O20} respond-with-entity? multiple-representations? handle-no-content)
 
 (defhandler handle-created 201 nil)
 
-(defdecision new? handle-created respond-with-entity?)
+(defdecision ^{:step :P11} new? handle-created respond-with-entity?)
 
-(defdecision post-redirect? handle-see-other new?)
+(defdecision ^{:step :N11} post-redirect? handle-see-other new?)
 
 (defhandler handle-not-found 404 "Resource not found.")
 
@@ -259,13 +259,13 @@
 
 (defdecision ^{:step :N5} can-post-to-gone? post! handle-gone)
 
-(defdecision post-to-gone? (partial =method :post) can-post-to-gone? handle-gone)
+(defdecision ^{:step :M5} post-to-gone? (partial =method :post) can-post-to-gone? handle-gone)
 
-(defdecision moved-temporarily? handle-moved-temporarily post-to-gone?)
+(defdecision ^{:step :L5} moved-temporarily? handle-moved-temporarily post-to-gone?)
 
-(defdecision moved-permanently? handle-moved-permamently moved-temporarily?)
+(defdecision ^{:step :K5} moved-permanently? handle-moved-permamently moved-temporarily?)
 
-(defdecision existed? moved-permanently? post-to-missing?)
+(defdecision ^{:step :K7} existed? moved-permanently? post-to-missing?)
 
 (defhandler handle-conflict 409 "Conflict.")
 
@@ -277,13 +277,13 @@
 
 (defdecision can-put-to-missing? conflict? handle-not-implemented)
 
-(defdecision put-to-different-url? handle-moved-permamently can-put-to-missing?)
+(defdecision ^{:step :I4} put-to-different-url? handle-moved-permamently can-put-to-missing?)
 
-(defdecision method-put? (partial =method :put) put-to-different-url? existed?)
+(defdecision ^{:step :I7} method-put? (partial =method :put) put-to-different-url? existed?)
 
 (defhandler handle-precondition-failed 412 "Precondition failed.")
 
-(defdecision if-match-star-exists-for-missing? 
+(defdecision ^{:step :H7} if-match-star-exists-for-missing? 
   if-match-star
   handle-precondition-failed
   method-put?)
@@ -303,7 +303,7 @@
 
 (defhandler handle-accepted 202 "Accepted")
 
-(defdecision delete-enacted? respond-with-entity? handle-accepted)
+(defdecision ^{:step :M20} delete-enacted? respond-with-entity? handle-accepted)
 
 (defaction delete! delete-enacted?)
 
@@ -387,11 +387,11 @@
 (defdecision ^{:step :G8} if-match-exists? (partial header-exists? "if-match")
   if-match-star? if-unmodified-since-exists?)
 
-(defdecision exists? if-match-exists? if-match-star-exists-for-missing?)
+(defdecision ^{:step :G7} exists? if-match-exists? if-match-star-exists-for-missing?)
 
 (defhandler handle-not-acceptable 406 "No acceptable resource available.")
 
-(defdecision encoding-available? 
+(defdecision ^{:step :F7} encoding-available? 
   (fn [ctx]
     (when-let [encoding (conneg/best-allowed-encoding
                          (get-in ctx [:request :headers "accept-encoding"])
@@ -406,10 +406,10 @@
           (throw (ProtocolException.
                   (format "Malformed %s header" ~header) e#)))))
 
-(defdecision accept-encoding-exists? (partial header-exists? "accept-encoding")
+(defdecision ^{:step :F6} accept-encoding-exists? (partial header-exists? "accept-encoding")
   encoding-available? exists?)
 
-(defdecision charset-available?
+(defdecision ^{:step :E6} charset-available?
   #(try-header "Accept-Charset"
                (when-let [charset (conneg/best-allowed-charset
                                    (get-in % [:request :headers "accept-charset"])
@@ -419,11 +419,11 @@
                    {:representation {:charset charset}})))
   accept-encoding-exists? handle-not-acceptable)
 
-(defdecision accept-charset-exists? (partial header-exists? "accept-charset")
+(defdecision ^{:step :E5} accept-charset-exists? (partial header-exists? "accept-charset")
   charset-available? accept-encoding-exists?)
 
 
-(defdecision language-available?
+(defdecision ^{:step :D5} language-available?
   #(try-header "Accept-Language"
                (when-let [lang (conneg/best-allowed-language
                                 (get-in % [:request :headers "accept-language"]) 
@@ -433,7 +433,7 @@
                    {:representation {:language lang}})))
   accept-charset-exists? handle-not-acceptable)
 
-(defdecision accept-language-exists? (partial header-exists? "accept-language")
+(defdecision ^{:step :D4} accept-language-exists? (partial header-exists? "accept-language")
   language-available? accept-charset-exists?)
 
 (defn negotiate-media-type [context]
@@ -443,10 +443,10 @@
                                ((get-in context [:resource :available-media-types] "text/html") context))]
                 {:representation {:media-type (conneg/stringify type)}})))
 
-(defdecision media-type-available? negotiate-media-type
+(defdecision ^{:step :C4} media-type-available? negotiate-media-type
   accept-language-exists? handle-not-acceptable)
 
-(defn accept-exists? [context]
+(defn ^{:step :C3} accept-exists? [context]
   (decide :accept-exists?
           #(if (header-exists? "accept" %)
              true
@@ -464,36 +464,36 @@
 (defn generate-options-header [{:keys [resource request]}]
   {:headers ((:generate-options-header resource) request)})
 
-(defdecision is-options? #(= :options (:request-method (:request %))) generate-options-header accept-exists?)
+(defdecision ^{:step :B3} is-options? (partial =method :options) generate-options-header accept-exists?)
 
 (defhandler handle-request-entity-too-large 413 "Request entity too large.")
-(defdecision valid-entity-length? is-options? handle-request-entity-too-large)
+(defdecision ^{:step :B4} valid-entity-length? is-options? handle-request-entity-too-large)
 
 (defhandler handle-unsupported-media-type 415 "Unsupported media type.")
-(defdecision known-content-type? valid-entity-length? handle-unsupported-media-type)
+(defdecision ^{:step :B5} known-content-type? valid-entity-length? handle-unsupported-media-type)
 
-(defdecision valid-content-header? known-content-type? handle-not-implemented)
+(defdecision ^{:step :B6} valid-content-header? known-content-type? handle-not-implemented)
 
 (defhandler handle-forbidden 403 "Forbidden.")
-(defdecision allowed? valid-content-header? handle-forbidden)
+(defdecision ^{:step :B7} allowed? valid-content-header? handle-forbidden)
 
 (defhandler handle-unauthorized 401 "Not authorized.")
-(defdecision authorized? allowed? handle-unauthorized)
+(defdecision ^{:step :B8} authorized? allowed? handle-unauthorized)
 
 (defhandler handle-malformed 400 "Bad request.")
-(defdecision malformed? handle-malformed authorized?)
+(defdecision ^{:step :B9} malformed? handle-malformed authorized?)
 
 (defhandler handle-method-not-allowed 405 "Method not allowed.")
-(defdecision method-allowed? coll-validator malformed? handle-method-not-allowed)
+(defdecision ^{:step :B10} method-allowed? coll-validator malformed? handle-method-not-allowed)
 
 (defhandler handle-uri-too-long 414 "Request URI too long.")
-(defdecision uri-too-long? handle-uri-too-long method-allowed?)
+(defdecision ^{:step :B11} uri-too-long? handle-uri-too-long method-allowed?)
 
 (defhandler handle-unknown-method 501 "Unknown method.")
-(defdecision known-method? uri-too-long? handle-unknown-method)
+(defdecision ^{:step :B12} known-method? uri-too-long? handle-unknown-method)
 
 (defhandler handle-service-not-available 503 "Service not available.")
-(defdecision service-available? known-method? handle-service-not-available)
+(defdecision ^{:step :B13} service-available? known-method? handle-service-not-available)
 
 (def default-functions 
      {
