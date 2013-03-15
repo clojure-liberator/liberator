@@ -19,7 +19,7 @@
 
 ;; Language negotiation
 (defresource hello-george
-  :available-media-types ["text/plain"] 
+  :available-media-types ["text/plain" "text/html"] 
   :handle-ok (fn [context] (case (get-in context [:representation :language])
                              "en" "Hello George!"
                              "bg" "Zdravej, Georgi"
@@ -138,7 +138,6 @@
                         [:li [:a {:href "/drag-drop"} "Drag and Drop (featuring clojure script)"]]
                         [:li [:a {:href "/drag-drop/athletes"} "Athletes"]]
                         [:li [:a {:href "/x-liberator/requests/"} "Liberator request dump"]]]]))) 
-;; Routes
 
 (defn assemble-routes []
   (->
