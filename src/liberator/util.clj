@@ -1,5 +1,5 @@
 (ns liberator.util
-  (:use liberator.core :only [make-function])
+  (:use [liberator.core :only [make-function]])
   (:import java.util.TimeZone
            java.text.SimpleDateFormat
            java.util.Locale
