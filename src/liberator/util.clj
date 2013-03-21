@@ -1,4 +1,5 @@
 (ns liberator.util
+  (:use liberator.core :only [make-function])
   (:import java.util.TimeZone
            java.text.SimpleDateFormat
            java.util.Locale
@@ -33,4 +34,4 @@
   (fn [ctx]
     (let [m (apply hash-map kvs)
           method (get-in ctx [:request :request-method])]
-      (if-let [d (or (get m method) (get m :any))] (d ctx)))))
+      (if-let [fd (make-function (or (get m method) (get m :any)))] (fd ctx)))))
