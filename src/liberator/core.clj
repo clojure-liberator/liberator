@@ -9,7 +9,7 @@
 (ns liberator.core
   (:require [liberator.conneg :as conneg])
   (:use
-   [liberator.util :only [parse-http-date http-date]]
+   [liberator.util :only [parse-http-date http-date make-function]]
    [liberator.representation :only [Representation as-response]]
    [clojure.tools.trace :only [trace]])
   (:import (javax.xml.ws ProtocolException)))
@@ -68,9 +68,6 @@
 
 (defn map-values [f m]
   (apply hash-map (apply concat (map (fn [k] [k (f (m k))]) (keys m)))))
-
-(defn make-function [x]
-  (if (fn? x) x (constantly x)))
 
 (defn request-method-in [& methods]
   #(some #{(:request-method (:request %))} methods))

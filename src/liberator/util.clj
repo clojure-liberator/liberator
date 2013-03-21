@@ -1,9 +1,11 @@
 (ns liberator.util
-  (:use [liberator.core :only [make-function]])
   (:import java.util.TimeZone
            java.text.SimpleDateFormat
            java.util.Locale
            java.util.Date))
+
+(defn make-function [x]
+  (if (fn? x) x (constantly x)))
 
 (defn apply-if-function [function-or-value request]
   (if (fn? function-or-value)
