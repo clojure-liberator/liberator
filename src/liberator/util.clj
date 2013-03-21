@@ -28,3 +28,9 @@
     (try 		      
       (.parse (http-date-format) date-string)
       (catch java.text.ParseException e nil))))
+
+(defn by-method [& kvs]
+  (fn [ctx]
+    (let [m (apply hash-map kvs)
+          method (get-in ctx [:request :request-method])]
+      (if-let [d (or (get m method) (get m :any))] (d ctx)))))
