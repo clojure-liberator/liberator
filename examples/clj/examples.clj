@@ -155,8 +155,8 @@
     (ANY ["/olympics/:stem" :stem #"m/.*"] [stem]
          (-> olympic-games
              (wrap-binder ::id (str "/" stem)))))
-   ;; wrap-trace-ui and wrap-trace-as-response-header currently collide
-   ;; also unify with with decision logging for graph creation
+   (dev/wrap-trace)
+   (dev/wrap-trace-header)
    (dev/wrap-trace-ui)))
 
 

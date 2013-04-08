@@ -29,36 +29,47 @@
 (defn seconds-ago [d]
   (int  (/ (- ( System/currentTimeMillis) (.getTime d)) 1000)))
 
+(defn log-by-id [id]
+  (first (filter (fn [[aid _]] (= id aid)) @logs)))
+
 (defresource log-handler [id]
   :available-media-types ["text/html" "application/json"]
-  :exists? (fn [ctx] (if-let [l (first (filter (fn [[aid _]] (= id aid)) @logs))]
-                      (assoc ctx ::log l)))
-  :handle-ok (fn [{[_ [d r log]] ::log {media-type :media-type} :representation}]
-               (condp = media-type
-                 "text/html"
-                 (html5
-                  [:head
-                   [:title "Liberator Request Trace #" id " at " d]]
-                  [:body
-                   [:a {:href mount-url} "List of all traces"]
-                   [:h1 "Liberator Request Trace #" id " at " d " (" (seconds-ago d) "s ago)"]
-                   [:h2 "Request was &quot;" [:span {:style "text-transform: uppercase"}
-                                              (:request-method r)] " " [:span (:uri r)] "&quot;"]
-                   [:h3 "Parameters"]
-                   [:dl (mapcat (fn [[k v]] [[:dt (h k)] [:dd (h v)]]) (:params r))]
-                   [:h3 "Headers"]
-                   [:dl (mapcat (fn [[k v]] [[:dt (h k)] [:dd (h v)]]) (:headers r))]
-                   [:h3 "Trace"]
-                   [:ol (map (fn [[l r]] [:li (h l) ": " (h (string/join " " r))]) log)]
-                   [:h3 "Full Request"]
-                   [:pre [:tt (h (with-out-str (clojure.pprint/pprint r)))]]])
-                 "application/json"
-                 (json/pprint-json log)))
-  :handle-not-found (fn [ctx]
-                      (html5 [:head [:title "Liberator Request Trace #" id " not found."]]
-                             [:body [:h1 "Liberator Request Trace #" id " not found."]
-                              [:p "The requested trace was not found. Maybe it is expired."]
-                              [:p "You can access a " [:a {:href mount-url} "list of traces"] "."]])))
+  :exists? (fn [ctx] (assoc ctx ::log (log-by-id id)))
+  :handle-ok
+  (fn [{[_ [d r log]] ::log {media-type :media-type} :representation}]
+    (condp = media-type
+      "text/html"
+      (html5
+       [:head
+        [:title "Liberator Request Trace #" id " at " d]]
+       [:body
+        [:a {:href mount-url} "List of all traces"]
+        [:h1 "Liberator Request Trace #" id " at " d " (" (seconds-ago d) "s ago)"]
+        [:h2 "Request was &quot;" [:span {:style "text-transform: uppercase"}
+                                   (:request-method r)] " " [:span (:uri r)] "&quot;"]
+        [:h3 "Parameters"]
+        [:dl (mapcat (fn [[k v]] [[:dt (h k)] [:dd (h v)]]) (:params r))]
+        [:h3 "Headers"]
+        [:dl (mapcat (fn [[k v]] [[:dt (h k)] [:dd (h v)]]) (:headers r))]
+        [:h3 "Trace"]
+        [:ol (map (fn [[l r]] [:li (h l) ": " (h (string/join " " r))]) log)]
+        [:h3 "Full Request"]
+        [:pre [:tt (h (with-out-str (clojure.pprint/pprint r)))]]])
+      "application/json"
+      (with-out-str
+        (json/write {:date (str d)
+                     :request {:method (:request-method r)
+                               :uri (:uri r)
+                               :parameters (:params r)
+                               :headers (:headers r)}
+                     :trace log} *out*))))
+
+  :handle-not-found
+  (fn [ctx]
+    (html5 [:head [:title "Liberator Request Trace #" id " not found."]]
+           [:body [:h1 "Liberator Request Trace #" id " not found."]
+            [:p "The requested trace was not found. Maybe it is expired."]
+            [:p "You can access a " [:a {:href mount-url} "list of traces"] "."]])))
 
 (defresource list-handler
   :available-media-types ["text/html"]
@@ -72,7 +83,8 @@
                    [:div
                     [:p "No request traces have been recorded, yet."]
                     [:p "wrap your handler with " [:code "wrap-trace-ui"] " to enable logging."
-                     "The link to the log will be available as a " [:code "Link"] " header in the http response."]]
+                     "The link to the log will be available as a " [:code "Link"]
+                     " header in the http response."]]
                    [:ol (map (fn [[id [d {:keys [request-method uri]} log]]]
                                [:ul
                                 [:a {:href (h (str (with-slash mount-url) id))}
@@ -84,10 +96,16 @@
 (defn include-trace-css []
   (include-css (css-url)))
 
+(defn trace-url
+  "Build the url under which the trace information can be found for the
+   given trace id"
+  [id]
+  (str (with-slash mount-url) id))
+
 (defn current-trace-url
   "Return the url under with the trace of the current request can be accessed"
   []
-  (str (with-slash mount-url) *current-id*))
+  (trace-url *current-id*))
 
 (defn include-trace-panel
   "Create a html snippet with a link to the current requests' trace"
@@ -114,7 +132,23 @@
   border: 1px solid #999;
   border-radius: .3em;
   text-align: center;
-}")
+}"
+  :etag "1")
+
+(defn wrap-trace [handler]
+  (fn [request]
+    (let [request-log (atom [])]
+      (binding [*current-id* (next-id)]
+        (core/with-logger (core/atom-logger request-log)
+          (let [resp (handler request)]
+            (if-not (empty? @request-log)
+              (do
+                (save-log! *current-id*
+                           [(Date.)
+                            (select-keys request [:request-method :uri :headers])
+                            @request-log])
+                (assoc-in resp [:headers "X-Liberator-Trace-Id"] *current-id*))
+              resp)))))))
 
 (defn wrap-trace-ui [handler]
   (let [base-url (with-slash mount-url)]
@@ -123,17 +157,19 @@
      (ANY [(str base-url ":id") :id #".+"] [id] #((log-handler id) %))
      (ANY [(str base-url ":id")  :id #""] [id] list-handler)
      (ANY base-url [] list-handler)
-     (fn [request]
-       (let [request-log (atom [])]
-         (binding [*current-id* (next-id)]
-           (core/with-logger (core/atom-logger request-log)
-             (let [resp (handler request)]
-               (if-not (empty? @request-log)
-                 (do
-                   (save-log! *current-id* [(Date.)
-                                       (select-keys request [:request-method :uri :headers])
-                                       @request-log])
-                   (-> resp (update-in [:headers "Link"]
-                                       #(str % (str "\n</" (current-trace-url) ">"
-                                                    "; rel=x-liberator-trace")))))
-                 resp)))))))))
+     (fn [req]
+       (let [resp (handler req)]
+         (if-let [id (get-in resp [:headers "X-Liberator-Trace-Id"])]
+           (update-in resp [:headers "Link"]
+                      #(str % (str "\n</" (trace-url id) ">"
+                                   "; rel=x-liberator-trace")))
+           resp))))))
+
+(defn wrap-trace-header [handler]
+  (fn [req]
+    (let [resp (handler req)] ()
+      (if-let [id (get-in resp [:headers "X-Liberator-Trace-Id"])]
+        (let [[_ [_ _ l]] (log-by-id id)]
+          (assoc-in resp [:headers "X-Liberator-Trace"]
+                    (map #(clojure.string/join " " %) l)))
+        resp))))
