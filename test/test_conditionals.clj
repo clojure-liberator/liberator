@@ -20,6 +20,7 @@
 
 
 ;; get requests
+
 (facts "get requests"
   (facts "if-modified-since true"
     (let [resp ((resource :exists? true
@@ -28,7 +29,8 @@
                 (-> (request :get "/")
                     (if-modified-since (http-date (as-date 1000)))))]
       (fact resp => OK)
-      (fact resp => (body "OK"))))
+      (fact resp => (body "OK"))
+      (fact resp => (header-value "Last-Modified" (http-date (as-date 1000))))))
 
   (facts "if-modified-since false"
     (let [resp ((resource :exists? true
@@ -36,7 +38,8 @@
                 (-> (request :get "/")
                     (if-modified-since (http-date (as-date 1000)))))]
       (fact resp => NOT-MODIFIED)
-      (fact resp => (body nil?))))
+      (fact resp => (body nil?))
+      (fact resp => (header-value "Last-Modified" (http-date (as-date 1000))))))
 
   (facts "if-unmodified-since true"
     (let [resp ((resource :exists? true
@@ -63,7 +66,8 @@
                 (-> (request :get "/")
                     (if-match "TAG1")))]
       (fact resp => OK)
-      (fact resp => (body "OK"))))
+      (fact resp => (body "OK"))
+      (fact resp => (header-value "ETag" "\"TAG1\""))))
 
  (facts "if-match false"
     (let [resp ((resource :exists? true
@@ -204,3 +208,4 @@
    :post
    :put
    :delete))
+

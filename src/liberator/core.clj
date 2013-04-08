@@ -73,9 +73,9 @@
   #(some #{(:request-method (:request %))} methods))
 
 (defn gen-etag [context]
-  (or (context ::etag)
-      (if-let [f ((:resource context) :etag)]
-	(format "\"%s\"" (f context)))))
+  (get context ::etag
+       (if-let [f ((:resource context) :etag)]
+         (format "\"%s\"" (f context)))))
 
 (defn gen-last-modified [context]
   (or (::last-modified context)
@@ -144,7 +144,7 @@
       (do
         (log! :handler (keyword name))
         (->>
-         (merge
+         (merge-with combine
 
           ;; Status
           {:status status}
