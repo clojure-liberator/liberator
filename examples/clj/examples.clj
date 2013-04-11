@@ -5,7 +5,6 @@
             [liberator.dev :as dev])
   (:use [liberator.core :only [defresource request-method-in]]
         [liberator.representation :only [Representation]]
-        [liberator.dev :only [wrap-trace-ui]]
         [compojure.core :only [context ANY routes defroutes]]
         [hiccup.page :only [html5]]
         [clojure.string :only [split]]
@@ -15,6 +14,7 @@
 ;; The classic 'Hello World' example.
 (defresource hello-world
   :handle-ok "Hello World!"
+  :etag "fixed-etag"
   :available-media-types ["text/plain"])
 
 ;; Language negotiation
@@ -67,6 +67,7 @@
              [:div#content]
              (dev/include-trace-panel)
              (javascript-tag main)])}))
+
 
 (defresource olympic-games-index-fancy
   :available-media-types ["text/html" "application/xhtml+xml;q=0.8" "*/*;q=0.6"]
@@ -154,8 +155,6 @@
     (ANY ["/olympics/:stem" :stem #"m/.*"] [stem]
          (-> olympic-games
              (wrap-binder ::id (str "/" stem)))))
-   (dev/wrap-trace)
-   (dev/wrap-trace-header)
-   (dev/wrap-trace-ui)))
+   (dev/wrap-trace :ui :header)))
 
 

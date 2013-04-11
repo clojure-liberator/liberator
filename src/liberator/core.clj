@@ -212,11 +212,11 @@
 (defmethod to-location nil [this] this)
 
 (defn- handle-moved [name]
-  (fn [{:keys [resource] :as context}]
+  (fn [{resource :resource :as context}]
     (if-let [f (or (get resource name) (make-function (get context :location)))]
       (to-location (f context))
       {:status 500
-       :body (format "Internal Server error: no location specified. Provide %s" name)})))
+       :body (format "Internal Server error: no location specified for %s" name)})))
 
 ;; Provide :see-other which returns a location or override :handle-see-other
 (defhandler handle-see-other 303 nil)
@@ -253,6 +253,8 @@
 (defhandler handle-moved-temporarily 307 nil)
 
 (defdecision can-post-to-gone? post! handle-gone)
+
+
 
 (defdecision post-to-gone? (partial =method :post) can-post-to-gone? handle-gone)
 
@@ -311,14 +313,14 @@
   (fn [context]
     (let [last-modified (gen-last-modified context)]
       [(and last-modified (.after last-modified (::if-modified-since-date context)))
-       (assoc context ::last-modified last-modified)]))
+       {::last-modified last-modified}]))
   method-delete?
   handle-not-modified)
 
 (defdecision if-modified-since-valid-date?
   (fn [context] 
     (if-let [date (parse-http-date (get-in context [:request :headers "if-modified-since"]))]
-      (assoc context ::if-modified-since-date date)))
+      {::if-modified-since-date date}))
   modified-since?
   method-delete?)
 
@@ -331,7 +333,7 @@
   (fn [context]
     (let [etag (gen-etag context)]
       [(= (get-in context [:request :headers "if-none-match"]) etag)
-       (assoc context ::etag etag)]))
+       {::etag etag}]))
   if-none-match
   if-modified-since-exists?)
 
@@ -347,9 +349,9 @@
   (fn [context]
     (let [last-modified (gen-last-modified context)]
       [(and last-modified
-             (.after last-modified
-                     (::if-unmodified-since-date context)))
-       (assoc context ::last-modified last-modified)]))
+            (.after last-modified
+                    (::if-unmodified-since-date context)))
+       {::last-modified last-modified}]))
   handle-precondition-failed
   if-none-match-exists?)
 

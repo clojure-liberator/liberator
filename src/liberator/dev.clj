@@ -3,7 +3,8 @@
         hiccup.page
         compojure.core
         clojure.tools.trace
-        [liberator.core :only [defresource]])
+        [liberator.core :only [defresource]]
+        [clojure.string :only [join]])
   (:require [liberator.core :as core]
             [clojure.string :as string]
             [clojure.data.json :as json])
@@ -32,9 +33,17 @@
 (defn log-by-id [id]
   (first (filter (fn [[aid _]] (= id aid)) @logs)))
 
+;; see graph/clean-id, unitfy
+(defn- clean-id [str]
+  (clojure.string/replace str #"[^a-zA-Z0-9_]+" ""))
+
+(defn result->bool [r]
+  (if (vector? r) (first r)
+      r))
+
 (defresource log-handler [id]
   :available-media-types ["text/html" "application/json"]
-  :exists? (fn [ctx] (assoc ctx ::log (log-by-id id)))
+  :exists? (fn [ctx] (if-let [l (log-by-id id)] (assoc ctx ::log l)))
   :handle-ok
   (fn [{[_ [d r log]] ::log {media-type :media-type} :representation}]
     (condp = media-type
@@ -42,6 +51,35 @@
       (html5
        [:head
         [:title "Liberator Request Trace #" id " at " d]]
+       [:script
+        (join "\n"
+              [""
+               "function insertStyle() {"
+               "var svg = document.getElementById(\"trace\").contentDocument;\n"
+               "var style = svg.createElementNS(\"http://www.w3.org/2000/svg\",\"style\"); "
+               (str  "style.textContent = '"
+                     (clojure.string/replace 
+                      (slurp (clojure.java.io/resource "liberator/trace.css"))
+                      #"[\r\n]" " ") "'; ")
+               "var root = svg.getElementsByTagName(\"svg\")[0];"
+               "root.appendChild(style);  "
+               "root.setAttribute(\"width\", \"100%\"); root.setAttribute(\"height\", \"100%\"); "
+               (join "\n"
+                     (map (fn [[l [n r]]]
+                            (format
+                             "svg.getElementById(\"%s\").setAttribute(\"class\", svg.getElementById(\"%s\").getAttribute(\"class\") + \" %s\"); " (clean-id n) (clean-id n) (if (result->bool r) "hl-true" "hl-false"))) log))
+
+               (join "\n"
+                     (map (fn [[[l1 [n1 r1]] [lr2 [n2 r2]]]]
+                             (let [id (format "%s_%s" (clean-id n1) (clean-id n2))]
+                               (format
+                                "svg.getElementById(\"%s\").setAttribute(\"class\", svg.getElementById(\"%s\").getAttribute(\"class\") + \" %s\");" id id (if (result->bool r1) "hl-true" "hl-false"))))
+                          (map vector log (rest log))))
+               
+               "};"
+               "setTimeout(function(){insertStyle()}, 500);"
+               
+               ""])]
        [:body
         [:a {:href mount-url} "List of all traces"]
         [:h1 "Liberator Request Trace #" id " at " d " (" (seconds-ago d) "s ago)"]
@@ -52,7 +90,13 @@
         [:h3 "Headers"]
         [:dl (mapcat (fn [[k v]] [[:dt (h k)] [:dd (h v)]]) (:headers r))]
         [:h3 "Trace"]
-        [:ol (map (fn [[l r]] [:li (h l) ": " (h (string/join " " r))]) log)]
+        [:ol (map (fn [[l [n r]]] [:li (h l) ": " (h n) " "
+                                  (if (nil? r) [:em "nil"] (h (pr-str r)))]) log)]
+        [:div {:style "text-align: center;"}
+         [:object {:id "trace" :data (str mount-url "trace.svg") :width "90%"
+                   :style "border: 1px solid #666;"}]]
+
+        
         [:h3 "Full Request"]
         [:pre [:tt (h (with-out-str (clojure.pprint/pprint r)))]]])
       "application/json"
@@ -120,10 +164,10 @@
   display:block;
   
   position:absolute;
-  bottom:0;
+  top:0;
   right:0;
   
-  margin-bottom: 1em;
+  margin-top: 1em;
   margin-right: 1em;
   padding: 0 1em;
   color: #333;
@@ -135,41 +179,60 @@
 }"
   :etag "1")
 
-(defn wrap-trace [handler]
-  (fn [request]
-    (let [request-log (atom [])]
-      (binding [*current-id* (next-id)]
-        (core/with-logger (core/atom-logger request-log)
-          (let [resp (handler request)]
-            (if-not (empty? @request-log)
-              (do
-                (save-log! *current-id*
-                           [(Date.)
-                            (select-keys request [:request-method :uri :headers])
-                            @request-log])
-                (assoc-in resp [:headers "X-Liberator-Trace-Id"] *current-id*))
-              resp)))))))
+(def trace-id-header "X-Liberator-Trace-Id")
 
-(defn wrap-trace-ui [handler]
+(def trace-svg (clojure.java.io/resource "liberator/trace.svg"))
+
+(defn- wrap-trace-ui [handler]
   (let [base-url (with-slash mount-url)]
     (routes
+     ;;           (fn [_] 
+     (GET (str base-url "trace.svg") [] (fn [_]  trace-svg))
      (ANY (str base-url "styles.css") [] styles)
      (ANY [(str base-url ":id") :id #".+"] [id] #((log-handler id) %))
      (ANY [(str base-url ":id")  :id #""] [id] list-handler)
      (ANY base-url [] list-handler)
      (fn [req]
        (let [resp (handler req)]
-         (if-let [id (get-in resp [:headers "X-Liberator-Trace-Id"])]
+         (if-let [id (get-in resp [:headers trace-id-header])]
            (update-in resp [:headers "Link"]
                       #(str % (str "\n</" (trace-url id) ">"
                                    "; rel=x-liberator-trace")))
            resp))))))
 
-(defn wrap-trace-header [handler]
+(defn- wrap-trace-header [handler]
   (fn [req]
-    (let [resp (handler req)] ()
-      (if-let [id (get-in resp [:headers "X-Liberator-Trace-Id"])]
+    (let [resp (handler req)]
+      (if-let [id (get-in resp [:headers trace-id-header])]
         (let [[_ [_ _ l]] (log-by-id id)]
           (assoc-in resp [:headers "X-Liberator-Trace"]
                     (map #(clojure.string/join " " %) l)))
         resp))))
+
+(defn- cond-wrap [fn expr wrapper]
+  (if expr (wrapper fn) fn))
+
+(defn wrap-trace
+  "Wraps a ring handler such that a request trace is generated.
+
+   Supported options:
+
+   :ui     - Include link to a resource that dumps the current request
+   :header - Include full trace in response header"
+  [handler & opts]
+  (-> 
+   (fn [request]
+     (let [request-log (atom [])]
+       (binding [*current-id* (next-id)]
+         (core/with-logger (core/atom-logger request-log)
+           (let [resp (handler request)]
+             (if-not (empty? @request-log)
+               (do
+                 (save-log! *current-id*
+                            [(Date.)
+                             (select-keys request [:request-method :uri :headers])
+                             @request-log])
+                 (assoc-in resp [:headers trace-id-header] *current-id*))
+               resp))))))
+   (cond-wrap (some #{:ui} opts) wrap-trace-ui)
+   (cond-wrap (some #{:header} opts) wrap-trace-header)))

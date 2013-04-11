@@ -1,0 +1,16 @@
+#start.node ellipse { stroke: #0000dd; fill: rgba(0,221,0,0.1); stroke-width: 3;}
+#start.node ellipse { stroke: #0000dd; fill: rgba(0,221,0,0.1); stroke-width: 3;}
+#start_serviceavailable path { stroke: #0000dd; stroke-width: 3;}
+#start_serviceavailable polygon { fill: #0000dd; stroke: #0000dd; stroke-width: 3;}
+
+.node.hl-true polygon { stroke: #0000dd; stroke-width: 3;}
+.node.hl-true text { fill: #0000dd; }
+.edge.hl-true path { stroke: #008800; stroke-width: 3;}
+.edge.hl-true polygon { fill: #008800; stroke: #008800; stroke-width: 3;}
+.edge.hl-true text { fill: #008800; } 
+
+.node.hl-false polygon { stroke: #0000dd; stroke-width: 3;}
+.node.hl-false text { fill: #0000dd; }
+.edge.hl-false path { stroke: #dd0000; stroke-width: 3;}
+.edge.hl-false polygon { fill: #dd0000; stroke: #dd0000; stroke-width: 3;}
+.edge.hl-false text { fill: #dd0000; } 
