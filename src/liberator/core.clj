@@ -139,37 +139,23 @@
 (defn run-handler [name status message
                    {:keys [resource request representation] :as context}]
   (let [context (assoc context :status status :message message)]
-    (if-let [handler (get resource (keyword name))]
-      (do
-        (log! :handler (keyword name))
-        (->> 
-         (merge-with combine
+    (merge-with
+     combine
 
-                     ;; Status
-                     {:status status}
+     ;; Status
+     {:status status}
 
-                     ;; ETags
-                     (when-let [etag (gen-etag context)]
-                       {:headers {"ETag" etag}})
+     ;; ETags
+     (when-let [etag (gen-etag context)]
+       {:headers {"ETag" etag}})
 
-                     ;; Last modified
-                     (when-let [last-modified (gen-last-modified context)]
-                       {:headers {"Last-Modified" (http-date last-modified)}})
-                     
-                     ;; Finally the result of the handler.  We allow the handler to
-                     ;; override the status and headers.
-                     ;;
-                     ;; The rules about who should take responsibility for encoding
-                     ;; the response are defined in the BodyResponse protocol.
-                     (let [handler-response (handler context)
-                           response (as-response handler-response context)]
-                       ;; We get an obscure 'cannot be cast to java.util.Map$Entry'
-                       ;; error if our BodyResponse function doesn't return a map,
-                       ;; so we check it now.
-                       (when-not (or (map? response) (nil? response))
-                         (throw (Exception. (format "%s as-response function did not return a map (or nil) for instance of %s"
-                                                    'Representation (type handler-response)))))
-                       response))
+     ;; Last modified
+     (when-let [last-modified (gen-last-modified context)]
+       {:headers {"Last-Modified" (http-date last-modified)}})
+     
+     (if-let [handler (get resource (keyword name))]
+       (do
+         (log! :handler (keyword name))
          ;; Content negotiations
          (merge-with
           merge
@@ -182,13 +168,28 @@
                (set-header-maybe "Content-Encoding"
                                  (let [e (:encoding representation)]
                                    (if-not (= "identity" e) e)))
-               (set-header-maybe "Vary" (build-vary-header representation)))})))
+               (set-header-maybe "Vary" (build-vary-header representation)))}
+          ;; Finally the result of the handler.  We allow the handler to
+          ;; override the status and headers.
+          ;;
+          ;; The rules about who should take responsibility for encoding
+          ;; the response are defined in the BodyResponse protocol.
+          (let [handler-response (handler context)
+                response (as-response handler-response context)]
+            ;; We get an obscure 'cannot be cast to java.util.Map$Entry'
+            ;; error if our BodyResponse function doesn't return a map,
+            ;; so we check it now.
+            (when-not (or (map? response) (nil? response))
+              (throw (Exception. (format "%s as-response function did not return a map (or nil) for instance of %s"
+                                         'Representation (type handler-response)))))
+            response)
+          ))
 
-      ;; If there is no handler we just return the information we have so far.
-      (do (log! :handler (keyword name) "(default implementation)")
-          {:status status 
-           :headers {"Content-Type" "text/plain"} 
-           :body (if (fn? message) (message context) message)}))))
+       ;; If there is no handler we just return the information we have so far.
+       (do (log! :handler (keyword name) "(default implementation)")
+           {:status status 
+            :headers {"Content-Type" "text/plain"} 
+            :body (if (fn? message) (message context) message)})))))
 
 (defmacro ^:private defhandler [name status message]
   `(defn ~name [context#]
@@ -485,59 +486,59 @@
 (defdecision service-available? known-method? handle-service-not-available)
 
 (def default-functions 
-     {
-      ;; Decisions
-      :service-available?        true
-      :known-method?             (request-method-in :get :head :options
-						   :put :post :delete :trace)
-      :uri-too-long?             false
-      :method-allowed?           (request-method-in :get :head)
-      :malformed?                false
-;;      :encoding-available?       true
-;;      :charset-available?        true
-      :authorized?               true
-      :allowed?                  true
-      :valid-content-header?     true
-      :known-content-type?       true
-      :valid-entity-length?      true
-      :exists?                   true
-      :existed?                  false
-      :respond-with-entity?      false
-      :new?                      true
-      :post-redirect?            false
-      :put-to-different-url?     false
-      :multiple-representations? false
-      :conflict?                 false
-      :can-post-to-missing?      true
-      :can-put-to-missing?       true
-      :moved-permanently?        false
-      :moved-temporarily?        false
-      :delete-enacted?           true
+  {
+   ;; Decisions
+   :service-available?        true
+   :known-method?             (request-method-in :get :head :options
+                                                 :put :post :delete :trace)
+   :uri-too-long?             false
+   :method-allowed?           (request-method-in :get :head)
+   :malformed?                false
+   ;;      :encoding-available?       true
+   ;;      :charset-available?        true
+   :authorized?               true
+   :allowed?                  true
+   :valid-content-header?     true
+   :known-content-type?       true
+   :valid-entity-length?      true
+   :exists?                   true
+   :existed?                  false
+   :respond-with-entity?      false
+   :new?                      true
+   :post-redirect?            false
+   :put-to-different-url?     false
+   :multiple-representations? false
+   :conflict?                 false
+   :can-post-to-missing?      true
+   :can-put-to-missing?       true
+   :moved-permanently?        false
+   :moved-temporarily?        false
+   :delete-enacted?           true
 
-      ;; Handlers
-      :handle-ok                 "OK"
-      :handle-see-other          (handle-moved :see-other)
-      :handle-moved-temporarily  (handle-moved :moved-temporarily)
-      :handle-moved-permanently  (handle-moved :moved-permanently)
-      
+   ;; Handlers
+   :handle-ok                 "OK"
+   :handle-see-other          (handle-moved :see-other)
+   :handle-moved-temporarily  (handle-moved :moved-temporarily)
+   :handle-moved-permanently  (handle-moved :moved-permanently)
+   
 
-      ;; Imperatives. Doesn't matter about decision outcome, both
-      ;; outcomes follow the same route.
-      :post!                     true
-      :put!                      true
-      :delete!                   true
+   ;; Imperatives. Doesn't matter about decision outcome, both
+   ;; outcomes follow the same route.
+   :post!                     true
+   :put!                      true
+   :delete!                   true
 
-      ;; Directives
-      :available-media-types     []
+   ;; Directives
+   :available-media-types     []
 
-      ;; "If no Content-Language is specified, the default is that the
-      ;; content is intended for all language audiences. This might mean
-      ;; that the sender does not consider it to be specific to any
-      ;; natural language, or that the sender does not know for which
-      ;; language it is intended."
-      :available-languages       ["*"]
-      :available-charsets        ["UTF-8"]
-      :available-encodings       ["identity"]})
+   ;; "If no Content-Language is specified, the default is that the
+   ;; content is intended for all language audiences. This might mean
+   ;; that the sender does not consider it to be specific to any
+   ;; natural language, or that the sender does not know for which
+   ;; language it is intended."
+   :available-languages       ["*"]
+   :available-charsets        ["UTF-8"]
+   :available-encodings       ["identity"]})
 
 ;; resources are a map of implementation methods
 (defn run-resource [request kvs]
