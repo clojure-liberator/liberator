@@ -1,5 +1,5 @@
 (ns test-conditionals
-  (:use [liberator.core :only [resource as-date request-method-in
+  (:use [liberator.core :only [resource request-method-in
                                with-console-logger]]
         midje.sweet
         checkers

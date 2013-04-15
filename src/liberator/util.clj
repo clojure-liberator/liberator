@@ -9,6 +9,16 @@
     (function-or-value request)
     function-or-value))
 
+(defprotocol DateCoercions
+  (as-date [_]))
+
+(extend-protocol DateCoercions
+  java.util.Date
+  (as-date [this] this)
+  Long
+  (as-date [millis-since-epoch]
+    (java.util.Date. millis-since-epoch)))
+
 (defn http-date-format []
   (let [df (new SimpleDateFormat
                 "EEE, dd MMM yyyy HH:mm:ss"

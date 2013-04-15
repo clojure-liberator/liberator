@@ -9,19 +9,9 @@
 (ns liberator.core
   (:require [liberator.conneg :as conneg])
   (:use
-   [liberator.util :only [parse-http-date http-date]]
+   [liberator.util :only [parse-http-date http-date as-date]]
    [liberator.representation :only [Representation as-response ring-response]])
   (:import (javax.xml.ws ProtocolException)))
-
-(defprotocol DateCoercions
-  (as-date [_]))
-
-(extend-protocol DateCoercions
-  java.util.Date
-  (as-date [this] this)
-  Long
-  (as-date [millis-since-epoch]
-    (java.util.Date. millis-since-epoch)))
 
 (defmulti coll-validator
   "Return a function that evaluaties if the give argument 
