@@ -107,3 +107,23 @@
                   :can-put-to-missing? true)
       resp (r (request :put "/"))]
   (fact "Put to missing can give 201" resp => CREATED))
+
+(facts "Head requests"
+  (facts "on existing resource"
+    (let [resp ((resource :exists? true :handle-ok "OK") (request :head "/"))]
+      (fact resp => OK)
+      (fact resp => (content-type "text/plain;charset=UTF-8"))
+      (fact resp => (no-body))))
+  
+  (facts "unexisting resource"
+    (let [resp ((resource :exists? false :handle-not-found "NOT-FOUND") (request :head "/"))]
+      (fact resp => NOT-FOUND)
+      (fact resp => (no-body))))
+  
+  (facts "on moved temporarily"
+    (let [resp ((resource :exists? false
+                          :existed? true
+                          :moved-temporarily? {:location "http://new.example.com/"})
+                (request :get "/"))]
+      (fact resp => (MOVED-TEMPORARILY "http://new.example.com/"))
+      (fact resp => (no-body)))))

@@ -10,6 +10,7 @@
   (:require [liberator.conneg :as conneg])
   (:use
    [liberator.util :only [parse-http-date http-date as-date]]
+   [clojure.tools.trace :only [trace]]
    [liberator.representation :only [Representation as-response ring-response]])
   (:import (javax.xml.ws ProtocolException)))
 
@@ -112,10 +113,10 @@
 (defmacro defaction [name next]
   `(defdecision ~name ~next ~next))
 
-(defn set-header-maybe [res name value]
-  (if (and value (not (empty? value)))
-    (assoc res name (str value))
-    res))
+(defn set-header-maybe [headers name value]
+  (if-not (empty? value)
+    (assoc headers name value)
+    headers))
 
 (defn build-vary-header [{:keys [media-type charset language encoding] :as represenation}]
   (->> [(when-not (empty? media-type) "Accept")
@@ -128,58 +129,61 @@
 
 (defn run-handler [name status message
                    {:keys [resource request representation] :as context}]
-  (let [context (assoc context :status status :message message)]
-    (merge-with
-     combine
+  (let [context (assoc context :status status :message message)
+        response 
+        (merge-with
+         combine
 
-     ;; Status
-     {:status status}
+         ;; Status
+         {:status status}
 
-     ;; ETags
-     (when-let [etag (gen-etag context)]
-       {:headers {"ETag" etag}})
-
-     ;; Last modified
-     (when-let [last-modified (gen-last-modified context)]
-       {:headers {"Last-Modified" (http-date last-modified)}})
+         ;; ETags
+         (when-let [etag (gen-etag context)]
+           {:headers {"ETag" etag}})
+         
+         ;; Last modified
+         (when-let [last-modified (gen-last-modified context)]
+           {:headers {"Last-Modified" (http-date last-modified)}})
      
-     (if-let [handler (get resource (keyword name))]
-       (do
-         (log! :handler (keyword name))
-         ;; Content negotiations
-         (merge-with
-          merge
-          {:headers
-           (-> {} 
-               (set-header-maybe "Content-Type"
-                                 (str (:media-type representation)
-                                      (when-let [charset (:charset representation)] (str ";charset=" charset))))
-               (set-header-maybe "Content-Language" (:language representation))
-               (set-header-maybe "Content-Encoding"
-                                 (let [e (:encoding representation)]
-                                   (if-not (= "identity" e) e)))
-               (set-header-maybe "Vary" (build-vary-header representation)))}
-          ;; Finally the result of the handler.  We allow the handler to
-          ;; override the status and headers.
-          ;;
-          ;; The rules about who should take responsibility for encoding
-          ;; the response are defined in the BodyResponse protocol.
-          (let [handler-response (handler context)
-                response (as-response handler-response context)]
-            ;; We get an obscure 'cannot be cast to java.util.Map$Entry'
-            ;; error if our BodyResponse function doesn't return a map,
-            ;; so we check it now.
-            (when-not (or (map? response) (nil? response))
-              (throw (Exception. (format "%s as-response function did not return a map (or nil) for instance of %s"
-                                         'Representation (type handler-response)))))
-            response)
-          ))
+         (if-let [handler (get resource (keyword name))]
+           (do
+             (log! :handler (keyword name))
+             ;; Content negotiations         
+             (merge-with
+              merge
+              {:headers
+               (-> {} 
+                   (set-header-maybe "Content-Type"
+                                     (str (:media-type representation)
+                                          (when-let [charset (:charset representation)] (str ";charset=" charset))))
+                   (set-header-maybe "Content-Language" (:language representation))
+                   (set-header-maybe "Content-Encoding"
+                                     (let [e (:encoding representation)]
+                                       (if-not (= "identity" e) e)))
+                   (set-header-maybe "Vary" (build-vary-header representation)))}
+              ;; Finally the result of the handler.  We allow the handler to
+              ;; override the status and headers.
+              ;;
+              ;; The rules about who should take responsibility for encoding
+              ;; the response are defined in the BodyResponse protocol.
+              (let [handler-response (handler context)
+                    response (as-response handler-response context)]
+                ;; We get an obscure 'cannot be cast to java.util.Map$Entry'
+                ;; error if our BodyResponse function doesn't return a map,
+                ;; so we check it now.
+                (when-not (or (map? response) (nil? response))
+                  (throw (Exception. (format "%s as-response function did not return a map (or nil) for instance of %s"
+                                             'Representation (type handler-response)))))
+                response)))
 
-       ;; If there is no handler we just return the information we have so far.
-       (do (log! :handler (keyword name) "(default implementation)")
-           {:status status 
-            :headers {"Content-Type" "text/plain"} 
-            :body (if (fn? message) (message context) message)})))))
+           ;; If there is no handler we just return the information we have so far.
+           (do (log! :handler (keyword name) "(default implementation)")
+               {:status status 
+                :headers {"Content-Type" "text/plain"} 
+                :body (if (fn? message) (message context) message)})))]
+    (if-not (= :head (:request-method request))
+      response
+      (dissoc response :body))))
 
 (defmacro ^:private defhandler [name status message]
   `(defn ~name [context#]

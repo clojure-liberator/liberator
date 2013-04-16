@@ -17,6 +17,9 @@
 (defchecker body [expected]
   (contains {:body expected}))
 
+(defchecker no-body []
+  (fn [actual] (nil? (:body actual))))
+
 (defchecker header-value [header expected]
   (fn [actual]
     (= (get-in actual [:headers header]) expected)))
