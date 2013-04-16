@@ -434,6 +434,8 @@
      true
      ;; "If no Accept header field is present, then it is assumed that the
      ;; client accepts all media types" [p100]
+     ;; in this case we do content-type negotiaion using */* as the accept
+     ;; specification
      (if-let [type (liberator.conneg/best-allowed-content-type 
                     "*/*"
                     ((get-in context [:resource :available-media-types]) context))]
@@ -475,14 +477,25 @@
 (defhandler handle-service-not-available 503 "Service not available.")
 (defdecision service-available? known-method? handle-service-not-available)
 
+(defn test-request-method [valid-methods-key]
+  (fn [{{m :request-method} :request
+       {vm valid-methods-key} :resource
+       :as ctx}]
+    (some #{m} (vm ctx))))
+
 (def default-functions 
   {
    ;; Decisions
    :service-available?        true
-   :known-method?             (request-method-in :get :head :options
-                                                 :put :post :delete :trace)
+
+   :known-methods             [:get :head :options :put :post :delete :trace]
+   :known-method?             (test-request-method :known-methods)
+
    :uri-too-long?             false
-   :method-allowed?           (request-method-in :get :head)
+
+   :allowed-methods           [:get :head]
+   :method-allowed?           (test-request-method :allowed-methods)
+
    :malformed?                false
    ;;      :encoding-available?       true
    ;;      :charset-available?        true
