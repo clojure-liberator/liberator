@@ -195,7 +195,7 @@
   (as-response [data context]
     (as-response (render-seq-generic data context) context))
 
-  clojure.lang.ILookup
+  clojure.lang.MapEquivalence
   (as-response [this context]
     (as-response (render-map-generic this context) context))
 
