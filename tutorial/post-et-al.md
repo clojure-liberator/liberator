@@ -6,7 +6,7 @@ title: Tutorial - Handling POST et. al.
 
 There's more than GET and HEAD requests. To be a useful web library
 you better support POST, PUT and DELETE as well, and so does
-liberator. While there are even more HTTP methods than those, liberate
+liberator. While there are even more HTTP methods than those, liberator
 has no out-of-the-box support for them and treat them like GET requests.
 In any case you need to declare them as known and allowed.
 
@@ -14,7 +14,7 @@ In any case you need to declare them as known and allowed.
 
 Post requests share a lot of the decision flow with GET requests. The
 main difference is that you can also reach the handlers
-````:created````, ````:no-content```` and ````:see-other````. Becuase
+````:created````, ````:no-content```` and ````:see-other````. Because
 post is a non-idempotent method, you can provide a function for the
 key ````:post!```` which is optimal for changing the state on the
 server. The negotiation of the status code is done afterwards. For the
@@ -36,8 +36,8 @@ An idiomatic way to support post is the following:
                   (let [body (get-in ctx [:request :body])
                         id   (count (alter posts conj body))]
                     {::id id})))
-        ;; acutally http requires absolute urls for redirect but let's
-        ;; keep things simple. 
+        ;; actually http requires absolute urls for redirect but let's
+        ;; keep things simple.
         :post-redirect? true
         :location (fn [ctx] (format "/postbox/%s" (::id ctx)))))
 {% endhighlight %}
@@ -60,8 +60,8 @@ was made since it checked the resource:
                   (let [body (get-in ctx [:request :body])
                         id   (count (alter posts conj body))]
                     {::id id})))
-        ;; acutally http requires absolute urls for redirect but let's
-        ;; keep things simple. 
+        ;; actually http requires absolute urls for redirect but let's
+        ;; keep things simple.
         :post-redirect? true
         :location (fn [ctx] (format "/postbox/%s" (::id ctx)))
         :etag (fn [_] (str (count @posts)))))
@@ -109,7 +109,7 @@ Precondition failed.
 The necessary steps to implement handling of PUT are mostly those for
 POST. A key difference is that ````:can-put-to-missing?```` can lead
 to ````:conflict?```` which can send you to ````:handle-conflict````.
-This is not possible for POST requests. On the other hand q PUT to a
+This is not possible for POST requests. On the other hand PUT to a
 nonexisting resource does not allow a response that sends you to a
 different location. The necessary flow can be seen as always on the
 chart.
