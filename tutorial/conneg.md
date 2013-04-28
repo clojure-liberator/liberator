@@ -5,7 +5,7 @@ layout: tutorial
 # Content Negotiation
 
 HTTP supports a rich set of methods to negotiate the represenation of
-a resource. The client tells the server it's preferences on
+a resource. The client tells the server its preferences on
 media-type, character set, content encoding and language and the
 server uses this information to select the best representation
 available.
@@ -14,7 +14,7 @@ available.
 
 A typical use case with liberator is the support of multiple media
 types. Out of the box, liberator supports response generation for
-arbitrary clojure values as JSON, clojure forms and some others. You
+arbitrary clojure values such as JSON, clojure forms and some others. You
 can also return a String, File or InputStream from a handler which
 will be returned basically literally.
 
@@ -35,7 +35,7 @@ key :media-type-available? instead of :available-media-types. The
 default implementation uses :available-media-types to gain a list of
 possible types does the negotation with the Accept-Header and stores
 the outcome in the representation map. This is in most cases more
-conveinient than doing this by manually.</div>
+convenient than doing this manually.</div>
 
 An example will illustrate how the things fit togehter:
 
@@ -80,9 +80,9 @@ $ curl -v http://localhost:3000/babel
 You requested plain text* Closing connection #0
 {% endhighlight %}
 
-You can see the curl sent an ````Accept````-Header of "*/*" which means
+You can see that curl sent an ````Accept````-Header of "*/*" which means
 that it accepts any media type. In this case, liberator will return
-use the first available media type.
+the first available media type.
 
 Let's try to be more specific and tell that we accept json and clojure
 but prefer clojure. (This was expected, right?)
@@ -143,11 +143,11 @@ Uh, Oh, I cannot speak those languages!* Closing connection #0
 If you watched closely then you observed that liberator automatically
 returns a value for the ````Vary```` header. The value of the header
 is filled from the negotiated parameters in the representation map.
-If you negotiated on e.g. media-type and lanuage than it will be set
+If you negotiated on e.g. media-type and language then it will be set
 to ````Accept, Accept-Language````. The header is used by caching
 proxies and caching user agents to tell apart different representation of
 the same resource. Thus it is vital that it is set correctly. If not,
-clients will received cached values in the wrong media-type and worse.
+clients will receive cached values in the wrong media-type and worse.
 
 ## More negotiatable parameters
 
@@ -160,18 +160,17 @@ representation map at the keys ````:media-type````, ````:language````,
 If a handler returns a string for the representation then liberator
 will return an inputstream for a bytestream representation of the
 string in the negotiated character set. You can use ````(keys
-(java.nio.charset.Charset/availableCharsets))```` to obtail the
-supported characters on your platform.
+(java.nio.charset.Charset/availableCharsets))```` to obtain the
+supported character sets on your platform.
 
 <div class="alert alert-info">Automatic character encoding is only
 supported if a handler returns a string value. If it returns an
-inputstream then liberator expected it to be already encoded
+inputstream then liberator expect it to be already encoded
 correctly. Reencoding is, while technically possible, in general
 a costly and unnecessary operation. In the case that you absolutely
-need it you can reencoding an inputstream in the handler.</div>
+need it you can reencode an inputstream in the handler.</div>
 
 The parameter ````:encoding```` has no further support from liberator.
-While content-encoding will typically done by a reverse proxy in front
-of your application, nothing prevents you return a compressed
+While content-encoding will typically be done by a reverse proxy in front
+of your application, nothing prevents you to return a compressed
 representation in the handler if requested.
-</div>

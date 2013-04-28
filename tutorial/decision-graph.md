@@ -15,7 +15,7 @@ in which decisions and places where the path splits into two.
 The flowchart always ends at a handler (at the bottom of the chart)
 which determines the HTTP status code in the response.
 
-On deciding how to implemented the behaviour you have designed for
+On deciding how to implement the behaviour you have designed for
 your resource you will often have this diagram in front of you to
 decide which functions to replace:
 
@@ -34,7 +34,7 @@ send a response.
 
 For every decision in the graph you can supply a function in your
 resource definition which will be called to obtain a boolean value.
-You can e.g. access a request parameter to decise if a certain
+You can e.g. access a request parameter to decide if a certain
 resource exists. We wrap the handler in a ring middleware to gain easy
 access to the parameters:
 
@@ -50,7 +50,7 @@ access to the parameters:
 
 In this example we've given a function that checks if the request
 parameter "word" equals the secret word. If it returns true, then
-liberator finally reaches ````handle-ok```` else if will call
+liberator finally reaches ````handle-ok```` else it will call
  ```handle-not-found```.
 
 Every decision function takes a single parameter, the context, which
@@ -58,7 +58,7 @@ is a map. The ring request map is available at the key
 ````:request````, we use it here to access the request parameter.
 
 We can also manipulate the context in a decision function. This is
-usefull when we want to pass along a value to a handler:
+useful when we want to pass along a value to a handler:
 
 {% highlight clojure %}
 (ANY "/choice" []
@@ -76,7 +76,7 @@ usefull when we want to pass along a value to a handler:
                                              (get ctx :choice "")))))
 {% endhighlight %}
 
-In this example we check if there is a entry in a map for the
+In this example we check if there is an entry in a map for the
 parameter "choice" and if we found one, we return a map:
 ````{:choice choice}````. Liberator merges a map that is returned from
 a decision function with the current context. This way we can easily
@@ -84,7 +84,7 @@ store the value for the choice and retrieve it later in the handle-ok
 function: ````(get ctx :choice)````.
 
 <div class="alert alert-info">Storing data in the context is an
-idiomatic pattern in liberator. The exits?-decision is a good location
+idiomatic pattern in liberator. The exists?-decision is a good location
 to lookup an entity from a database. By doing so you can avoid
 repeated costly lookups in later decision functions or in the handler.
 </div>
