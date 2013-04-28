@@ -2,3 +2,4 @@ permalink: /:title
 safe: false
 lsi: false
 pygments: true
+url: http://clojure-liberator.github.io/liberator/
