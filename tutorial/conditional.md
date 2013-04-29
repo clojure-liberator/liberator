@@ -6,7 +6,7 @@ title: Tutorial - Conditional Requests
 
 A key feature of HTTP is the support for conditional requests. This
 allows the user agent to check the freshness of a cached
-representation or to prevent updated of a resource based on a stale
+representation or to prevent update of a resource based on a stale
 local representation. Liberator provides the client with the necessary
 information and informs the client if the representation was not
 modified.
@@ -16,7 +16,7 @@ modified.
 To enable the conditional request based on the time of the last
 modification, a resource must provide a function at the key
 ````:last-modified````. The value returned by this function will be
-picked up by the default implementaiton of the decision function
+picked up by the default implementation of the decision function
 ````:modified-since?```` and used to check against the request header
 ````If-Modified-Since````.
 

@@ -21,14 +21,14 @@ enable you to create application according to a REST architecture.
 Liberator resources are ring handlers and fit exactly in the clojure
 web development environment. Typicall you will use liberator together
 with a routing library like compojure and a library to generate the
-representation in HTML, like hiccup or liberary that generates json.
+representation in HTML, like hiccup or library that generates json.
 
 For more Information about adding the web server component, see the
 [Ring documentation](https://github.com/ring-clojure/ring/wiki).
 
 ## Installation and getting started
 
-Liberator is available from clojars. add liberator to your project.clj as
+Liberator is available from clojars. Add liberator to your project.clj as
 
 ````[liberator "0.8.0"]````
 
@@ -65,7 +65,7 @@ Edit liberator_tutorial/core.clj where we define our first resource:
 {% endhighlight %}
 
 Load the namespace and jetty will be started on port 3000. However,
-the result of pointing your browser are somewhat disappointing: 
+the result of pointing your browser is somewhat disappointing: 
 "No acceptable resource available." To fix this we simply must
 declare which kind of media type we are able to offer, e.g. 
 "text/html". So change the definition as follows:
@@ -76,14 +76,14 @@ declare which kind of media type we are able to offer, e.g.
 {% endhighlight %}
 
 The result is promising but we likely want to return something more
-dynamcis. For this we declare a handler function that will be invoked
+dynamic. For this we declare a handler function that will be invoked
 for the http status code 200 "OK":
 
 {% highlight clojure %}
 (defroutes app
   (ANY "/foo" [] (resource :available-media-types ["text/html"]
                            :handle-ok (fn [ctx]
-                                        (format "<html>It's %d milliseconds since the begin of the epoch."
+                                        (format "<html>It's %d milliseconds since the beginning of the epoch."
                                                 (System/currentTimeMillis))))))
 
 {% endhighlight %}
@@ -103,5 +103,5 @@ Method not allowed.
 {% endhighlight %}
 
 Wohoo! Exactly what I'd expect. But how did liberator determine that
-it must send a 405 status? It uses a graph of decisions wich is
+it must send a 405 status? It uses a graph of decisions which is
 described in the next part: [Decision graph](decision-graph.html).
