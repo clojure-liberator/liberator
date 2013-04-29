@@ -17,7 +17,9 @@
   (as-date [this] this)
   Long
   (as-date [millis-since-epoch]
-    (java.util.Date. millis-since-epoch)))
+    (java.util.Date. millis-since-epoch))
+  nil
+  (as-date [this] nil))
 
 (defn http-date-format []
   (let [df (new SimpleDateFormat

@@ -136,6 +136,18 @@
        (fact resp => CREATED)
        (fact resp => (body "CREATED"))))
 
+   (facts "if-unmodified-since with last-modified changes due do post"
+          (let [resp ((resource :exists? true
+                                :method-allowed? (request-method-in ?method)
+                                :post! (fn [ctx] {::LM 1001})
+                                :handle-created "CREATED"
+                                :last-modified (fn [ctx] (as-date (get ctx ::LM 1000))))
+                      (-> (request ?method "/")
+                          (if-unmodified-since (http-date (as-date 1000)))))]
+            (fact resp => CREATED)
+            (fact resp => (body "CREATED"))
+            (fact resp => (header-value "Last-Modified" (as-date 1001)))))
+
    (facts "if-match true"
      (let [resp ((resource :exists? true
                            :method-allowed? (request-method-in ?method)

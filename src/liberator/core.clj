@@ -63,14 +63,12 @@
   #(some #{(:request-method (:request %))} methods))
 
 (defn gen-etag [context]
-  (get context ::etag
-       (if-let [f ((:resource context) :etag)]
-         (format "\"%s\"" (f context)))))
+  (if-let [f (get-in context [:resource :etag])]
+    (format "\"%s\"" (f context))))
 
 (defn gen-last-modified [context]
-  (or (::last-modified context)
-      (if-let [f (get-in context [:resource :last-modified])]
-	(as-date (f context)))))
+  (if-let [f (get-in context [:resource :last-modified])]
+    (as-date (f context))))
 
 ;; A more sophisticated update of the request than a simple merge
 ;; provides.  This allows decisions to return maps which modify the
@@ -208,7 +206,7 @@
 
 (defn- handle-moved [name]
   (fn [{resource :resource :as context}]
-    (if-let [f (or (get resource name) (make-function (get context :location)))]
+    (if-let [f (or (get resource name) (make-function (get resource :location)))]
       (to-location (f context))
       {:status 500
        :body (format "Internal Server error: no location specified for %s" name)})))
