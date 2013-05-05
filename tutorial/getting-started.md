@@ -66,18 +66,21 @@ Edit liberator_tutorial/core.clj where we define our first resource:
 
 Load the namespace and jetty will be started on port 3000. However,
 the result of pointing your browser is somewhat disappointing: 
-"No acceptable resource available." To fix this we simply must
+"OK". To get a more exciting result we simply must
 declare which kind of media type we are able to offer, e.g. 
-"text/html". So change the definition as follows:
+"text/html" and set a handler for the status ````200 OK````.
+ So change the definition as follows:
 
 {% highlight clojure %}
 (defroutes app
-  (ANY "/foo" [] (resource :available-media-types ["text/html"])))
+  (ANY "/foo" [] (resource :available-media-types ["text/html"]
+                           :handle-ok "<html>Hello, Internet.</html>")))
 {% endhighlight %}
 
 The result is promising but we likely want to return something more
 dynamic. For this we declare a handler function that will be invoked
-for the http status code 200 "OK":
+for the http status code 200 "OK". As you can see, liberator accepts
+either values or functions that take the context as the only argument.
 
 {% highlight clojure %}
 (defroutes app
