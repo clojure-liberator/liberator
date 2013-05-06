@@ -91,8 +91,30 @@ either values or functions that take the context as the only argument.
 
 {% endhighlight %}
 
-That was easy, wasn't it? Now let's try a different HTTP method,
-say "PUT":
+## There comes the confusion
+
+Make sure that you actually provide a function and not a value:
+{% highlight clojure %}
+(def counter (ref 0))
+;;...
+(resource :handle-ok (format "The counter is %d" @counter))
+;;...
+{% endhighlight %}
+
+This looks well but handle-ok will be set to a *value* which was computed
+when the function ````resource```` was called, not when the request was
+processed. The correct solution is:
+{% highlight clojure %}
+(def counter (ref 0))
+;;...
+(resource :handle-ok (fn [_] (format "The counter is %d" @counter)))
+;;...
+{% endhighlight %}
+
+## PUT to get more out of your resource 
+
+Processing GET was easy, wasn't it? Now let's try a different HTTP
+method, say "PUT":
 
 {% highlight bash session %}
 $ curl -v -X PUT http://localhost:3000/foo
