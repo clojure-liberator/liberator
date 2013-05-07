@@ -111,6 +111,30 @@ processed. The correct solution is:
 ;;...
 {% endhighlight %}
 
+## Variations of resource definitions
+
+Until now we used the function ````resource```` to create a ring
+handler for the resources. It is natural that liberator also provides
+a macro to bind the resource function to a var:
+
+{% highlight clojure %}
+(defresource example
+  :handle-ok "This is the example")
+{% endhighlight %}
+
+Liberator also supports so-called parametrized resources. These are
+handler factories that close over some bindings and match perfectly
+with compojure's routing parameters:
+
+{% highlight clojure %}
+(defresource parameter [txt]
+  :available-media-types ["text/plain"]
+  :handle-ok (fn [_] (format "The text is %s" txt)))
+
+(defroutes app
+  (ANY "/bar/:txt" [txt] (parameter txt)))
+{% endhighlight %}
+
 ## PUT to get more out of your resource 
 
 Processing GET was easy, wasn't it? Now let's try a different HTTP
