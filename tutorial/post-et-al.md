@@ -10,6 +10,16 @@ liberator. While there are even more HTTP methods than those, liberator
 has no out-of-the-box support for them and treat them like GET requests.
 In any case you need to declare them as known and allowed.
 
+## Enabling the methods
+
+The allowed methods are determined by ````:method-allowed?````. The
+default implementation for this decision uses the resource key
+````:allowed-methods```` to obtain a list of methods and checks if it
+matches the request method. When adding more methods to your resource,
+make sure that the method is declared as known in
+````:known-methods````. By default, liberator knows the methods from
+RFC2616: GET, HEAD, PUT, POST, DELETE, OPTIONS, TRACE.
+
 ## POST
 
 Post requests share a lot of the decision flow with GET requests. The
