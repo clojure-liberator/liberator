@@ -2,42 +2,45 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>Liberator Docs{% if page.title }%} - {{page.title}}{% endif %}</title>
+    <title>Liberator{% if page.title }%} - {{page.title}}{% endif %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
     <meta name="author" content="">
     <!-- Le styles -->
-    <link href="{{site.url}}/assets/css/bootstrap.css" rel="stylesheet">
+    <link href="{{site.url}}assets/css/bootstrap.css" rel="stylesheet">
     <style>
       body { padding-top: 60px; /* 60px to make the container go all the way
       to the bottom of the topbar */ }
     </style>
-    <link href="{{site.url}}/assets/css/bootstrap-responsive.css" rel="stylesheet">
-    <link href="{{site.url}}/assets/css/docs.css" rel="stylesheet">
-    <link href="{{site.url}}/assets/css/pygments-solarized.css" rel="stylesheet">
+    <link href="{{site.url}}assets/css/bootstrap-responsive.css" rel="stylesheet">
+    <link href="{{site.url}}assets/css/docs.css" rel="stylesheet">
+    <link href="{{site.url}}assets/css/pygments-solarized.css" rel="stylesheet">
     <!-- Le HTML5 shim, for IE6-8 support of HTML5 elements -->
     <!--[if lt IE 9]>
       <script src="http://html5shim.googlecode.com/svn/trunk/html5.js">
       </script>
     <![endif]-->
     <!-- Le fav and touch icons -->
-    <link rel="shortcut icon" href="{{site.url}}/assets/ico/favicon.ico">
-    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="{{site.url}}/assets/ico/apple-touch-icon-144-precomposed.png">
-    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="{{site.url}}/assets/ico/apple-touch-icon-114-precomposed.png">
-    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="{{site.url}}/assets/ico/apple-touch-icon-72-precomposed.png">
-    <link rel="apple-touch-icon-precomposed" href="{{site.url}}/assets/ico/apple-touch-icon-57-precomposed.png">
+    <link rel="shortcut icon" href="{{site.url}}assets/ico/favicon.ico">
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="{{site.url}}assets/ico/apple-touch-icon-144-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="{{site.url}}assets/ico/apple-touch-icon-114-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="{{site.url}}assets/ico/apple-touch-icon-72-precomposed.png">
+    <link rel="apple-touch-icon-precomposed"
+    href="{{site.url}}assets/ico/apple-touch-icon-57-precomposed.png">
+    <!-- web fonts -->
+    <link href="http://fonts.googleapis.com/css?family=Lato:300" rel="stylesheet" type="text/css">
     <style>
     </style>
   </head>
   <body>
-    <a href="https://github.com/clojure-liberator/liberator/"><img style="position: absolute; z-index: 10000; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_red_aa0000.png" alt="Fork me on GitHub"></a>
+    <a href="https://github.com/clojure-liberator/liberator/"><img style="position: absolute; z-index: 10000; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_gray_6d6d6d.png" alt="Fork me on GitHub"></a>
     <div class="navbar navbar-fixed-top">
       <div class="navbar-inner">
         <div class="container">
-	  <a href="{{site.url}}/" class="brand">Liberator</a>
+	  <a href="{{site.url}}" class="brand">Liberator</a>
           <ul class="nav pull-right">
-            <li><a href="{{site.url}}/tutorial">Tutorial</a></li>
-            <li><a href="{{site.url}}/docs">Documentation</a></li>
+            <li><a href="{{site.url}}tutorial">Tutorial</a></li>
+            <li><a href="{{site.url}}doc">Documentation</a></li>
           </ul>
         </div>
       </div>
@@ -48,39 +51,41 @@
         <div class="span3">
           <ul id="menu" class="nav nav-list" data-spy="affix">
             <li class="nav-header">Liberator docs</li>
-            <li><a href="{{site.url}}/">Home</a></li>
+            <li><a href="{{site.url}}">Home</a></li>
+            <li><a href="{{site.url}}/download.html">Download</a></li>
+            <li><a href="{{site.url}}/changelog.html">Changelog</a></li>
             <li class="nav-header">Tutorial</li>
-            <li><a href="{{site.url}}/tutorial/">Table of contents</a></li>
-            <li><a href="{{site.url}}/tutorial/getting-started.html">Getting Started</a></li>
-            <li><a href="{{site.url}}/tutorial/decision-graph.html">Decision graph</a></li>
-            <li><a href="{{site.url}}/tutorial/debugging.html">Debugging</a></li>
-            <li><a href="{{site.url}}/tutorial/conneg.html">Content Negotiation</a></li>
-            <li><a href="{{site.url}}/tutorial/conditional.html">Conditional Requests</a></li>
-            <li><a href="{{site.url}}/tutorial/post-et-al.html">Handling POST et. al.</a></li>
+            <li><a href="{{site.url}}tutorial/">Table of contents</a></li>
+            <li><a href="{{site.url}}tutorial/getting-started.html">Getting Started</a></li>
+            <li><a href="{{site.url}}tutorial/decision-graph.html">Decision graph</a></li>
+            <li><a href="{{site.url}}tutorial/debugging.html">Debugging</a></li>
+            <li><a href="{{site.url}}tutorial/conneg.html">Content Negotiation</a></li>
+            <li><a href="{{site.url}}tutorial/conditional.html">Conditional Requests</a></li>
+            <li><a href="{{site.url}}tutorial/post-et-al.html">Handling POST et. al.</a></li>
             <li class="nav-header">Documentation</li>
-            <li data-section="definition"><a href="{{site.url}}/doc/resource-definition.html">
+            <li data-section="definition"><a href="{{site.url}}doc/resource-definition.html">
                 Resource definition</a></li>    
-            <li data-section="execution"><a href="{{site.url}}/doc/execution-model.html">
+            <li data-section="execution"><a href="{{site.url}}doc/execution-model.html">
                 Execution model</a></li>    
-            <li data-section="representations"><a href="{{site.url}}/doc/representations.html">
+            <li data-section="representations"><a href="{{site.url}}doc/representations.html">
                 Representations</a></li>    
-            <li data-section="decisions"><a href="{{site.url}}/doc/decisions.html">
+            <li data-section="decisions"><a href="{{site.url}}doc/decisions.html">
                 Decisions</a></li>
-            <li data-section="actions"><a href="{{site.url}}/doc/actions.html">
+            <li data-section="actions"><a href="{{site.url}}doc/actions.html">
                 Actions</a></li>
-            <li data-section="handlers"><a href="{{site.url}}/doc/handlers.html">
+            <li data-section="handlers"><a href="{{site.url}}doc/handlers.html">
                 Handlers</a></li>
-            <li data-section="debug"><a href="{{site.url}}/doc/debugging.html">
+            <li data-section="debug"><a href="{{site.url}}doc/debugging.html">
                 Debugging</a></li>
-            <li data-section="integration"><a href="{{site.url}}/doc/integration.html">
+            <li data-section="integration"><a href="{{site.url}}doc/integration.html">
                 Integration</a></li>
             <li class="nav-header">Support</li>
-            <li><a href="{{site.url}}/faq.html">FAQ</a></li>
+            <li><a href="{{site.url}}faq.html">FAQ</a></li>
             <li><a href="https://groups.google.com/forum/#!forum/clojure-liberator">Google
             Group!</a></li>
             <li class="nav-header">Contribute</li>
-            <li><a href="{{site.url}}/community.html">Community</a></li>
-            <li><a href="{{site.url}}/team.html">Team</a></li>
+            <li><a href="{{site.url}}community.html">Community</a></li>
+            <li><a href="{{site.url}}team.html">Team</a></li>
             <li><a href="https://github.com/clojure-liberator/liberator/">Github</a>
           </ul>
         </div>
@@ -92,7 +97,7 @@
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js">
     </script>
-    <script src="{{site.url}}/assets/js/bootstrap.js">
+    <script src="{{site.url}}assets/js/bootstrap.js">
     </script>
 
     <script>

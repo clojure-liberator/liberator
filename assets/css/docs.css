@@ -1,0 +1,22 @@
+body,
+input,
+button,
+select,
+textarea,
+.navbar-search .search-query {
+    font-family: Lato, "Lucida Grande", Tahoma, Helvetica, Arial, sans-serif;
+}
+
+h1, h2, h3, .navbar, #menu {
+    font-family: Lato;
+    font-weight: 300;
+}
+
+.nav-header {
+    font-weight: 300;
+}
+
+.navbar .brand {
+    padding: 10px 20px 10px 25px;
+    background: url('../img/Liberator%20Logo%20Badge%2020.png') 0 11px no-repeat;
+}
