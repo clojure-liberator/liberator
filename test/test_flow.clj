@@ -20,13 +20,15 @@
 (facts "get on moved temporarily"
        (let [resp ((resource :exists? false
                              :existed? true
-                             :moved-temporarily? {:location "http://new.example.com/"})
+                             :moved-temporarily? true
+                             :location "http://new.example.com/")
               (request :get "/"))]
     (fact resp => (MOVED-TEMPORARILY "http://new.example.com/"))))
 
 (facts "get on moved permantently"
   (let [resp ((resource :exists? false :existed? true
-                        :moved-permanently? {:location "http://other.example.com/"})
+                        :moved-permanently? true
+                        :location "http://other.example.com/")
               (request :get "/"))]
     (fact resp => (MOVED-PERMANENTLY "http://other.example.com/"))))
 
@@ -50,7 +52,8 @@
 
 (facts "get on moved permantently with automatic response"
   (let [resp ((resource :exists? false :existed? true
-                        :moved-permanently? {:location "http://other.example.com/"})
+                        :moved-permanently? true
+                        :location "http://other.example.com/")
               (request :get "/"))]
     (fact resp => (MOVED-PERMANENTLY "http://other.example.com/"))))
 
@@ -123,7 +126,8 @@
   (facts "on moved temporarily"
     (let [resp ((resource :exists? false
                           :existed? true
-                          :moved-temporarily? {:location "http://new.example.com/"})
+                          :moved-temporarily? true
+                          :moved-temporarily "http://new.example.com/")
                 (request :get "/"))]
       (fact resp => (MOVED-TEMPORARILY "http://new.example.com/"))
       (fact resp => (no-body)))))

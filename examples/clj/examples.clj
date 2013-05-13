@@ -156,7 +156,7 @@
     (ANY ["/olympics/:stem" :stem #"m/.*"] [stem]
          (-> olympic-games
              (wrap-binder ::id (str "/" stem))))
-    (ANY ["/collection/:id" #".*"] [id] (entry-resource id))
+    (ANY ["/collection/:id" :id #".*"] [id] (entry-resource id))
     (ANY "/collection" [] list-resource))
 
    

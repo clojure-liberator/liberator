@@ -4,6 +4,7 @@
 
 ## Changes
 
+* Rename decision if-none-match to if-none-match?
 * UTF-8 is now the default charset for Representations
 * Adds web console for traces, include trace link header
 * Add "ETag" and "Last-Modified" automatically

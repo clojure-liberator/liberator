@@ -332,12 +332,12 @@
     (let [etag (gen-etag context)]
       [(= (get-in context [:request :headers "if-none-match"]) etag)
        {::etag etag}]))
-  if-none-match
+  if-none-match?
   if-modified-since-exists?)
 
 (defdecision if-none-match-star? 
   #(= "*" (get-in % [:request :headers "if-none-match"]))
-  if-none-match
+  if-none-match?
   etag-matches-for-if-none?)
 
 (defdecision if-none-match-exists? (partial header-exists? "if-none-match")

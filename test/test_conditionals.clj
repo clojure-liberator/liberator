@@ -146,7 +146,7 @@
                           (if-unmodified-since (http-date (as-date 1000)))))]
             (fact resp => CREATED)
             (fact resp => (body "CREATED"))
-            (fact resp => (header-value "Last-Modified" (as-date 1001)))))
+            (fact resp => (header-value "Last-Modified" (http-date (as-date 1001))))))
 
    (facts "if-match true"
      (let [resp ((resource :exists? true
