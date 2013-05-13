@@ -52,19 +52,29 @@
        (map (fn [sg] (map first sg)))
        (map rank-same)
        (apply str)
-      ))
+       ))
 
-(defn generate-graph-dot []
+(defn parse-source-definitions []
   (let [nodes (let [pr (java.io.PushbackReader.
                         (clojure.java.io/reader "src/liberator/core.clj"))
                     eof (Object.)]
                 (take-while #(not= eof %) (repeatedly #(read pr false eof))))
+        decisions (->> nodes
+                      (filter #(= 'defdecision (first %)))
+                      (map second))
         handlers (->> nodes
                       (filter #(= 'defhandler (first %)))
                       (map (fn [[_ name status _]] [name status])))
         actions (->> nodes
                       (filter #(= 'defaction (first %)))
                       (map second))]
+    {:nodes nodes
+     :decisions decisions
+     :handlers handlers
+     :actions actions}))
+
+(defn generate-graph-dot []
+  (let [{:keys [nodes handlers actions]} (parse-source-definitions)]
     (->> nodes
          (map to-graph)
          (filter identity)
