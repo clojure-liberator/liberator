@@ -9,6 +9,7 @@
         [hiccup.page :only [html5]]
         [clojure.string :only [split]]
         [examples.util :only [wrap-binder static clojurescript-resource create-cljs-route]]
+        [examples.collection]
         [hiccup.element :only [javascript-tag]]))
 
 ;; The classic 'Hello World' example.
@@ -154,7 +155,11 @@
     (ANY "/static/*" [] static)
     (ANY ["/olympics/:stem" :stem #"m/.*"] [stem]
          (-> olympic-games
-             (wrap-binder ::id (str "/" stem)))))
+             (wrap-binder ::id (str "/" stem))))
+    (ANY ["/collection/:id" #".*"] [id] (entry-resource id))
+    (ANY "/collection" [] list-resource))
+
+   
    (dev/wrap-trace :ui :header)))
 
 
