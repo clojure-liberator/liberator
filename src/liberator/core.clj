@@ -57,7 +57,7 @@
   (apply hash-map (apply concat (map (fn [k] [k (f (m k))]) (keys m)))))
 
 (defn make-function [x]
-  (if (fn? x) x (constantly x)))
+  (if (or (keyword? x) (fn? x)) x (constantly x)))
 
 (defn request-method-in [& methods]
   #(some #{(:request-method (:request %))} methods))
@@ -127,7 +127,8 @@
 
 (defn run-handler [name status message
                    {:keys [resource request representation] :as context}]
-  (let [context (assoc context :status status :message message)
+  (let [context
+        (merge {:status status :message message} context)
         response 
         (merge-with
          combine
@@ -174,11 +175,13 @@
                                              'Representation (type handler-response)))))
                 response)))
 
-           ;; If there is no handler we just return the information we have so far.
-           (do (log! :handler (keyword name) "(default implementation)")
-               {:status status 
-                :headers {"Content-Type" "text/plain"} 
-                :body (if (fn? message) (message context) message)})))]
+           ;; If there is no handler we just return the information we
+           ;; have so far.
+           (let [message (get context :message)]
+             (do (log! :handler (keyword name) "(default implementation)")
+                 {:status status 
+                  :headers {"Content-Type" "text/plain"} 
+                  :body (if (fn? message) (message context) message)}))))]
     (if-not (= :head (:request-method request))
       response
       (dissoc response :body))))
@@ -201,6 +204,8 @@
 (defmethod to-location String [uri] (ring-response {:headers {"Location" uri}}))
 
 (defmethod to-location clojure.lang.APersistentMap [this] this)
+
+(defmethod to-location java.net.URL [url] (to-location (.toString url)))
 
 (defmethod to-location nil [this] this)
 
@@ -280,7 +285,7 @@
 
 (defhandler handle-not-modified 304 nil)
 
-(defdecision if-none-match 
+(defdecision if-none-match? 
   #(#{ :head :get} (get-in % [:request :request-method]))
   handle-not-modified
   handle-precondition-failed)
