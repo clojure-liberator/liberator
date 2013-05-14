@@ -209,12 +209,12 @@
 
 (defmethod to-location nil [this] this)
 
-(defn- handle-moved [name]
-  (fn [{resource :resource :as context}]
-    (if-let [f (or (get resource name) (make-function (get resource :location)))]
-      (to-location (f context))
-      {:status 500
-       :body (format "Internal Server error: no location specified for %s" name)})))
+(defn- handle-moved [{resource :resource :as context}]
+  (if-let [f (or (get context :location)
+                 (get resource :location))]
+    (to-location ((make-function f) context))
+    {:status 500
+     :body (format "Internal Server error: no location specified for status %s" (:status context))}))
 
 ;; Provide :see-other which returns a location or override :handle-see-other
 (defhandler handle-see-other 303 nil)
@@ -527,9 +527,9 @@
 
    ;; Handlers
    :handle-ok                 "OK"
-   :handle-see-other          (handle-moved :see-other)
-   :handle-moved-temporarily  (handle-moved :moved-temporarily)
-   :handle-moved-permanently  (handle-moved :moved-permanently)
+   :handle-see-other          handle-moved
+   :handle-moved-temporarily  handle-moved
+   :handle-moved-permanently  handle-moved
    
 
    ;; Imperatives. Doesn't matter about decision outcome, both

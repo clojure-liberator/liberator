@@ -49,8 +49,8 @@
   :post! #(let [id (str (inc (rand-int 100000)))]
             (dosync (alter entries assoc id (::data %)))
             {::id id})
-  :post-redirect? true
-  :location #(build-entry-url (get % :request) (get % ::id))
+  :post-redirect? (fn [ctx] {:location (build-entry-url (get ctx :request)
+                                                       (get ctx ::id))})
   :handle-ok #(map (fn [id] (str (build-entry-url (get % :request) id)))
                    (keys @entries)))
 

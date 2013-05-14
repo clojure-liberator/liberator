@@ -11,6 +11,8 @@
 * Add "Vary" automatically
 * Add declaration :available-media-types?
 * Add support for HEAD request
+* Rework redirecting handlers. Now supports pickup of redirect
+  location from context key :location
 * Extractor for graphivz dot file that reads core.clj
 * Bump hiccup dependency to 1.0.2
 * Add can-put-to-missing? 

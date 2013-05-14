@@ -20,8 +20,7 @@
 (facts "get on moved temporarily"
        (let [resp ((resource :exists? false
                              :existed? true
-                             :moved-temporarily? true
-                             :location "http://new.example.com/")
+                             :moved-temporarily? {:location "http://new.example.com/"})
               (request :get "/"))]
     (fact resp => (MOVED-TEMPORARILY "http://new.example.com/"))))
 
@@ -66,8 +65,7 @@
 
 (let [r (resource :method-allowed? (request-method-in :post)
                   :exists? true
-                  :post-redirect? true
-                  :see-other "http://example.com/foo")
+                  :post-redirect? {:location "http://example.com/foo"})
       resp (r (request :post "/")) ]
   (fact "Post to existing resource and redirect" resp => (SEE-OTHER  "http://example.com/foo")))
 
@@ -75,7 +73,7 @@
                   :exists? false
                   :post-redirect? true
                   :can-post-to-missing? true
-                  :see-other "http://example.com/foo")
+                  :location "http://example.com/foo")
       resp (r (request :post "/")) ]
   (fact "Post to missing can redirect" resp => (SEE-OTHER  "http://example.com/foo")))
 
@@ -127,7 +125,7 @@
     (let [resp ((resource :exists? false
                           :existed? true
                           :moved-temporarily? true
-                          :moved-temporarily "http://new.example.com/")
+                          :location "http://new.example.com/")
                 (request :get "/"))]
       (fact resp => (MOVED-TEMPORARILY "http://new.example.com/"))
       (fact resp => (no-body)))))
