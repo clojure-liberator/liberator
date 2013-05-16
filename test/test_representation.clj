@@ -24,7 +24,8 @@
                                      "<tr><th>baz</th><td>qux</td></tr>"
                                      "</tbody></table></div>")
                   "application/json" (clojure.data.json/write-str entity)
-                  "application/clojure" (pr-str-dup entity))))
+                  "application/clojure" (pr-str-dup entity)
+                  "application/edn" (pr-str-dup entity))))
 
 (facts "Can produce representations from a seq of maps"
        (let [entity [{:foo 1 :bar 2} {:foo 2 :bar 3}]]
@@ -43,6 +44,7 @@
                                      "</tbody>"
                                      "</table></div>")
                   "application/json" (clojure.data.json/write-str entity)
-                  "application/clojure" (pr-str-dup entity))))
+                  "application/clojure" (pr-str-dup entity)
+                  "application/edn" (pr-str-dup entity))))
 
 
