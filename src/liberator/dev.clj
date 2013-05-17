@@ -35,7 +35,7 @@
 
 ;; see graph/clean-id, unitfy
 (defn- clean-id [str]
-  (clojure.string/replace str #"[^a-zA-Z0-9_]+" ""))
+  (clojure.string/replace (or str "") #"[^a-zA-Z0-9_]+" ""))
 
 (defn result->bool [r]
   (if (vector? r) (first r)
