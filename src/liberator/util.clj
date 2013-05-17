@@ -23,7 +23,7 @@
 
 (defn http-date-format []
   (let [df (new SimpleDateFormat
-                "EEE, dd MMM yyyy HH:mm:ss"
+                "EEE, dd MMM yyyy HH:mm:ss z"
                 Locale/US)]
     (do (.setTimeZone df (TimeZone/getTimeZone "GMT"))
         df)))
@@ -32,7 +32,7 @@
   (Date. (+ (System/currentTimeMillis) future)))
 
 (defn http-date [date]
-  (format "%s GMT" (.format (http-date-format) date)))
+  (format "%s" (.format (http-date-format) date)))
 
 (defn parse-http-date [date-string]
   (if (nil? date-string)
