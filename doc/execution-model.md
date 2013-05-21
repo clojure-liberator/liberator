@@ -48,7 +48,7 @@ It's outcome is interpreted as a boolean value. If the value is a
 vector than the first element is used as the boolean decision and the
 second part is used to update the context.
 
-decition function result     | boolean value | context update
+decision function result     | boolean value | context update
 -----------------------------|---------------|---------------
 ````true````                 | true          | _no-update_
 ````false````                | false         | _no-update_
