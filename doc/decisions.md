@@ -139,3 +139,16 @@ post-to-gone?                       | checks if the request method is post for r
 post-to-existing?                   | checks if the request method is post for resources that do exist
 post-to-missing?                    | checks if the request method is post for resources that do not exist
 put-to-existing?                    | checks if the request method is put for resources that exists
+
+
+## The flowchart: a decision graph
+
+The Liberator flowchart - mousewheel to zoom, click-and-drag to
+pan. (if you don't see anything below, please [open it]({{site.url}}assets/img/decision-graph.svg))
+
+<span style="border: 1px solid #333; width: 90%; height: 40em; display:block;">
+<object data="{{site.url}}assets/img/decision-graph.svg" width="100%" height="100%">
+<img src="{{site.url}}assets/img/decision-graph.svg"
+        type="image/svg+xml">
+</object>
+</span>
