@@ -135,7 +135,7 @@ with compojure's routing parameters:
   (ANY "/bar/:txt" [txt] (parameter txt)))
 {% endhighlight %}
 
-## PUT to get more out of your resource 
+## Using PUT to get more out of your resource 
 
 Processing GET was easy, wasn't it? Now let's try a different HTTP
 method, say "PUT":

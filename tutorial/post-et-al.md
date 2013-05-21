@@ -43,13 +43,12 @@ An idiomatic way to support post is the following:
                               (count @posts)))
         :post! (fn [ctx]
                  (dosync 
-                  (let [body (get-in ctx [:request :body])
+                  (let [body (slurp (get-in ctx [:request :body]))
                         id   (count (alter posts conj body))]
                     {::id id})))
         ;; actually http requires absolute urls for redirect but let's
         ;; keep things simple.
-        :post-redirect? true
-        :location (fn [ctx] (format "/postbox/%s" (::id ctx)))))
+        :post-redirect? (fn [ctx] {:location (format "/postbox/%s" (::id ctx))})))
 {% endhighlight %}
 
 We can extend this example to support conditional request. Thus a
@@ -67,18 +66,27 @@ was made since it checked the resource:
                               (count @posts)))
         :post! (fn [ctx]
                  (dosync 
-                  (let [body (get-in ctx [:request :body])
+                  (let [body (slurp (get-in ctx [:request :body]))
                         id   (count (alter posts conj body))]
                     {::id id})))
         ;; actually http requires absolute urls for redirect but let's
         ;; keep things simple.
-        :post-redirect? true
-        :location (fn [ctx] (format "/postbox/%s" (::id ctx)))
+        :post-redirect? (fn [ctx] {:location (format "/postbox/%s" (::id ctx))})
         :etag (fn [_] (str (count @posts)))))
 {% endhighlight %}
 
-A quick test with curl shows that we can make sure that we do not post
-to a stale resource:
+We also make a litte resource to retreive the posted content again:
+
+{% highlight clojure %}
+    (ANY "/postbox/:x" [x]
+       (resource
+        :allowed-methods [:get]
+        :available-media-types ["text/html"]
+        :exists? (fn [ctx] (if-let [d (get @posts (dec (Integer/parseInt x)))] {::data d}))
+        :handle-ok ::data))
+{% endhighlight %}
+
+A quick test with curl shows that we cannot post to a stale resource:
 
 {% highlight bash session %}
 $ curl -i http://localhost:3000/cond-postbox
@@ -93,7 +101,7 @@ Server: Jetty(7.6.1.v20120215)
 <html>Post text/plain to this resource.<br>
 There are 4 posts at the moment.
 
-$ curl -XPOST -H 'Content-Type: text/plain' -H 'If-Match: "4"' -i http://localhost:3000/cond-postbox
+$ curl -XPOST -d test -H 'Content-Type: text/plain' -H 'If-Match: "4"' -i http://localhost:3000/cond-postbox
 HTTP/1.1 303 See Other
 Date: Thu, 25 Apr 2013 15:53:52 GMT
 Vary: Accept
@@ -103,7 +111,7 @@ Content-Type: text/html;charset=ISO-8859-1
 Content-Length: 0
 Server: Jetty(7.6.1.v20120215)
 
-$ curl -XPOST -H 'Content-Type: text/plain' -H 'If-Match: "4"' -i http://localhost:3000/cond-postbox
+$ curl -XPOST -d test -H 'Content-Type: text/plain' -H 'If-Match: "4"' -i http://localhost:3000/cond-postbox
 HTTP/1.1 412 Precondition Failed
 Date: Thu, 25 Apr 2013 15:54:04 GMT
 ETag: "5"

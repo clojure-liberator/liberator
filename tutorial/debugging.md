@@ -121,12 +121,3 @@ The trace ui shows for a single request the request including
 parameters and headers, the trace of decisions and the decision graph.
 It highlights the path that was taken for the request. The edges are
 colored depending on the boolean value of the decision.
-
-## Linking to a request's trace
-
-In any case a link header will be returned with rel=x-liberator-trace.
-It points to the request on the trace ui. The current id can also be
-retreived programatically using ````(current-trace-url)````. A small
-link popup for html documents can be generated with
-````(include-trace-panel)```` a matching css to float the link in the
-upper right is available at ````/x-liberator-trace/styles.css````.

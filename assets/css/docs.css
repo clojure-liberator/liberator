@@ -7,6 +7,9 @@ textarea,
     font-family: Lato, "Lucida Grande", Tahoma, Helvetica, Arial, sans-serif;
 }
 
+h1, h2, h3 {
+    padding-left: -.1em;
+}
 h1, h2, h3, .navbar, #menu {
     font-family: Lato;
     font-weight: 300;
@@ -19,4 +22,18 @@ h1, h2, h3, .navbar, #menu {
 .navbar .brand {
     padding: 10px 20px 10px 25px;
     background: url('../img/Liberator%20Logo%20Badge%2020.png') 0 11px no-repeat;
+}
+
+.container thead {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.5);
+}
+
+.container th {
+    font-weight: normal;
+    padding-right: 0.5em;
+    vertical-align: top;
+}
+
+.container td {
+    vertical-align: top;
 }

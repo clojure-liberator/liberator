@@ -19,6 +19,11 @@ title: Welcome
 
 ## Liberating data?
 
-Forget “big data”, there is so much useful data locked up in 'big applications'. Many of these applications, especially in large organisations, are written in Java.
+Forget “big data”, there is so much useful data locked up in “big
+applications”. Many of these applications, especially in large
+organizations, are written in Java.
 
-Clojure can run side-by-side with Java in the JVM, seamlessly accessing the same internal Java APIs that your application does. That makes Clojure a great choice for developing new facades onto your application stack.
+Clojure can run side-by-side with Java in the JVM, seamlessly
+accessing the same internal Java APIs that your application does. That
+makes Clojure a great choice for developing new facades onto your
+application stack.
