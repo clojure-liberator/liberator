@@ -6,6 +6,17 @@ title: Welcome
 ## Include in project.clj
 {% highlight clojure %}
 [liberator "0.8.0"]{% endhighlight %}
+
+This documentation refers to the latest master which will be released
+as 0.9.0. 
+
+<div class="alert alert-warning">Liberator is still under heavy
+development, however, the programming interface is settling down.
+Compatibility with prior releases is a goal but it cannot always be
+guaranteed. Compatibility notes will be added to the interface in 
+the future.</div>
+
+
 ## Define your first resource 
 ````defresource```` defines a resource which, in the end, is a ring handler.
 {% highlight clojure %}
