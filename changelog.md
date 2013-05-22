@@ -2,12 +2,14 @@
 layout: default
 title: Changelog
 ---
-# New in 0.9.0-SNAPSNOT (current master, unreleased)
+# Changelog
 
-## Changes
+## New in 0.9.0-SNAPSHOT (current master, unreleased)
 
-* UTF-8 is now the default charset for Representations
-* Adds web console for traces, include trace link header
+### Changes
+
+* UTF-8 is now the default character set for Representations
+* New web console for traces, include trace link header
 * Add "ETag" and "Last-Modified" automatically
 * Add "Vary" automatically
 * Add declaration :available-media-types?
@@ -23,7 +25,7 @@ title: Changelog
 * Fixes to HTML Table representation (missing tr)
 * Render Clojure Representation using \*print-dup\*
 
-## Bugs fixed
+### Bugs fixed
 
 * \#28 Head requests
 * Do not re-use generated ETag and Last-Modified during request
@@ -31,13 +33,13 @@ title: Changelog
 * Handlers for redirect status work now reliably
 * Fix Postbox example using value, not function for post!
 
-# New in 0.8.0
+## New in 0.8.0
 
-## Changes
+### Changes
 
 * Include olympics example data in source tree
 
-## Bugs fixes
+### Bugs fixes
 * Handle line-break and whitespace in Accept headers
 * Ignore case in character set negotiation
 * \#12 String representation sets character set
@@ -45,6 +47,6 @@ title: Changelog
 * \#11
 * \#14 Use newer org.clojure:data.csv
 
-# New in 0.7.0
+## New in 0.7.0
 
 Revision 0.7.0 has been accidently skipped
