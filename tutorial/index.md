@@ -11,8 +11,7 @@ Table of contents:
 
 * [Getting started](getting-started.html)
 * [Decision Graph](decision-graph.html)
+* [Debugging](debugging.html)
 * [Content Negotiation](conneg.html)
-* [Conditional Requests](condreq.html)
-* [Representations](representations.html)
-* [Handling POST, PUT, DELETE](handling-post-put-delete.html)
-* [Debugging Technics](debugging.html)
+* [Conditional Requests](conditional.html)
+* [Handling POST, PUT, DELETE](post-et-al.html)
