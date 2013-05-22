@@ -10,7 +10,7 @@ decision poinst. This enables a compact and powerful style of
 programming but, in case of an unexpected result, can make debugging a
 pain: there is no step through.
 
-## Tracing with liberator.dev/wrap-trace
+## So show me the traces!
 
 Altough the developer cannot step through the sequence of decisions,
 liberator can be told to trace the execution and report to the
