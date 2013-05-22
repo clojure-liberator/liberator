@@ -35,9 +35,9 @@
     (str k)))
 
 (defn html-table [data fields lang dictionary]
-  [:div [:table 
+  [:div [:table
          [:thead
-          [:tr 
+          [:tr
            (for [field fields] [:th (or (dictionary field lang)
                                         (default-dictionary field lang))])]]
          [:tbody (for [row data]
@@ -89,7 +89,7 @@
     :keys [dictionary fields] :or {dictionary default-dictionary}
     :as context} mode]
   (let [content
-        [:div [:table 
+        [:div [:table
 
                [:tbody (for [[key value] data]
                          [:tr
@@ -179,7 +179,7 @@
   (if (and charset (not (.equalsIgnoreCase charset "UTF-8")))
     (java.io.ByteArrayInputStream.
      (.getBytes string (java.nio.charset.Charset/forName charset)))
-      
+
     ;; "If no Accept-Charset header is present, the default is that
     ;; any character set is acceptable." (p101). In the case of Strings, it is unnecessary to convert to a byte stream now, and doing so might even make things harder for test-suites, so we just return the string.
     string))
@@ -197,26 +197,35 @@
   nil
   (as-response [this _] nil) ; accept defaults
 
-  clojure.lang.Sequential
-  (as-response [data context]
-    (as-response (render-seq-generic data context) context))
-
-  clojure.lang.MapEquivalence
-  (as-response [this context]
-    (as-response (render-map-generic this context) context))
-
-  ;; If a string is returned, we should carry out the conversion of both the charset and the encoding.
   String
-  (as-response [this {representation :representation}]
-    (let [charset (get representation :charset "UTF-8")]
-      {:body
-       (in-charset this charset)
-       :headers {"Content-Type" (format "%s;charset=%s" (get representation :media-type "text/plain") charset)}}))
-  
+  (as-response [this _] this)
+
+  clojure.lang.MapEntry
+  (as-response [[k v] context] [(as-response k context) (as-response v context)])
+
+  clojure.lang.Seqable
+  (as-response [this context]
+    (into (empty this) (map #(as-response % context) this)))
+
+  clojure.lang.Keyword
+  (as-response [this _] (name this))
+
+  clojure.lang.Symbol
+  (as-response [this _] (name this))
+
+  Number
+  (as-response [this _] this)
+
+  Character
+  (as-response [this _] this)
+
+  Boolean
+  (as-response [this _] this)
+
   ;; If an input-stream is returned, we have no way of telling whether it's been encoded properly (charset and encoding), so we have to assume it is, given that we told the developer what representation was negotiated.
   java.io.File
   (as-response [this _] {:body this})
-  
+
   ;; We assume the input stream is already in the requested
   ;; charset. Decoding and encoding an existing charset unnecessarily
   ;; would be expensive.
@@ -226,6 +235,17 @@
       {:body this
        :headers {"Content-Type" (format "%s;charset=%s" (get representation :media-type "text/plain") charset)}})))
 
+(defmulti as-ring-response (fn [data _] (class data)))
+;; If a string is given, we should carry out the conversion of both the charset and the encoding.
+(defmethod as-ring-response String [data {representation :representation}]
+  (let [charset (get representation :charset "UTF-8")]
+      {:body
+       (in-charset data charset)
+       :headers {"Content-Type" (format "%s;charset=%s" (get representation :media-type "text/plain") charset)}}))
+(defmethod as-ring-response :default
+  [data context]
+  (as-ring-response (render-item (as-response data context) context) context))
+
 ;; define a wrapper to tell a generic Map from a Ring response map
 ;; to return a ring response as the representation
 (defrecord RingResponse [response]
@@ -234,4 +254,3 @@
     response))
 
 (defn ring-response [map] (->RingResponse map))
-
