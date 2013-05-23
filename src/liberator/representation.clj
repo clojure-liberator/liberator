@@ -208,7 +208,7 @@
     (into (empty this) (map #(as-response % context) this)))
 
   clojure.lang.Keyword
-  (as-response [this _] (name this))
+  (as-response [this _] this)
 
   clojure.lang.Symbol
   (as-response [this _] (name this))
