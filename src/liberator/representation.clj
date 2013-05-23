@@ -22,12 +22,8 @@
 
 (defprotocol Representation
   (as-response [_ {represenation :represenation :as context}]
-    "Coerce to a standard Ring response (a map
-    containing :status, :headers and :body). Developers can call
-    as-response directly, usually when they need to augment the context. It
-    does all the charset conversion and encoding and returns are Ring
-    response map so no further post-processing of the response will be
-    carried out."))
+    "Coerce to a standard Ring response body. Developers can call
+    as-response directly, usually when they need to augment the context."))
 
 (defn default-dictionary [k lang]
   (if (instance? clojure.lang.Named k)
@@ -235,13 +231,23 @@
       {:body this
        :headers {"Content-Type" (format "%s;charset=%s" (get representation :media-type "text/plain") charset)}})))
 
-(defmulti as-ring-response (fn [data _] (class data)))
+(defmulti as-ring-response
+  "Returns the complete Ring response map ({:body \"...\" :headers [] :status xxx}).
+   It does all the charset conversion and encoding and returns are Ring
+   response map so no further post-processing of the response will be
+   carried out."
+  (fn [data _] (class data)))
+
 ;; If a string is given, we should carry out the conversion of both the charset and the encoding.
 (defmethod as-ring-response String [data {representation :representation}]
   (let [charset (get representation :charset "UTF-8")]
       {:body
        (in-charset data charset)
-       :headers {"Content-Type" (format "%s;charset=%s" (get representation :media-type "text/plain") charset)}}))
+       :headers {"Content-Type"
+                 (format "%s;charset=%s"
+                         (get representation :media-type "text/plain")
+                         charset)}}))
+
 (defmethod as-ring-response :default
   [data context]
   (as-ring-response (render-item (as-response data context) context) context))
