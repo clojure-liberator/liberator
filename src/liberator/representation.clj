@@ -248,6 +248,8 @@
                          (get representation :media-type "text/plain")
                          charset)}}))
 
+(defmethod as-ring-response nil [_ _] nil)
+
 (defmethod as-ring-response :default
   [data context]
   (as-ring-response (render-item (as-response data context) context) context))
