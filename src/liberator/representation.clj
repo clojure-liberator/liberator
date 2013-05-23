@@ -155,13 +155,14 @@
                        (map #(render-map-generic % context)
                             data)))
 
-(defmulti render-item (fn [m media-type] (type m)))
+(defmulti render-item (fn [m context] (type m)))
+(prefer-method render-item clojure.lang.MapEquivalence clojure.lang.Seqable)
 
-(defmethod render-item clojure.lang.Associative [m media-type]
-  (render-map-generic m media-type))
+(defmethod render-item clojure.lang.MapEquivalence [m context]
+  (render-map-generic m context))
 
-(defmethod render-item clojure.lang.Seqable [m media-type]
-  (render-seq-generic m media-type))
+(defmethod render-item clojure.lang.Seqable [m context]
+  (render-seq-generic m context))
 
 (defmethod render-seq-generic :default
   [data {{:keys [language media-type] :as representation} :representation :as context}]
@@ -231,12 +232,20 @@
       {:body this
        :headers {"Content-Type" (format "%s;charset=%s" (get representation :media-type "text/plain") charset)}})))
 
+;; define a wrapper to tell a generic Map from a Ring response map
+;; to return a ring response as the representation
+(defrecord RingResponse [response])
+
+(defn ring-response [map] (->RingResponse map))
+
 (defmulti as-ring-response
-  "Returns the complete Ring response map ({:body \"...\" :headers [] :status xxx}).
+  "Returns the complete Ring response map ({:body \"...\" :headers {...} :status xxx}).
    It does all the charset conversion and encoding and returns are Ring
    response map so no further post-processing of the response will be
    carried out."
   (fn [data _] (class data)))
+
+(defmethod as-ring-response RingResponse [{response :response} _] response)
 
 ;; If a string is given, we should carry out the conversion of both the charset and the encoding.
 (defmethod as-ring-response String [data {representation :representation}]
@@ -253,12 +262,3 @@
 (defmethod as-ring-response :default
   [data context]
   (as-ring-response (render-item (as-response data context) context) context))
-
-;; define a wrapper to tell a generic Map from a Ring response map
-;; to return a ring response as the representation
-(defrecord RingResponse [response]
-  Representation
-  (as-response [this context]
-    response))
-
-(defn ring-response [map] (->RingResponse map))
