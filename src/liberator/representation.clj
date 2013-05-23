@@ -145,7 +145,7 @@
                    :newline :cr+lf :separator sep)))
 
 (defmethod render-seq-generic "text/csv" [data context]
-   (render-seq-csv data context \,))
+  (render-seq-csv data context \,))
 
 (defmethod render-seq-generic "text/tab-separated-values" [data context]
   (render-seq-csv data context \tab))
