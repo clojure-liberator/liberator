@@ -5,10 +5,7 @@ title: Welcome
 # Quickstart
 ## Include in project.clj
 {% highlight clojure %}
-[liberator "0.8.0"]{% endhighlight %}
-
-This documentation refers to the latest master which will be released
-as 0.9.0. 
+[liberator "0.9.0"]{% endhighlight %}
 
 <div class="alert alert-warning">Liberator is still under heavy
 development, however, the programming interface is settling down.

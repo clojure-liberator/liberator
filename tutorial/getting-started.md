@@ -30,7 +30,7 @@ For more Information about adding the web server component, see the
 
 Liberator is available from clojars. Add liberator to your project.clj as
 
-````[liberator "0.8.0"]````
+````[liberator "0.9.0"]````
 
 <div class="alert alert-info">The latest release might be newer, but the tutorial works at least
 with this version.</div>
@@ -45,7 +45,7 @@ lein new liberator-tutorial
 {% highlight clojure %}
 (defproject tutorial "0.1.0-SNAPSHOT"
   :dependencies [[org.clojure/clojure "1.4.0"]
-                 [liberator "0.8.0"]
+                 [liberator "0.9.0"]
                  [compojure "1.1.3"]
                  [ring/ring-jetty-adapter "1.1.0"]])  
 {% endhighlight %}
