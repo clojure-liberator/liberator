@@ -6,27 +6,7 @@ layout: tutorial
 
 This part will give you a quick start into programming with liberator.
 
-## What is liberator?
-
-Liberator is a Clojure library that helps you expose your data as
-resources while automatically complying with all the relevant
-requirements of HTTP specification (RFC-2616). Your resources will
-automatically gain useful HTTP features, such as caching and content
-negotiation. Liberator was inspired by erlang's webmachine. By
-following the constraints and requirements in RFC-2616 liberator will
-enable you to create application according to a REST architecture.
-
-## Liberator's place in the ecosystem
-
-Liberator resources are ring handlers and fit exactly in the clojure
-web development environment. Typicall you will use liberator together
-with a routing library like compojure and a library to generate the
-representation in HTML, like hiccup or library that generates json.
-
-For more Information about adding the web server component, see the
-[Ring documentation](https://github.com/ring-clojure/ring/wiki).
-
-## Installation and getting started
+## Installation
 
 Liberator is available from clojars. Add liberator to your project.clj as
 
