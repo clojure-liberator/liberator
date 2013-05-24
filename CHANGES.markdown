@@ -2,6 +2,9 @@
 
 # New in 0.9.0
 
+* Improved documentation
+* Add support for 422 unprocessable entity via processable?
+
 ## Changes
 
 * Rename decision if-none-match to if-none-match?
@@ -23,6 +26,7 @@
   increased robustnes
 * Fixes to HTML Table representation (missing tr)
 * Render Clojure Representation using \*print-dup\* 
+* Support "application/edn" representation
 
 ## Bugs fixed
 
