@@ -4,7 +4,7 @@ title: Changelog
 ---
 # Changelog
 
-## New in 0.9.0-SNAPSHOT (current master, unreleased)
+## New in 0.9.0
 
 ### Changes
 
@@ -24,6 +24,7 @@ title: Changelog
   increased robustnes
 * Fixes to HTML Table representation (missing tr)
 * Render Clojure Representation using \*print-dup\*
+* Support "application/edn" representation
 
 ### Bugs fixed
 
