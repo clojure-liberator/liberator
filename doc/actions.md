@@ -12,7 +12,7 @@ representation of the changed entity is returned to the client, or one
 of the status codes that redirect the client to a different locations
 is returned.
 
-Liberators provides so called action functions that you can declared
+Liberator provides so called action functions that you can declare
 with your resource definitions which are called at well suited points
 during request processing.
 

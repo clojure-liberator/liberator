@@ -33,7 +33,7 @@ is done in the decision called ````:media-type-available?````.
 <div class="alert alert-info">You can also specify a function for the
 key :media-type-available? instead of :available-media-types. The
 default implementation uses :available-media-types to gain a list of
-possible types does the negotiation with the Accept-Header and stores
+possible types does the negotiation with the Accept header and stores
 the outcome in the representation map. This is in most cases more
 convenient than doing this manually.</div>
 
@@ -80,7 +80,7 @@ $ curl -v http://localhost:3000/babel
 You requested plain text* Closing connection #0
 {% endhighlight %}
 
-You can see that curl sent an ````Accept````-Header of "*/*" which means
+You can see that curl sent an ````Accept```` header of "\*/\*" which means
 that it accepts any media type. In this case, liberator will return
 the first available media type.
 

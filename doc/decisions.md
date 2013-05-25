@@ -16,10 +16,10 @@ on the desired resource behaviour.
 key                         | description                            | default
 ----------------------------|----------------------------------------|-------
 allowed?                    |
-is the request allowed?     |
+Is the request allowed?     |
 true                        |
 authorized?                 |
-is the request authorized?  |
+Is the request authorized?  |
 true                        |
 charset-available?          |
 Is any of requested charsets available? Should set ````:charset```` in representation to the negotiated character set. |
@@ -114,7 +114,7 @@ true |
 ## Internal decision points
 
 These decision points are used internally by liberator and provide
-reasonable defaults. Overriding is possibly but not useful in general.
+reasonable defaults. Overriding is possible, but not useful in general.
 
 key                                 | description
 ------------------------------------|------------------------------------------

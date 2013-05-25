@@ -5,8 +5,8 @@ title: Resource definition
 # Resource definition
 
 A liberator resource is a ring handler and adheres to the ring
-contract. However, as a developer, you will not work with the ring interface,
-but provide functions for decision points, actions and handlers.
+contract. However, as a developer you will not work with the ring interface,
+but instead provide functions for decision points, actions and handlers.
 
 ## resource and defresource
 
