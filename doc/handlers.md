@@ -6,7 +6,7 @@ title: Handlers
 
 For every http status code there is a handler function defined in
 liberator. All have sensible defaults and will return a simple english
-error message or an empty reponse, whatever is appropriate.
+error message or an empty response, whatever is appropriate.
 
 Handler key                     | status code | redirect?
 --------------------------------|-------------|----------

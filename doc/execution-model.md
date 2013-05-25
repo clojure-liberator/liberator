@@ -7,25 +7,25 @@ title: Execution model
 The execution flow is driven by the outcome of the decision
 function. This is how liberator determines the final status code and
 which handler must be used. To propagate information like the
-negotiated media-type or wether a resource exists, a map, the
-*context* is, passed along. 
+negotiated media-type or whether a resource exists, a
+*context* map is passed along.
 
 ## Context
 
 The context initially contains the following keys
 
-* representation - a map containing the negotiated representation
+* ````:representation```` - a map containing the negotiated representation
    parameters such as ````:media-type````, ````:charset````,
    ````:language```` and ````:encoding````. This map will be filled by
    the decision functions like ````:media-type-available?````
-*  request - the original ring request 
-*  resource - the map that defines the resource, including decision
+*  ````:request```` - the original ring request
+*  ````:resource```` - the map that defines the resource, including decision
    function etc.
 
 The context is updated by the outcome of decision and action functions.
-When the outcome is a map it is deeply merged with the context. Deeply
+When the outcome is a map it is deeply merged with the context. "Deeply merged"
 means that map values in the context are merged with the outcome's
-value. Sequential values a appended with the outcome's sequence.
+value. Sequential values are appended with the outcome's sequence.
 
 Updating the context with a single new key is easy: just return a map
 with the single key:
@@ -43,10 +43,10 @@ a keyword is a function that can "lookup itself" from a map.
 
 ## Decision functions
 
-Every decision in a resource is implemented by a decision functions.
-It's outcome is interpreted as a boolean value. If the value is a
-vector than the first element is used as the boolean decision and the
-second part is used to update the context.
+Every decision in a resource is implemented by a decision function.
+Its outcome is interpreted as a boolean value. If the value is a
+vector then the first element is used as the boolean decision and the
+second element is used to update the context.
 
 decision function result     | boolean value | context update
 -----------------------------|---------------|---------------
@@ -60,7 +60,7 @@ decision function result     | boolean value | context update
 
 The keys ````:post!````, ````:put!```` and ````:delete!```` provide
 points that are suited well to enact side effects. While they are
-evaluted like decision functions, the boolean value has no effect and
+evaluated like decision functions, the boolean value has no effect and
 the next decision step is constant. The context update works exactly
 like for decision functions.
 

@@ -14,14 +14,14 @@ title: Changelog
 * Add "Vary" automatically
 * Add declaration :available-media-types?
 * Add support for HEAD request
-* Extractor for graphivz dot file that reads core.clj
+* Extractor for graphviz dot file that reads core.clj
 * Bump hiccup dependency to 1.0.2
 * Add can-put-to-missing?
 * Fix representation render-map-csv
 * Make liberator build with lein 2.0.0RC1 (manage dependencies)
 * Drop unnecessary methods from Representation
 * Dispatch Representation on MapEquivalence and Sequential which
-  increased robustnes
+  increased robustness
 * Fixes to HTML Table representation (missing tr)
 * Render Clojure Representation using \*print-dup\*
 * Support "application/edn" representation
@@ -50,4 +50,4 @@ title: Changelog
 
 ## New in 0.7.0
 
-Revision 0.7.0 has been accidently skipped
+Revision 0.7.0 has been accidentally skipped

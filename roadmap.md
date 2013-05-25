@@ -3,12 +3,12 @@ layout: default
 title: Future development
 ---
 # Roadmap
-There is still a lot todo. While we track bugs and issues at github,
+There is still a lot to do. While we track bugs and issues at github,
 this page shows the roadmap for liberator's future. This is a
 collection of ideas and planned features, but there is no commitment
-on when or wether a certain feature will be available.
+on when or whether a certain feature will be available.
 
-## Core Exection
+## Core Execution
 * Support language subtags ("en-gb", etc.)
 * Send sensible default response for OPTIONS requests, include
   "Allow"-Header etc.
