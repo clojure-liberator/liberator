@@ -131,6 +131,6 @@ Server: Jetty(7.6.1.v20120215)
 Method not allowed.
 {% endhighlight %}
 
-Wohoo! Exactly what I'd expect. But how did liberator determine that
+Woohoo! Exactly what I'd expect. But how did liberator determine that
 it must send a 405 status? It uses a graph of decisions which is
 described in the next part: [Decision graph](decision-graph.html).

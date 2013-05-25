@@ -10,7 +10,7 @@ returned value must extend the protocol
 a single method ````as-response```` which must return a standard ring
 response map. The representation must consider the media-type, charset
 and other negotiated values in the context's representation map.
-Liberator does not reencode the returned response any further to match
+Liberator does not re-encode the returned response any further to match
 character set or encoding.
 
 The most common types for response bodies are supported by liberator
@@ -71,7 +71,7 @@ multi-method ````liberator.representation/render-seq-generic````
 ### RingResponse
 
 The function ````(liberator.representation/ring-response)```` will
-create a reponse which is used unaltered as the ring response. This is
+create a response which is used unaltered as the ring response. This is
 necessary because simple maps would be transformed to the above
 media-types.
 

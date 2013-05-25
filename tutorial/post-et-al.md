@@ -1,8 +1,8 @@
 ---
 layout: tutorial
-title: Tutorial - Handling POST et. al.
+title: Tutorial - Handling POST, et al.
 ---
-# Handling POST et. al.
+# Handling POST, et al.
 
 There's more than GET and HEAD requests. To be a useful web library
 you better support POST, PUT and DELETE as well, and so does
@@ -75,7 +75,7 @@ was made since it checked the resource:
         :etag (fn [_] (str (count @posts)))))
 {% endhighlight %}
 
-We also make a litte resource to retreive the posted content again:
+We also make a little resource to retrieve the posted content again:
 
 {% highlight clojure %}
     (ANY "/postbox/:x" [x]
@@ -128,6 +128,6 @@ The necessary steps to implement handling of PUT are mostly those for
 POST. A key difference is that ````:can-put-to-missing?```` can lead
 to ````:conflict?```` which can send you to ````:handle-conflict````.
 This is not possible for POST requests. On the other hand PUT to a
-nonexisting resource does not allow a response that sends you to a
+nonexistent resource does not allow a response that sends you to a
 different location. The necessary flow can be seen as always on the
 chart.

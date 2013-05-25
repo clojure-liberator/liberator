@@ -7,7 +7,7 @@ title: Execution model
 The execution flow is driven by the outcome of the decision
 function. This is how liberator determines the final status code and
 which handler must be used. To propagate information like the
-negotiated media-type or wether a resource exists, a map, the
+negotiated media-type or whether a resource exists, a map, the
 *context* is, passed along. 
 
 ## Context
@@ -60,7 +60,7 @@ decision function result     | boolean value | context update
 
 The keys ````:post!````, ````:put!```` and ````:delete!```` provide
 points that are suited well to enact side effects. While they are
-evaluted like decision functions, the boolean value has no effect and
+evaluated like decision functions, the boolean value has no effect and
 the next decision step is constant. The context update works exactly
 like for decision functions.
 

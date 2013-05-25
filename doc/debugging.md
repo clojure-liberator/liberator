@@ -5,7 +5,7 @@ title: Debugging
 # Debugging the execution flow
 
 Finding out why liberator comes to a certain result can be tedious.
-despite sprinking trace statemens over your code, liberator can also
+Instead of sprinkling trace statements over your code, liberator can simply
 trace the request execution.
 
 ## Tracing with liberator.dev/wrap-trace
@@ -52,7 +52,7 @@ routing.
 
 In any case a link header will be returned with rel=x-liberator-trace.
 It points to the request on the trace ui. The current id can also be
-retreived programatically using ````(current-trace-url)````. 
+retrieved programmatically using ````(current-trace-url)````.
 
 ### Runtime access to the current trace id
 
@@ -63,7 +63,7 @@ and embed a HTML-snippet of a hovering link.
 function                    | description
 ----------------------------|------------
 ````current-trace-url````   | generates a URL pointing to the trace ui for the current request
-````include-trace-panel```` | generates an HTML snippet with a link to thetrace ui
+````include-trace-panel```` | generates an HTML snippet with a link to the trace ui
 ````css-url````             | generates a URL to CSS for the above
 HTML-snippet
 
@@ -71,7 +71,7 @@ HTML-snippet
 
 The function ````liberator.core/log!```` adds entries to liberators
 trace log. This can have some advantages over printing to the console,
-because the logged statment is available at the correct position in 
+because the logged statement is available at the correct position in
 the trace.
 
 {% highlight clojure %}

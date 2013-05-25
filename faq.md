@@ -39,6 +39,6 @@ Add ````:post```` to the list at ````:allowed-methods````
 
 ### Why aren't there more FAQ? Where can I get help?
 
-There wheren't that many questions that came up frequently. To get
+There weren't that many questions that came up frequently. To get
 support quickly, please post your question to our
 [Google Group](https://groups.google.com/forum/#!forum/clojure-liberator).

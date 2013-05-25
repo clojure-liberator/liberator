@@ -4,7 +4,7 @@ layout: tutorial
 ---
 # Content Negotiation
 
-HTTP supports a rich set of methods to negotiate the represenation of
+HTTP supports a rich set of methods to negotiate the representation of
 a resource. The client tells the server its preferences on
 media-type, character set, content encoding and language and the
 server uses this information to select the best representation
@@ -33,11 +33,11 @@ is done in the decision called ````:media-type-available?````.
 <div class="alert alert-info">You can also specify a function for the
 key :media-type-available? instead of :available-media-types. The
 default implementation uses :available-media-types to gain a list of
-possible types does the negotation with the Accept-Header and stores
+possible types does the negotiation with the Accept-Header and stores
 the outcome in the representation map. This is in most cases more
 convenient than doing this manually.</div>
 
-An example will illustrate how the things fit togehter:
+An example will illustrate how things fit together:
 
 {% highlight clojure %}
   (ANY "/babel" []
@@ -115,7 +115,7 @@ clojure map that was returned from the handler method.
 
 So, what happens if we request some media-type which is not available?
 As you can guess, liberator will finally use
-````:handle-not-acceptable```` to generate a 406 repsone:
+````:handle-not-acceptable```` to generate a 406 response:
 
 {% highlight bash session %}
 curl -v -H 'Accept: image/png' http://localhost:3000/babel
@@ -149,7 +149,7 @@ proxies and caching user agents to tell apart different representation of
 the same resource. Thus it is vital that it is set correctly. If not,
 clients will receive cached values in the wrong media-type and worse.
 
-## More negotiatable parameters
+## More negotiable parameters
 
 Liberator supports negotiation for the headers ````Accept```` (media-type),
 ````Accept-Language````, ````Accept-Charset```` and
@@ -166,9 +166,9 @@ supported character sets on your platform.
 <div class="alert alert-info">Automatic character encoding is only
 supported if a handler returns a string value. If it returns an
 inputstream then liberator expect it to be already encoded
-correctly. Reencoding is, while technically possible, in general
+correctly. Re-encoding is, while technically possible, in general
 a costly and unnecessary operation. In the case that you absolutely
-need it you can reencode an inputstream in the handler.</div>
+need it you can re-encode an inputstream in the handler.</div>
 
 The parameter ````:encoding```` has no further support from liberator.
 While content-encoding will typically be done by a reverse proxy in front

@@ -4,7 +4,7 @@ title: Tutorial - All together now
 ---
 # All together now
 
-Nowing how to handle different request methods and the extension
+Knowing how to handle different request methods and the extension
 points for a liberator resource is one thing, putting all together in
 a un-complected way is not trivial. Fortunately it's not hard either
 as the following example shows.
@@ -29,7 +29,7 @@ semantics of GET, PUT, POST and DELETE:
 The list resources accept and produces application/json in this
 example. The body is parsed in ````:malformed```` and stored in the
 context under the key ````::data````. To keeps things simple
-````post!```` generates a random number for the id and stores id unter
+````post!```` generates a random number for the id and stores id under
 ````:id````. We enable redirect after post and ````:location```` picks
 up the id to create the url where a resource for the created entity
 can be found.
@@ -80,7 +80,7 @@ Then comes the resource for the list of entries.
 ;; we hold a entries in this ref
 (defonce entries (ref {}))
 
-;; a helper to create a absoulte url for the entry with the given id
+;; a helper to create a absolute url for the entry with the given id
 (defn build-entry-url [request id]
   (URL. (format "%s://%s:%s%s/%s"
                 (name (:scheme request))
@@ -90,7 +90,7 @@ Then comes the resource for the list of entries.
                 (str id))))
 
 
-;; create and liste entries
+;; create and list entries
 (defresource list-resource
   :available-media-types ["application/json"]
   :allowed-methods [:get :post]
@@ -112,7 +112,7 @@ GET, PUT and DELETE. Like the list-resource it accepts json for update
 and generates a json response.
 
 An entries exists if the stored value is not nil. If the stored value
-is nil, the entrie is gone (status 410). If there is no value stored
+is nil, the entry is gone (status 410). If there is no value stored
 at all, the entries does not exist (status 404).
 
 On delete, the entry is set to nil and thus marked as gone.
@@ -153,6 +153,6 @@ hand-in-hand with compojure's routing parameters:
 
 ## Possible extensions
 
-This example is nfar from beeing feature complete. It can be extended
+This example is far from being feature complete. It can be extended
 to support conditional requests and more media types. You can use
 ````authorized?```` to restrict access to the resourses.

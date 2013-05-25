@@ -15,7 +15,7 @@ enable you to create application according to a REST architecture.
 # Liberator's place in the ecosystem
 
 Liberator resources are ring handlers and fit exactly in the clojure
-web development environment. Typicall you will use liberator together
+web development environment. Typically you will use liberator together
 with a routing library like compojure and a library to generate the
 representation in HTML, like hiccup or library that generates json.
 
