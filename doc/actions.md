@@ -28,5 +28,5 @@ The action functions are called after content negotiation, existence
 checks and conditional request processing -- just before deciding on
 actual the response type: including an entity, redirection etc.
 
-You can spot the actions on the [decision graph](decisions.tml) as the
+You can spot the actions on the [decision graph](decisions.html) as the
 round nodes.
