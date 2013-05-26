@@ -5,7 +5,7 @@ layout: tutorial
 # Decision Graph
 
 When handling a resource liberator executes a set of decisions to
-determine the correct response status code and to provie the handler
+determine the correct response status code and to provide the handler
 function with the necessary information to generate an appropriate
 response.
 

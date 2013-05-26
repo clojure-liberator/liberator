@@ -6,13 +6,13 @@ title: Tutorial - Debugging the execution flow
 
 Liberator encourages a declarative programming style: the developer is
 hidden from the algorithm and only provides callbacks at certain
-decision poinst. This enables a compact and powerful style of
+decision points. This enables a compact and powerful style of
 programming but, in case of an unexpected result, can make debugging a
 pain: there is no step through.
 
 ## So show me the traces!
 
-Altough the developer cannot step through the sequence of decisions,
+Although the developer cannot step through the sequence of decisions,
 liberator can be told to trace the execution and report to the
 developer. The namespace ````liberator.dev```` contains helper
 functions for this.
@@ -32,7 +32,7 @@ Let's take this example resource and trace it:
 
 To enable request tracing wrap the request handler in
 ````liberator.dev/wrap-trace````. You can wrap either a single
-resource or any ring middleware stack. The later is recommented to
+resource or any ring middleware stack. The later is recommended to
 make the trace ui easily accessible:
 
 {% highlight clojure %}
@@ -91,7 +91,7 @@ The counter is 0
 
 You can see that the media-type was negotiated and the decision
 function returned a map with the representation definition. This map
-was combined with the conext at that time and makes the media-type
+was combined with the context at that time and makes the media-type
 available for the handler.
 
 Also visible is that the part for conditional request was skipped. Try

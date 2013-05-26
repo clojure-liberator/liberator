@@ -5,21 +5,21 @@ title: List of Decisions
 # List of Decisions
 
 Liberator supports a whole lot of decisions points. Some of them are
-needed for next to every resource definition. Others are used seldomly
+needed for next to every resource definition. Others are seldom used
 or there is no other sensible implementation.
 
 ## Typical decision points for resource implementors
 
 The following decisions points will be typically specified depending
-on the desired resource behavoiur.
+on the desired resource behaviour.
 
 key                         | description                            | default
 ----------------------------|----------------------------------------|-------
 allowed?                    |
-is the request allowed?     |
+Is the request allowed?     |
 true                        |
 authorized?                 |
-is the request authorized?  |
+Is the request authorized?  |
 true                        |
 charset-available?          |
 Is any of requested charsets available? Should set ````:charset```` in representation to the negotiated character set. |
@@ -66,7 +66,7 @@ malformed? |
 Is the request malformed? |
 false |
 media-type-available? |
-Is the requested media-type available? Should set ````:medita-type```` in representation |
+Is the requested media-type available? Should set ````:media-type```` in representation |
 Uses value at ````:available-media-types```` |
 method-allowed? |
 Is the request method allowed for this resource? |
@@ -87,7 +87,7 @@ new? |
 Was the resource created by this request? |
 true |
 post-redirect? |
-Shall the reponse redirect after a POST? |
+Shall the response redirect after a POST? |
 false |
 put-to-different-url? |
 Should the PUT request be made to a different url? |
@@ -114,7 +114,7 @@ true |
 ## Internal decision points
 
 These decision points are used internally by liberator and provide
-reasonable defaults. Overriding is possibly but not useful in general.
+reasonable defaults. Overriding is possible, but not useful in general.
 
 key                                 | description
 ------------------------------------|------------------------------------------
@@ -131,7 +131,7 @@ if-none-match?                      | checks the request method to handle failed
 if-none-match-exists?               | checks if header "If-None-Match" exists
 if-none-match-star?                 | checks if header "If-None-Match" is "\*"
 if-unmodified-since-exists?         | checks if header "If-Unmodified-Since" exists
-if-unmodified-since-valid-date?     | checks if header "If-Unodified-Since" is a valid HTTP date
+if-unmodified-since-valid-date?     | checks if header "If-Unmodified-Since" is a valid HTTP date
 is-options?                         | checks if the request method is options
 method-delete?                      | checks if the request method is delete
 method-put?                         | checks if the request method is put
