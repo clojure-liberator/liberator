@@ -41,7 +41,7 @@ Edit liberator_tutorial/core.clj where we define our first resource:
 (defroutes app
   (ANY "/" [] (resource)))
 
-(run-jetty #'app {{:port 3000}})
+(run-jetty #'app {:port 3000})
 {% endhighlight %}
 
 Load the namespace and jetty will be started on port 3000. However,
