@@ -13,7 +13,7 @@
 (facts "Can produce representations from map"
        (let [entity {:foo "bar" :baz "qux"}]
          (tabular "Various media types are supported"
-                  (as-response entity {:representation {:media-type ?media-type :charset "UTF-8"}})
+                  (as-ring-response entity {:representation {:media-type ?media-type :charset "UTF-8"}})
                   => {:body ?body :headers { "Content-Type" (str ?media-type ";charset=UTF-8")}}
                   ?media-type   ?body
                   "text/csv"    "name,value\r\n:foo,bar\r\n:baz,qux\r\n"
@@ -30,7 +30,7 @@
 (facts "Can produce representations from a seq of maps"
        (let [entity [{:foo 1 :bar 2} {:foo 2 :bar 3}]]
          (tabular "Various media types are supported"
-                  (as-response entity {:representation {:media-type ?media-type :charset "UTF-8"}})
+                  (as-ring-response entity {:representation {:media-type ?media-type :charset "UTF-8"}})
                   => {:body ?body :headers { "Content-Type" (str ?media-type ";charset=UTF-8")}}
                   ?media-type   ?body
                   "text/csv"    "foo,bar\r\n1,2\r\n2,3\r\n"
@@ -46,5 +46,3 @@
                   "application/json" (clojure.data.json/write-str entity)
                   "application/clojure" (pr-str-dup entity)
                   "application/edn" (pr-str-dup entity))))
-
-
