@@ -3,7 +3,7 @@
             [clojure.java.io :as io]
             [clojure.data.json :as json]
             [liberator.dev :as dev])
-  (:use [liberator.core :only [defresource request-method-in]]
+  (:use [liberator.core :only [defresource defhandler request-method-in]]
         [liberator.representation :only [Representation]]
         [compojure.core :only [context ANY routes defroutes]]
         [hiccup.page :only [html5]]
@@ -140,6 +140,17 @@
                         [:li [:a {:href "/drag-drop"} "Drag and Drop (featuring clojure script)"]]
                         [:li [:a {:href "/drag-drop/athletes"} "Athletes"]]
                         [:li [:a {:href "/x-liberator/requests/"} "Liberator request dump"]]]]))) 
+
+(defhandler handle-unprocessable-entity 422 "Entity is invalid")
+
+(defresource simple-splice
+  :method-allowed? (request-method-in :get :post)
+  :available-media-types ["text/html"]
+  :post! (fn [ctx]
+           (if (= "pass" (get-in ctx [:request :params :flag]))
+             true ; continue on default processing path
+             #(handle-unprocessable-entity %))) ;change default flow to new handler
+  :handle-created "Created")
 
 (defn assemble-routes []
   (->

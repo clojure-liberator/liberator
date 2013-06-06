@@ -2,8 +2,9 @@
   (:require examples)
   (:use
    [liberator.representation :only [->when]]
-   [ring.mock.request :only [request header]]
+   [ring.mock.request :as mock :only [request header]]
    [compojure.core :only [ANY]]
+   [compojure.handler :only [api]]
    [liberator.core  :only [resource with-console-logger]]
    [midje.sweet :only [fact facts truthy against-background contains future-fact future-facts defchecker tabular before]]
    [checkers]))
@@ -69,3 +70,18 @@
    "text/html"          ["text/html"]      200        "text/html;charset=UTF-8"
    "text/plain"         ["text/html"]      406         "text/plain"))
 
+(facts "about splice"
+  (tabular
+   (facts "about posting"
+     (let [handler (api (ANY "/splice" [] examples/simple-splice))
+           req (-> (request :post "/splice")
+                   (mock/body ?body))
+           response (handler req)]
+       (fact "has expected status"
+         response => (contains {:status ?status}))
+       (fact "has expected content"
+         response => (body ?result))))
+   ?body                ?status             ?result
+   {:flag "pass"}       201                 "Created"
+   {:flag "fail"}       422                 "Entity is invalid"
+   {}                   422                 "Entity is invalid"))
