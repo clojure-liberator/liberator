@@ -146,10 +146,10 @@
 (defresource simple-splice
   :method-allowed? (request-method-in :get :post)
   :available-media-types ["text/html"]
-  :post! (fn [ctx]
-           (if (= "pass" (get-in ctx [:request :params :flag]))
-             true ; continue on default processing path
-             #(handle-unprocessable-entity %))) ;change default flow to new handler
+  :post-to-existing? (fn [ctx]
+                          (if (= "pass" (get-in ctx [:request :params :flag]))
+                            true ; process as normal
+                            handle-unprocessable-entity)) ; change
   :handle-created "Created")
 
 (defn assemble-routes []

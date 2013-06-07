@@ -47,7 +47,7 @@
   :new? (fn [ctx] (=method :post ctx))
   :post-to-existing? (fn [ctx]
                        (if (=method :post ctx)
-                         #(post-entity-valid? %)
+                         post-entity-valid?
                          false))
   :post-entity-valid? (fn [ctx]
                         (let [entity (request->ToDo (get ctx :request))]
@@ -56,7 +56,7 @@
            (swap! todo-list conj (:entity ctx)))
   :handle-created "Created"
 
-  :conflict? (fn [_] #(put-entity-valid? %))
+  :conflict? (constantly put-entity-valid?)
   :put-entity-valid? (fn [ctx]
                        (let [entity (request->ToDo (get ctx :request))]
                          [(.valid? entity :update) {:entity entity}]))
