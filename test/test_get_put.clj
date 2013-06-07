@@ -4,34 +4,54 @@
         checkers
         [ring.mock.request :only [request header]]))
 
-;; tests for a simple resource that can be accessed on a given uri
+;; tests for a resource where you can put something and get
+;; it back later. Will use the content-type of the PUT body
+;; Generates last-modified header for conditional requests.
 
+(def things (ref nil))
 
-
-(defn make-thing-resource [things]
-  (resource 
+(def thing-resource
+  (resource
+   ;; early lookup   
+   :service-available? (fn [ctx] {::r (get @things (get-in ctx [:request :uri]))})
    :method-allowed? (request-method-in :get :put :delete)
-   ;; are resource exists if a value is stored in @things at the uri 
-   :exists?  #(not (nil? (get @things (get-in % [:request :uri]))))
-   ;; ...and id existed if the stored value is nil (and not some random Object. used as setinel
-   :existed? #(and (nil? (get @things (get-in % [:request :uri]) (Object.))))
-   :handle-ok #(get-in @things [(get-in % [:request :uri]) :content])
-   :put! #(dosync (alter things assoc-in [(get-in % [:request :uri]) :content] (get-in % [:request :body])))
-   :delete! #(dosync (alter things assoc (get-in % [:request :uri]) nil))))
+   ;; lookup media types of the requested resource
+   :available-media-types #(if-let [m (get-in % [::r :media-type])] [m])
+   ;; the resource exists if a value is stored in @things at the uri
+   ;; store the looked up value at key ::r in the context
+   :exists? #(get % ::r)
+   ;; ...it existed if the stored value is nil (and not some random
+   ;; Objeced we use as a setinel)
+   :existed? #(nil? (get @things (get-in % [:request :uri]) (Object.)))
+   ;; use the previously stored value at ::r
+   :handle-ok #(get-in % [::r :content])
+   ;; update the representation
+   :put! #(dosync
+           (alter things assoc-in
+                  [(get-in % [:request :uri])]
+                  {:content (get-in % [:request :body])
+                   :media-type (get-in % [:request :headers "content-type"]
+                                       "application/octet-stream")
+                   :last-modified (java.util.Date.)}))
+   ;; ...store a nil value to marke the resource as gone
+   :delete! #(dosync (alter things assoc (get-in % [:request :uri]) nil))
+   :last-modified #(get-in % [::r :last-modified])))
 
-(let [things (ref nil)
-      r (make-thing-resource things)]
-  (do
-    (let [resp (r (request :get "/r1"))]
-      (fact "get => 404" resp => NOT-FOUND))
-    (let [resp (r (-> (request :put "/r1")
-                      (assoc :body "r1")
-                      (header "content-type" "text/plain")))]
-      (fact "put => 202" resp => CREATED))
-    (let [resp (r (-> (request :get "/r1")))]
-      (fact "get => 200" resp => OK)
-      (fact "get body is what was put before" resp => (body "r1")))
-    (let [resp (r (-> (request :delete "/r1")))]
-      (fact "delete" resp => NO-CONTENT))
-    (let [resp (r (request :get "/r1"))]
-      (fact "get => gone" resp => GONE))))
+(facts
+ (let [resp (thing-resource (request :get "/r1"))]
+   (fact "get => 404" resp => NOT-FOUND))
+ (let [resp (thing-resource (-> (request :put "/r1")
+                   (assoc :body "r1")
+                   (header "content-type" "text/plain")))]
+   (fact "put => 202" resp => CREATED))
+ (let [resp (thing-resource (-> (request :get "/r1")))]
+   (fact "get => 200" resp => OK)
+   (fact "get body is what was put before"
+         resp => (body "r1"))
+   (fact "content type is set correcty"
+         resp => (content-type "text/plain;charset=UTF-8"))
+   (future-fact "last-modified header is set"))
+ (let [resp (thing-resource (-> (request :delete "/r1")))]
+   (fact "delete" resp => NO-CONTENT))
+ (let [resp (thing-resource (request :get "/r1"))]
+   (fact "get => gone" resp => GONE)))

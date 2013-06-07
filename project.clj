@@ -19,11 +19,11 @@
   :plugins [[lein-midje "2.0.3"]
             [lein-ring "0.7.1" :exclusions [org.clojure/clojure]]]
 
-  :profiles {:dev {:dependencies [[ring/ring-jetty-adapter "1.1.0"]
+  :profiles {:dev {:dependencies [[ring/ring-jetty-adapter "1.1.6"]
                                   [ring-mock "0.1.2"]
-                                  [ring/ring-devel "1.1.0"]
+                                  [ring/ring-devel "1.1.6"]
                                   [compojure "1.0.2" :exclusions [org.clojure/tools.macro]] ;; only for examples
-                                  [midje "1.4.0"]
+                                  [midje "1.5.0"]
                                   [bultitude "0.1.7"]
                                   [org.clojure/clojurescript "0.0-1450"]]
                     :source-paths [ "src" "examples/clj"]}}

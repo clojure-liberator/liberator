@@ -1,5 +1,6 @@
 (ns test-flow
   (:use liberator.core
+        [liberator.representation :only (ring-response)]
         midje.sweet
         checkers
         [ring.mock.request :only [request header]]))
@@ -17,29 +18,41 @@
     (fact resp => (body "NOT-FOUND"))))
 
 (facts "get on moved temporarily"
-  (let [resp ((resource :exists? false :existed? true
-                        :moved-temporarily? (fn [ctx] (assoc ctx :location "http://new.example.com/")))
+       (let [resp ((resource :exists? false
+                             :existed? true
+                             :moved-temporarily? {:location "http://new.example.com/"})
               (request :get "/"))]
     (fact resp => (MOVED-TEMPORARILY "http://new.example.com/"))))
 
 (facts "get on moved permantently"
   (let [resp ((resource :exists? false :existed? true
-                        :moved-permanently? (fn [ctx] (assoc ctx :location "http://other.example.com/")))
+                        :moved-permanently? true
+                        :location "http://other.example.com/")
               (request :get "/"))]
     (fact resp => (MOVED-PERMANENTLY "http://other.example.com/"))))
 
 (facts "get on moved permantently with custom response"
   (let [resp ((resource :exists? false :existed? true
                         :moved-permanently? true
-                        :handle-moved-permanently {:body "Not here, there!"
-                                                   :headers {"Location" "http://other.example.com/"}})
+                        :handle-moved-permanently (ring-response {:body "Not here, there!"
+                                                                  :headers {"Location" "http://other.example.com/"}}))
+              (request :get "/"))]
+    (fact resp => (MOVED-PERMANENTLY "http://other.example.com/"))
+    (fact resp => (body "Not here, there!"))))
+
+(facts "get on moved permantently with custom response"
+  (let [resp ((resource :exists? false :existed? true
+                        :moved-permanently? true
+                        :handle-moved-permanently (ring-response {:body "Not here, there!"
+                                                             :headers {"Location" "http://other.example.com/"}}))
               (request :get "/"))]
     (fact resp => (MOVED-PERMANENTLY "http://other.example.com/"))
     (fact resp => (body "Not here, there!"))))
 
 (facts "get on moved permantently with automatic response"
   (let [resp ((resource :exists? false :existed? true
-                        :moved-permanently? (fn [ctx] (assoc ctx :location "http://other.example.com/")))
+                        :moved-permanently? true
+                        :location "http://other.example.com/")
               (request :get "/"))]
     (fact resp => (MOVED-PERMANENTLY "http://other.example.com/"))))
 
@@ -52,8 +65,7 @@
 
 (let [r (resource :method-allowed? (request-method-in :post)
                   :exists? true
-                  :post-redirect? true
-                  :see-other "http://example.com/foo")
+                  :post-redirect? {:location "http://example.com/foo"})
       resp (r (request :post "/")) ]
   (fact "Post to existing resource and redirect" resp => (SEE-OTHER  "http://example.com/foo")))
 
@@ -61,7 +73,7 @@
                   :exists? false
                   :post-redirect? true
                   :can-post-to-missing? true
-                  :see-other "http://example.com/foo")
+                  :location "http://example.com/foo")
       resp (r (request :post "/")) ]
   (fact "Post to missing can redirect" resp => (SEE-OTHER  "http://example.com/foo")))
 
@@ -96,3 +108,24 @@
                   :can-put-to-missing? true)
       resp (r (request :put "/"))]
   (fact "Put to missing can give 201" resp => CREATED))
+
+(facts "Head requests"
+  (facts "on existing resource"
+    (let [resp ((resource :exists? true :handle-ok "OK") (request :head "/"))]
+      (fact resp => OK)
+      (fact resp => (content-type "text/plain;charset=UTF-8"))
+      (fact resp => (no-body))))
+  
+  (facts "unexisting resource"
+    (let [resp ((resource :exists? false :handle-not-found "NOT-FOUND") (request :head "/"))]
+      (fact resp => NOT-FOUND)
+      (fact resp => (no-body))))
+  
+  (facts "on moved temporarily"
+    (let [resp ((resource :exists? false
+                          :existed? true
+                          :moved-temporarily? true
+                          :location "http://new.example.com/")
+                (request :get "/"))]
+      (fact resp => (MOVED-TEMPORARILY "http://new.example.com/"))
+      (fact resp => (no-body)))))

@@ -5,3 +5,6 @@ jdk:
   - openjdk7
   - openjdk6
   - oraclejdk7
+branches:
+  except:
+    - gh-pages

@@ -7,22 +7,13 @@
    [ring.util.response :only [header]]
    [compojure.handler :only [api]]))
 
-(defn create-handler []
-  (fn [request]
-    (
-     (->
-      (assemble-routes)
+(def handler
+  (-> (assemble-routes)
       api
-      wrap-multipart-params)
-     request)))
-
-(def handler (create-handler))
+      wrap-multipart-params))
 
 (defn start [options]
-  (jetty/run-jetty
-   (fn [request]
-     ((create-handler) request))
-   (assoc options :join? false)))
+  (jetty/run-jetty #'handler (assoc options :join? false)))
 
 (defn -main
   ([port]

@@ -9,20 +9,16 @@
 (ns liberator.core
   (:require [liberator.conneg :as conneg])
   (:use
+<<<<<<< HEAD
    [liberator.util :only [parse-http-date http-date make-function]]
    [liberator.representation :only [Representation as-response]]
    [clojure.tools.trace :only [trace]])
+=======
+   [liberator.util :only [parse-http-date http-date as-date]]
+   [clojure.tools.trace :only [trace]]
+   [liberator.representation :only [Representation as-response ring-response]])
+>>>>>>> 766d76c39a5fdf680b0270c9dc2fd0b493ed1719
   (:import (javax.xml.ws ProtocolException)))
-
-(defprotocol DateCoercions
-  (as-date [_]))
-
-(extend-protocol DateCoercions
-  java.util.Date
-  (as-date [this] this)
-  Long
-  (as-date [millis-since-epoch]
-    (java.util.Date. millis-since-epoch)))
 
 (defmulti coll-validator
   "Return a function that evaluaties if the give argument 
@@ -30,8 +26,8 @@
              b) equals an argument
              c) when applied to a function evaluates as true" 
   (fn [x] (cond
-	   (coll? x) :col
-	   (fn? x) :fn)))
+          (coll? x) :col
+          (fn? x) :fn)))
 
 (defmethod coll-validator :col [xs]
   (fn [x] (some #{x} xs)))
@@ -40,47 +36,48 @@
 (defmethod coll-validator :default [x]
   (partial = x))
 
-;; todos
-;; make authorized handler returning single value (not map) as identifier of a principal
+(defn console-logger [category values] 
+  #(apply println "LOG " category " " values))
 
-(def console-logger #(println (str "LOG " %)))
-(def no-logger (constantly nil))
+(def ^:dynamic *loggers* nil) 
 
-(declare ^:dynamic *-log*)
-
-(def ^:dynamic *-logger* no-logger)
-
-(def var-logger (fn [msg] (dosync (alter *-log* #(conj % msg)))))
-
-(defn log [name value]
-  (do
-    (*-logger* (str name ": " (pr-str value)))
-    value))
-
-(defn make-trace-headers [log]
-  log)
+(defmacro with-logger [logger & body]
+  `(binding [*loggers* (conj (or *loggers* []) ~logger)]
+     ~@body))
 
 (defmacro with-console-logger [& body]
-  `(binding [*-logger* console-logger]
+  `(with-logger console-logger
      ~@body))
+
+(defn atom-logger [atom]
+  (fn [& args]
+    (swap! atom conj args)))
+
+(defn log! [category & values]
+  (doseq [l *loggers*]
+    (l category values)))
 
 (declare if-none-match-exists?)
 
 (defn map-values [f m]
   (apply hash-map (apply concat (map (fn [k] [k (f (m k))]) (keys m)))))
 
+<<<<<<< HEAD
+=======
+(defn make-function [x]
+  (if (or (keyword? x) (fn? x)) x (constantly x)))
+
+>>>>>>> 766d76c39a5fdf680b0270c9dc2fd0b493ed1719
 (defn request-method-in [& methods]
   #(some #{(:request-method (:request %))} methods))
 
 (defn gen-etag [context]
-  (or (context ::etag)
-      (if-let [f ((:resource context) :etag)]
-	(format "\"%s\"" (f context)))))
+  (if-let [f (get-in context [:resource :etag])]
+    (format "\"%s\"" (f context))))
 
 (defn gen-last-modified [context]
-  (or (::last-modified context)
-      (if-let [f (get-in context [:resource :last-modified])]
-	(as-date (f context)))))
+  (if-let [f (get-in context [:resource :last-modified])]
+    (as-date (f context))))
 
 ;; A more sophisticated update of the request than a simple merge
 ;; provides.  This allows decisions to return maps which modify the
@@ -99,11 +96,12 @@
 	  ftest (make-function ftest)
 	  fthen (make-function then)
 	  felse (make-function else)
-	  decision (log (str "Decision " name) (ftest context))
+	  decision (ftest context)
 	  result (if (vector? decision) (first decision) decision)
 	  context-update (if (vector? decision) (second decision) decision)
 	  context (if (map? context-update)
                     (combine context context-update) context)]
+      (log! :decision name decision)
       ((if result fthen felse) context))
     {:status 500 :body (str "No handler found for key \""  name "\"."
                             " Keys defined for resource are " (keys resource))}))
@@ -122,10 +120,10 @@
 (defmacro defaction [name next]
   `(defdecision ~name ~next ~next))
 
-(defn set-header-maybe [res name value]
-  (if (and value (not (empty? value)))
-    (assoc res name (str value))
-    res))
+(defn set-header-maybe [headers name value]
+  (if-not (empty? value)
+    (assoc headers name value)
+    headers))
 
 (defn build-vary-header [{:keys [media-type charset language encoding] :as represenation}]
   (->> [(when-not (empty? media-type) "Accept")
@@ -138,64 +136,71 @@
 
 (defn run-handler [name status message
                    {:keys [resource request representation] :as context}]
-  (let [context (assoc context :status status :message message)]
-    (if-let [handler (resource (keyword name))]
-      (do
-        (log "Handler" (keyword name))
-        (->> 
-         (merge
+  (let [context
+        (merge {:status status :message message} context)
+        response 
+        (merge-with
+         combine
 
-          ;; Status
-          {:status status}
+         ;; Status
+         {:status status}
 
-          ;; ETags
-          (when-let [etag (gen-etag context)]
-            {:headers {"ETag" etag}})
+         ;; ETags
+         (when-let [etag (gen-etag context)]
+           {:headers {"ETag" etag}})
+         
+         ;; Last modified
+         (when-let [last-modified (gen-last-modified context)]
+           {:headers {"Last-Modified" (http-date last-modified)}})
+     
+         (if-let [handler (get resource (keyword name))]
+           (do
+             (log! :handler (keyword name))
+             ;; Content negotiations         
+             (merge-with
+              merge
+              {:headers
+               (-> {} 
+                   (set-header-maybe "Content-Type"
+                                     (str (:media-type representation)
+                                          (when-let [charset (:charset representation)] (str ";charset=" charset))))
+                   (set-header-maybe "Content-Language" (:language representation))
+                   (set-header-maybe "Content-Encoding"
+                                     (let [e (:encoding representation)]
+                                       (if-not (= "identity" e) e)))
+                   (set-header-maybe "Vary" (build-vary-header representation)))}
+              ;; Finally the result of the handler.  We allow the handler to
+              ;; override the status and headers.
+              ;;
+              ;; The rules about who should take responsibility for encoding
+              ;; the response are defined in the BodyResponse protocol.
+              (let [handler-response (handler context)
+                    response (as-response handler-response context)]
+                ;; We get an obscure 'cannot be cast to java.util.Map$Entry'
+                ;; error if our BodyResponse function doesn't return a map,
+                ;; so we check it now.
+                (when-not (or (map? response) (nil? response))
+                  (throw (Exception. (format "%s as-response function did not return a map (or nil) for instance of %s"
+                                             'Representation (type handler-response)))))
+                response)))
 
-          ;; Last modified
-          (when-let [last-modified (gen-last-modified context)]
-            {:headers {"Last-Modified" (http-date last-modified)}})
-       
-          ;; Finally the result of the handler.  We allow the handler to
-          ;; override the status and headers.
-          ;;
-          ;; The rules about who should take responsibility for encoding
-          ;; the response are defined in the BodyResponse protocol.
-          (let [handler-response (handler context)
-                response (as-response handler-response context)]
-            ;; We get an obscure 'cannot be cast to java.util.Map$Entry'
-            ;; error if our BodyResponse function doesn't return a map,
-            ;; so we check it now.
-            (when-not (or (map? response) (nil? response))
-              (throw (Exception. (format "%s as-response function did not return a map (or nil) for instance of %s"
-                                         'Representation (type handler-response)))))
-            response))
-         ;; Content negotiations
-         (merge-with
-          merge
-          {:headers
-           (-> {} 
-               (set-header-maybe "Content-Type"
-                                 (str (:media-type representation)
-                                      (when-let [charset (:charset representation)] (str ";charset=" charset))))
-               (set-header-maybe "Content-Language" (:language representation))
-               (set-header-maybe "Content-Encoding"
-                                 (let [e (:encoding representation)]
-                                   (if-not (= "identity" e) e)))
-               (set-header-maybe "Vary" (build-vary-header representation)))})))
-      
-      ;; If there is no handler we just return the information we have so far.
-      (do (log "Handler (default)" (keyword name))
-          {:status status 
-           :headers {"Content-Type" "text/plain"} 
-           :body message}))))
+           ;; If there is no handler we just return the information we
+           ;; have so far.
+           (let [message (get context :message)]
+             (do (log! :handler (keyword name) "(default implementation)")
+                 {:status status 
+                  :headers {"Content-Type" "text/plain"} 
+                  :body (if (fn? message) (message context) message)}))))]
+    (if-not (= :head (:request-method request))
+      response
+      (dissoc response :body))))
 
 (defmacro ^:private defhandler [name status message]
   `(defn ~name [context#]
      (run-handler '~name ~status ~message context#)))
 
 (defn header-exists? [header context]
-  (contains? (:headers (:request context)) header))
+  (get-in context [:request :headers header]))
 
 (defn if-match-star [context]
   (= "*" (get-in context [:request :headers "if-match"])))
@@ -205,21 +210,23 @@
 
 (defmulti to-location type)
 
-(defmethod to-location String [uri] {:headers {"Location" uri}})
+(defmethod to-location String [uri] (ring-response {:headers {"Location" uri}}))
 
 (defmethod to-location clojure.lang.APersistentMap [this] this)
 
+(defmethod to-location java.net.URL [url] (to-location (.toString url)))
+
 (defmethod to-location nil [this] this)
 
-(defn- handle-moved [name status {:keys [resource] :as context}]
-  (if-let [f (or (get resource name) (make-function (get context :location)))]
-    (merge {:status status} (to-location (f context)))
+(defn- handle-moved [{resource :resource :as context}]
+  (if-let [f (or (get context :location)
+                 (get resource :location))]
+    (to-location ((make-function f) context))
     {:status 500
-     :body (format "Internal Server error: no location specified for status %d. Provide %s" status name)}))
+     :body (format "Internal Server error: no location specified for status %s" (:status context))}))
 
 ;; Provide :see-other which returns a location or override :handle-see-other
-(defn handle-see-other [context]
-  (handle-moved :see-other 303 context))
+(defhandler handle-see-other 303 nil)
 
 (defhandler handle-ok 200 "OK")
 
@@ -243,24 +250,24 @@
 
 (defaction post! post-redirect?)
 
-(defdecision ^{:step :M7} can-post-to-missing? post! handle-not-found)
+(defdecision can-post-to-missing? post! handle-not-found)
 
-(defdecision ^{:step :L7} post-to-missing? (partial =method :post)
+(defdecision post-to-missing? (partial =method :post)
   can-post-to-missing? handle-not-found)
 
-(defn handle-moved-permamently [context]
-  (handle-moved :handle-moved-permanently 301 context))
+(defhandler handle-moved-permanently 301 nil)
 
-(defn handle-moved-temporarily [context]
-  (handle-moved :handle-moved-temporarily 307 context))
+(defhandler handle-moved-temporarily 307 nil)
 
-(defdecision ^{:step :N5} can-post-to-gone? post! handle-gone)
+(defdecision can-post-to-gone? post! handle-gone)
+
+
 
 (defdecision post-to-gone? (partial =method :post) can-post-to-gone? handle-gone)
 
 (defdecision moved-temporarily? handle-moved-temporarily post-to-gone?)
 
-(defdecision moved-permanently? handle-moved-permamently moved-temporarily?)
+(defdecision moved-permanently? handle-moved-permanently moved-temporarily?)
 
 (defdecision existed? moved-permanently? post-to-missing?)
 
@@ -268,13 +275,13 @@
 
 (defaction put! new?)
 
-(defdecision ^{:step [:O14 :P3]} conflict? handle-conflict put!)
+(defdecision conflict? handle-conflict put!)
 
 (defhandler handle-not-implemented 501 "Not implemented.")
 
 (defdecision can-put-to-missing? conflict? handle-not-implemented)
 
-(defdecision put-to-different-url? handle-moved-permamently can-put-to-missing?)
+(defdecision put-to-different-url? handle-moved-permanently can-put-to-missing?)
 
 (defdecision method-put? (partial =method :put) put-to-different-url? existed?)
 
@@ -287,15 +294,15 @@
 
 (defhandler handle-not-modified 304 nil)
 
-(defdecision ^{:step :J18} if-none-match 
+(defdecision if-none-match? 
   #(#{ :head :get} (get-in % [:request :request-method]))
   handle-not-modified
   handle-precondition-failed)
 
-(defdecision ^{:step :O16} put-to-existing? (partial =method :put)
+(defdecision put-to-existing? (partial =method :put)
   conflict? multiple-representations?)
 
-(defdecision ^{:step :N16} post-to-existing? (partial =method :post) 
+(defdecision post-to-existing? (partial =method :post) 
   post! put-to-existing?)
 
 (defhandler handle-accepted 202 "Accepted")
@@ -304,84 +311,79 @@
 
 (defaction delete! delete-enacted?)
 
-(defdecision ^{:step :M16} method-delete?
+(defdecision method-delete?
   (partial =method :delete)
   delete!
   post-to-existing?)
 
-(defn modified-since? [context]
-  (let [last-modified (gen-last-modified context)]
-    (decide :modified-since?
-            (fn [context] (and last-modified
-                               (.after last-modified
-                                       (::if-modified-since-date context))))
-            method-delete?
-            handle-not-modified
-            (assoc context ::last-modified last-modified))))
+(defdecision modified-since?
+  (fn [context]
+    (let [last-modified (gen-last-modified context)]
+      [(and last-modified (.after last-modified (::if-modified-since-date context)))
+       {::last-modified last-modified}]))
+  method-delete?
+  handle-not-modified)
 
-(defn if-modified-since-valid-date? [context]
-  (let [date (parse-http-date (get-in context [:request :headers "if-modified-since"]))]
-    (decide :if-modified-since-valid-date?
-            (fn [_] date)
-            modified-since?
-            method-delete?
-            (if date (assoc context ::if-modified-since-date date) context))))
+(defdecision if-modified-since-valid-date?
+  (fn [context] 
+    (if-let [date (parse-http-date (get-in context [:request :headers "if-modified-since"]))]
+      {::if-modified-since-date date}))
+  modified-since?
+  method-delete?)
 
-(defdecision ^{:step :L13} if-modified-since-exists?
+(defdecision if-modified-since-exists?
   (partial header-exists? "if-modified-since")
   if-modified-since-valid-date?
   method-delete?)
 
-(defn ^{:step :K13} etag-matches-for-if-none? [context]
-  (let [etag (gen-etag context)]
-    (decide :etag-matches-for-if-none?
-	    #(= (get-in % [:request :headers "if-none-match"]) etag)
-	    if-none-match
-	    if-modified-since-exists?
-	    (assoc context ::etag etag))))
+(defdecision etag-matches-for-if-none?
+  (fn [context]
+    (let [etag (gen-etag context)]
+      [(= (get-in context [:request :headers "if-none-match"]) etag)
+       {::etag etag}]))
+  if-none-match?
+  if-modified-since-exists?)
 
-(defdecision ^{:step :I13} if-none-match-star? 
+(defdecision if-none-match-star? 
   #(= "*" (get-in % [:request :headers "if-none-match"]))
-  if-none-match
+  if-none-match?
   etag-matches-for-if-none?)
 
-(defdecision ^{:step :I12} if-none-match-exists? (partial header-exists? "if-none-match")
+(defdecision if-none-match-exists? (partial header-exists? "if-none-match")
   if-none-match-star? if-modified-since-exists?)
 
-(defn ^{:step :H12} unmodified-since? [context]
-  (let [last-modified (gen-last-modified context)]
-    (decide :unmodified-since?
-            (fn [context] (and last-modified
-                               (.after last-modified
-                                       (::if-unmodified-since-date context))))
-            handle-precondition-failed
-            if-none-match-exists?
-            (assoc context ::last-modified last-modified))))
+(defdecision unmodified-since?
+  (fn [context]
+    (let [last-modified (gen-last-modified context)]
+      [(and last-modified
+            (.after last-modified
+                    (::if-unmodified-since-date context)))
+       {::last-modified last-modified}]))
+  handle-precondition-failed
+  if-none-match-exists?)
 
-(defn ^{:step :H11} if-unmodified-since-valid-date? [context]
-  (let [date (parse-http-date (get-in context [:request :headers  "if-unmodified-since"]))]
-    (decide :if-unmodified-since-valid-date?
-            (fn [context] date)
-            unmodified-since?
-            if-none-match-exists?
-            (if date (assoc context ::if-unmodified-since-date date) context))))
+(defdecision  if-unmodified-since-valid-date?
+  (fn [context]   
+    (if-let [date (parse-http-date (get-in context [:request :headers  "if-unmodified-since"]))]
+      (assoc context ::if-unmodified-since-date date) context))
+  unmodified-since?
+  if-none-match-exists?)
 
-(defdecision ^{:step :H10} if-unmodified-since-exists? (partial header-exists? "if-unmodified-since")
+(defdecision if-unmodified-since-exists? (partial header-exists? "if-unmodified-since")
   if-unmodified-since-valid-date? if-none-match-exists?)
 
-(defn ^{:step :G11} etag-matches-for-if-match? [context]
-  (let [etag (gen-etag context)]
-    (decide
-     :etag-matches-for-if-match?
-     #(= etag (get-in % [:request :headers "if-match"]))
-     if-unmodified-since-exists?
-     handle-precondition-failed
-     (assoc context ::etag etag))))
+(defdecision etag-matches-for-if-match?
+  (fn [context]
+    (let [etag (gen-etag context)]
+      [(= etag (get-in context [:request :headers "if-match"]))
+       (assoc context ::etag etag)]))
+  if-unmodified-since-exists?
+  handle-precondition-failed)
 
-(defdecision ^{:step :G9} if-match-star? 
+(defdecision if-match-star? 
   if-match-star if-unmodified-since-exists? etag-matches-for-if-match?)
 
-(defdecision ^{:step :G8} if-match-exists? (partial header-exists? "if-match")
+(defdecision if-match-exists? (partial header-exists? "if-match")
   if-match-star? if-unmodified-since-exists?)
 
 (defdecision exists? if-match-exists? if-match-star-exists-for-missing?)
@@ -443,25 +445,24 @@
 (defdecision media-type-available? negotiate-media-type
   accept-language-exists? handle-not-acceptable)
 
-(defn accept-exists? [context]
-  (decide :accept-exists?
-          #(if (header-exists? "accept" %)
-             true
-             ;; "If no Accept header field is present, then it is assumed that the
-             ;; client accepts all media types" [p100]
-             (if-let [type (liberator.conneg/best-allowed-content-type 
-                            "*/*"
-                            ((get-in context [:resource :available-media-types]) context))]
-               [false {:representation {:media-type (liberator.conneg/stringify type)}}]
-               false))
-          media-type-available?
-          accept-language-exists?
-          context))
+(defdecision accept-exists?
+  #(if (header-exists? "accept" %)
+     true
+     ;; "If no Accept header field is present, then it is assumed that the
+     ;; client accepts all media types" [p100]
+     ;; in this case we do content-type negotiaion using */* as the accept
+     ;; specification
+     (if-let [type (liberator.conneg/best-allowed-content-type 
+                    "*/*"
+                    ((get-in context [:resource :available-media-types]) context))]
+       [false {:representation {:media-type (liberator.conneg/stringify type)}}]
+       false))
+  media-type-available?
+  accept-language-exists?)
 
-(defn generate-options-header [{:keys [resource request]}]
-  {:headers ((:generate-options-header resource) request)})
+(defhandler handle-options 201 nil)
 
-(defdecision is-options? #(= :options (:request-method (:request %))) generate-options-header accept-exists?)
+(defdecision is-options? #(= :options (:request-method (:request %))) handle-options accept-exists?)
 
 (defhandler handle-request-entity-too-large 413 "Request entity too large.")
 (defdecision valid-entity-length? is-options? handle-request-entity-too-large)
@@ -492,56 +493,71 @@
 (defhandler handle-service-not-available 503 "Service not available.")
 (defdecision service-available? known-method? handle-service-not-available)
 
+(defn test-request-method [valid-methods-key]
+  (fn [{{m :request-method} :request
+       {vm valid-methods-key} :resource
+       :as ctx}]
+    (some #{m} (vm ctx))))
+
 (def default-functions 
-     {
-      ;; Decisions
-      :service-available?        true
-      :known-method?             (request-method-in :get :head :options
-						   :put :post :delete :trace)
-      :uri-too-long?             false
-      :method-allowed?           (request-method-in :get :head)
-      :malformed?                false
-;      :encoding-available?       true
-;      :charset-available?        true
-      :authorized?               true
-      :allowed?                  true
-      :valid-content-header?     true
-      :known-content-type?       true
-      :valid-entity-length?      true
-      :exists?                   true
-      :existed?                  false
-      :respond-with-entity?      false
-      :new?                      true
-      :post-redirect?            false
-      :put-to-different-url?     false
-      :multiple-representations? false
-      :conflict?                 false
-      :can-post-to-missing?      true
-      :can-put-to-missing?       true
-      :moved-permanently?        false
-      :moved-temporarily?        false
-      :delete-enacted?           true
+  {
+   ;; Decisions
+   :service-available?        true
 
-      ;; Handlers
-      :handle-ok                 "OK"
+   :known-methods             [:get :head :options :put :post :delete :trace]
+   :known-method?             (test-request-method :known-methods)
 
-      ;; Imperatives. Doesn't matter about decision outcome, both
-      ;; outcomes follow the same route.
-      :post!                     true
-      :put!                      true
-      :delete!                   true
+   :uri-too-long?             false
 
-      ;; Directives
-      :available-media-types     []
+   :allowed-methods           [:get :head]
+   :method-allowed?           (test-request-method :allowed-methods)
 
-      ;; "If no Content-Language is specified, the default is that the
-      ;; content is intended for all language audiences. This might mean
-      ;; that the sender does not consider it to be specific to any
-      ;; natural language, or that the sender does not know for which
-      ;; language it is intended."
-      :available-languages       ["*"]
-      :available-charsets        ["UTF-8"]
-      :available-encodings       ["identity"]})
+   :malformed?                false
+   ;;      :encoding-available?       true
+   ;;      :charset-available?        true
+   :authorized?               true
+   :allowed?                  true
+   :valid-content-header?     true
+   :known-content-type?       true
+   :valid-entity-length?      true
+   :exists?                   true
+   :existed?                  false
+   :respond-with-entity?      false
+   :new?                      true
+   :post-redirect?            false
+   :put-to-different-url?     false
+   :multiple-representations? false
+   :conflict?                 false
+   :can-post-to-missing?      true
+   :can-put-to-missing?       true
+   :moved-permanently?        false
+   :moved-temporarily?        false
+   :delete-enacted?           true
+
+   ;; Handlers
+   :handle-ok                 "OK"
+   :handle-see-other          handle-moved
+   :handle-moved-temporarily  handle-moved
+   :handle-moved-permanently  handle-moved
+   
+
+   ;; Imperatives. Doesn't matter about decision outcome, both
+   ;; outcomes follow the same route.
+   :post!                     true
+   :put!                      true
+   :delete!                   true
+
+   ;; Directives
+   :available-media-types     []
+
+   ;; "If no Content-Language is specified, the default is that the
+   ;; content is intended for all language audiences. This might mean
+   ;; that the sender does not consider it to be specific to any
+   ;; natural language, or that the sender does not know for which
+   ;; language it is intended."
+   :available-languages       ["*"]
+   :available-charsets        ["UTF-8"]
+   :available-encodings       ["identity"]})
 
 ;; resources are a map of implementation methods
 (defn run-resource [request kvs]
@@ -570,14 +586,14 @@
     `(defn ~name [request#] 
        (run-resource request# ~(apply hash-map kvs)))))
 
-(defn wrap-trace-as-response-header [handler]
-  (fn [request]
-    (binding [*-log* (ref [])
-              *-logger* var-logger]
-      (let [resp (handler request)]
-        (when resp
-          (assoc-in resp
-                    [:headers "X-Liberator-Trace"] (make-trace-headers @*-log*)))))))
+(defn by-method
+  "returns a handler function that uses the request method to
+   lookup a function from the map and delegates to it.
 
-(defn get-trace []
-  (make-trace-headers @*-log*))
+   Example:
+
+   (by-method {:get \"This is the entity\"
+               :delete \"Entity was deleted successfully.\"})"
+  [map]
+  (fn [ctx] ((make-function (get map (get-in ctx [:request :request-method]) ctx)) ctx)))
+

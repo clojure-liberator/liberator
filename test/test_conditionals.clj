@@ -1,5 +1,5 @@
 (ns test-conditionals
-  (:use [liberator.core :only [resource as-date request-method-in
+  (:use [liberator.core :only [resource request-method-in
                                with-console-logger]]
         midje.sweet
         checkers
@@ -20,6 +20,7 @@
 
 
 ;; get requests
+
 (facts "get requests"
   (facts "if-modified-since true"
     (let [resp ((resource :exists? true
@@ -28,7 +29,8 @@
                 (-> (request :get "/")
                     (if-modified-since (http-date (as-date 1000)))))]
       (fact resp => OK)
-      (fact resp => (body "OK"))))
+      (fact resp => (body "OK"))
+      (fact resp => (header-value "Last-Modified" (http-date (as-date 1000))))))
 
   (facts "if-modified-since false"
     (let [resp ((resource :exists? true
@@ -36,7 +38,8 @@
                 (-> (request :get "/")
                     (if-modified-since (http-date (as-date 1000)))))]
       (fact resp => NOT-MODIFIED)
-      (fact resp => (body nil?))))
+      (fact resp => (body nil?))
+      (fact resp => (header-value "Last-Modified" (http-date (as-date 1000))))))
 
   (facts "if-unmodified-since true"
     (let [resp ((resource :exists? true
@@ -63,7 +66,8 @@
                 (-> (request :get "/")
                     (if-match "TAG1")))]
       (fact resp => OK)
-      (fact resp => (body "OK"))))
+      (fact resp => (body "OK"))
+      (fact resp => (header-value "ETag" "\"TAG1\""))))
 
  (facts "if-match false"
     (let [resp ((resource :exists? true
@@ -131,6 +135,18 @@
                      (if-unmodified-since (http-date (as-date 200000)))))]
        (fact resp => CREATED)
        (fact resp => (body "CREATED"))))
+
+   (facts "if-unmodified-since with last-modified changes due do post"
+          (let [resp ((resource :exists? true
+                                :method-allowed? (request-method-in ?method)
+                                :post! (fn [ctx] {::LM 1001})
+                                :handle-created "CREATED"
+                                :last-modified (fn [ctx] (as-date (get ctx ::LM 1000))))
+                      (-> (request ?method "/")
+                          (if-unmodified-since (http-date (as-date 1000)))))]
+            (fact resp => CREATED)
+            (fact resp => (body "CREATED"))
+            (fact resp => (header-value "Last-Modified" (http-date (as-date 1001))))))
 
    (facts "if-match true"
      (let [resp ((resource :exists? true
@@ -204,3 +220,4 @@
    :post
    :put
    :delete))
+

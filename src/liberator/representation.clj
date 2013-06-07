@@ -80,6 +80,9 @@
 (defmethod render-map-generic "application/clojure" [data context]
   (render-as-clojure data))
 
+(defmethod render-map-generic "application/edn" [data context]
+  (render-as-clojure data))
+
 (defn- render-map-html-table
   [data
    {{:keys [media-type language] :as representation} :representation
@@ -127,6 +130,9 @@
   (json/write-str data))
 
 (defmethod render-seq-generic "application/clojure" [data _]
+  (render-as-clojure data))
+
+(defmethod render-seq-generic "application/edn" [data _]
   (render-as-clojure data))
 
 (defn render-seq-csv
@@ -195,7 +201,7 @@
   (as-response [data context]
     (as-response (render-seq-generic data context) context))
 
-  clojure.lang.ILookup
+  clojure.lang.MapEquivalence
   (as-response [this context]
     (as-response (render-map-generic this context) context))
 
