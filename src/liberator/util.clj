@@ -4,6 +4,9 @@
            java.util.Locale
            java.util.Date))
 
+(defn make-function [x]
+  (if (fn? x) x (constantly x)))
+
 (defn apply-if-function [function-or-value request]
   (if (fn? function-or-value)
     (function-or-value request)
@@ -40,3 +43,9 @@
     (try 		      
       (.parse (http-date-format) date-string)
       (catch java.text.ParseException e nil))))
+
+(defn by-method [& kvs]
+  (fn [ctx]
+    (let [m (apply hash-map kvs)
+          method (get-in ctx [:request :request-method])]
+      (if-let [fd (make-function (or (get m method) (get m :any)))] (fd ctx)))))
