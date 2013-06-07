@@ -9,9 +9,9 @@
 (ns liberator.core
   (:require [liberator.conneg :as conneg])
   (:use
-   [liberator.util :only [parse-http-date http-date as-date]]
-   [clojure.tools.trace :only [trace]]
-   [liberator.representation :only [Representation as-response ring-response]])
+   [liberator.util :only [parse-http-date http-date as-date make-function]]
+   [liberator.representation :only [Representation as-response ring-response]]
+   [clojure.tools.trace :only [trace]])
   (:import (javax.xml.ws ProtocolException)))
 
 (defmulti coll-validator
@@ -55,9 +55,6 @@
 
 (defn map-values [f m]
   (apply hash-map (apply concat (map (fn [k] [k (f (m k))]) (keys m)))))
-
-(defn make-function [x]
-  (if (or (keyword? x) (fn? x)) x (constantly x)))
 
 (defn request-method-in [& methods]
   #(some #{(:request-method (:request %))} methods))
