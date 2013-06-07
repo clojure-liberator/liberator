@@ -45,8 +45,47 @@
                                s)
                              "")])])]]])
 
+(defn render-as-clojure [data]
+  (binding [*print-dup* true]
+    (with-out-str (pr data))))
+
+(defmulti render-generic "dispatch on media type"
+  (fn [data context] (get-in context [:represenation :media-type] "text/plain")))
+
+(defmethod render-generic "text/plain"
+  [data _]
+  (str data))
+
+(defmethod render-generic "text/html"
+  [data _]
+  (html data))
+
+(defmethod render-generic "application/xhtml+xml"
+  [data _]
+  (html data))
+
+(defmethod render-generic "text/csv"
+  [data _]
+  (str data))
+
+(defmethod render-generic "text/tab-seperated-values"
+  [data _]
+  (str data))
+
+(defmethod render-generic "application/json"
+  [data _]
+  (json/write-str data))
+
+(defmethod render-generic "application/clojure"
+  [data _]
+  (render-as-clojure data))
+
+(defmethod render-generic "application/edn"
+  [data _]
+  (render-as-clojure data))
+
 (defmulti render-map-generic "dispatch on media type"
-  (fn [data context] (get-in context [:representation :media-type])))
+  (fn [data context] (get-in context [:representation :media-type] "text/plain")))
 
 (defmethod render-map-generic "text/plain"
   [data {:keys [dictionary language] :or {dictionary default-dictionary} :as context}]
@@ -68,10 +107,6 @@
 
 (defmethod render-map-generic "application/json" [data context]
   (json/write-str data))
-
-(defn render-as-clojure [data]
-  (binding [*print-dup* true]
-    (with-out-str (pr data))))
 
 (defmethod render-map-generic "application/clojure" [data context]
   (render-as-clojure data))
@@ -99,7 +134,7 @@
 (defmethod render-map-generic "text/html" [data context]
   (render-map-html-table data context :html))
 
-(defmethod  render-map-generic "application/xhtml+xml" [data context]
+(defmethod render-map-generic "application/xhtml+xml" [data context]
   (render-map-html-table data context :html))
 
 (defmulti render-seq-generic (fn [data context] (get-in context [:representation :media-type])))
@@ -119,7 +154,7 @@
 (defmethod render-seq-generic "text/html" [data context]
   (render-seq-html-table data context :html))
 
-(defmethod  render-seq-generic "application/xhtml+xml" [data context]
+(defmethod render-seq-generic "application/xhtml+xml" [data context]
   (render-seq-html-table data context :html))
 
 (defmethod render-seq-generic "application/json" [data _]
@@ -163,6 +198,9 @@
 
 (defmethod render-item clojure.lang.Seqable [m context]
   (render-seq-generic m context))
+
+(defmethod render-item Object [m context]
+  (render-generic m context))
 
 (defmethod render-seq-generic :default
   [data {{:keys [language media-type] :as representation} :representation :as context}]
@@ -217,6 +255,9 @@
   (as-response [this _] this)
 
   Boolean
+  (as-response [this _] this)
+
+  java.util.Date
   (as-response [this _] this)
 
   ;; If an input-stream is returned, we have no way of telling whether it's been encoded properly (charset and encoding), so we have to assume it is, given that we told the developer what representation was negotiated.

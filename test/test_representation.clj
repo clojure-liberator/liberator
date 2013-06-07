@@ -46,3 +46,31 @@
                   "application/json" (clojure.data.json/write-str entity)
                   "application/clojure" (pr-str-dup entity)
                   "application/edn" (pr-str-dup entity))))
+
+(facts "Can produce representations from strings"
+  (let [entity "Testing liberator"]
+    (tabular "Various media types are supported"
+             (as-ring-response entity {:representation {:media-type ?media-type :charset "UTF-8"}})
+             => {:body ?body :headers { "Content-Type" (str ?media-type ";charset=UTF-8")}}
+             ?media-type   ?body
+             "text/csv"    "Testing liberator"
+             "text/tab-separated-values" "Testing liberator"
+             "text/plain"  "Testing liberator"
+             "text/html"   "Testing liberator"
+             "application/json" "Testing liberator"
+             "application/clojure" "Testing liberator"
+             "application/edn" "Testing liberator")))
+
+(facts "Can produce representations from dates"
+  (let [entity (java.util.Date.)]
+    (tabular "Various media types are supported"
+             (as-ring-response entity {:representation {:media-type ?media-type :charset "UTF-8"}})
+             => {:body ?body :headers { "Content-Type" (str ?media-type ";charset=UTF-8")}}
+             ?media-type   ?body
+             "text/csv"    (str entity)
+             "text/tab-separated-values" (str entity)
+             "text/plain"  (str entity)
+             "text/html"   (str entity)
+             "application/json" (str entity)
+             "application/clojure" (str entity)
+             "application/edn" (str entity))))
