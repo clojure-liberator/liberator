@@ -109,6 +109,11 @@
       resp (r (request :put "/"))]
   (fact "Put to missing can give 201" resp => CREATED))
 
+(let [r (resource :method-allowed? [:put]
+                  :processable? false)
+      resp (r (request :put "/"))]
+  (fact "Unprocessable can give 422" resp => (is-status 422)))
+
 (facts "Head requests"
   (facts "on existing resource"
     (let [resp ((resource :exists? true :handle-ok "OK") (request :head "/"))]
