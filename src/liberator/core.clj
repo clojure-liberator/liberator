@@ -376,6 +376,9 @@
 
 (defdecision exists? if-match-exists? if-match-star-exists-for-missing?)
 
+(defhandler handle-unprocessable-entity 422 "Unprocessable entity.")
+(defdecision processable? exists? handle-unprocessable-entity)
+
 (defhandler handle-not-acceptable 406 "No acceptable resource available.")
 
 (defdecision encoding-available? 
@@ -385,7 +388,7 @@
                          ((get-in ctx [:resource :available-encodings]) ctx))]
       {:representation {:encoding encoding}}))
 
-  exists? handle-not-acceptable)
+  processable? handle-not-acceptable)
 
 (defmacro try-header [header & body]
   `(try ~@body
@@ -394,7 +397,7 @@
                   (format "Malformed %s header" ~header) e#)))))
 
 (defdecision accept-encoding-exists? (partial header-exists? "accept-encoding")
-  encoding-available? exists?)
+  encoding-available? processable?)
 
 (defdecision charset-available?
   #(try-header "Accept-Charset"
@@ -521,6 +524,7 @@
    :moved-permanently?        false
    :moved-temporarily?        false
    :delete-enacted?           true
+   :processable?              true
 
    ;; Handlers
    :handle-ok                 "OK"
