@@ -5,9 +5,8 @@ title: Download Liberator
 
 # Download Liberator
 
-Liberator is available at [clojars](http://www.clojars.org) and can be
-included in your project using the default dependency resolution
-mechanism.
+Liberator is available at [clojars](https://clojars.org/liberator) and can be
+included in your project in the standard manner.
 
 ## Leiningen
 
