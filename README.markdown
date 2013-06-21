@@ -155,8 +155,9 @@ Depending on how far the processing of the request has got, the map may also con
 The function must be return one of the following :-
 
 * A boolean, determining the next step in the decision tree.
+* A function that takes the context and calls an alternate decision, action or handler
 * A map to be merged with the context, indicating a true value.
-* A vector pair containing a boolean as the first item and a map as the second item.
+* A vector pair containing a boolean or function as the first item and a map as the second item.
 
 ## Handlers
 
@@ -208,7 +209,7 @@ you should check examples and documentation.
 
 Examples can be found in the examples/ dir.
 
-# Reference: List of decisions
+# Reference: List of out-of-the-box decisions
 
 Decision points can be :-
 
@@ -270,6 +271,9 @@ available-* = option
 .*\? = decision
 .*\! = action
 :else handler
+
+New decisions, actions, and handlers can be defined and spliced into the
+decision-graph by returning a function from a decision instead of a boolean.
 
 # License
 

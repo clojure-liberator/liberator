@@ -90,7 +90,9 @@
 	  context (if (map? context-update)
                     (combine context context-update) context)]
       (log! :decision name decision)
-      ((if result fthen felse) context))
+      (if (fn? result)
+        (result context)
+        ((if result fthen felse) context)))
     {:status 500 :body (str "No handler found for key \""  name "\"."
                             " Keys defined for resource are " (keys resource))}))
 
@@ -183,7 +185,7 @@
       response
       (dissoc response :body))))
 
-(defmacro ^:private defhandler [name status message]
+(defmacro defhandler [name status message]
   `(defn ~name [context#]
      (run-handler '~name ~status ~message context#)))
 
