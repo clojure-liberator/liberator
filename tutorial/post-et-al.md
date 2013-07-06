@@ -130,4 +130,4 @@ to ````:conflict?```` which can send you to ````:handle-conflict````.
 This is not possible for POST requests. On the other hand PUT to a
 nonexistent resource does not allow a response that sends you to a
 different location. The necessary flow can be seen as always on the
-chart.
+[decision graph](decision-graph.html).
