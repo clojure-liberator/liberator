@@ -32,7 +32,7 @@ with the single key:
 
 {% highlight clojure %}
 (defresource foo 
-  :exists? (fn [ctx] (if-let [x (lookup-entity) {:entity x}))
+  :exists? (fn [ctx] (if-let [x (lookup-entity)] {:entity x}))
   :handle-ok :entity)
 {% endhighlight %}
 
