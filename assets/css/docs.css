@@ -5,6 +5,7 @@ select,
 textarea,
 .navbar-search .search-query {
     font-family: Lato, "Lucida Grande", Tahoma, Helvetica, Arial, sans-serif;
+    font-weight: 400;
 }
 
 h1, h2, h3 {
