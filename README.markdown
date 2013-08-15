@@ -2,6 +2,12 @@
 
 Liberator is a Clojure library for building RESTful applications. 
 
+## Quick Links
+
+You can find documentation at http://clojure-liberator.github.io/liberator
+
+If you have any questions, visit our fine google group at https://groups.google.com/forum/#!forum/clojure-liberator
+
 ### Similar projects
 
 Liberator used to be known as compojure-rest. It got renamed in July 2012. 
