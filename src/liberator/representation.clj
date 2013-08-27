@@ -77,11 +77,15 @@
   (binding [*print-dup* true]
     (with-out-str (pr data))))
 
+(defn render-as-edn [data]
+  (binding [*print-dup* false]
+    (with-out-str (pr data))))
+
 (defmethod render-map-generic "application/clojure" [data context]
   (render-as-clojure data))
 
 (defmethod render-map-generic "application/edn" [data context]
-  (render-as-clojure data))
+  (render-as-edn data))
 
 (defn- render-map-html-table
   [data
@@ -133,7 +137,7 @@
   (render-as-clojure data))
 
 (defmethod render-seq-generic "application/edn" [data _]
-  (render-as-clojure data))
+  (render-as-edn data))
 
 (defn render-seq-csv
   [data
