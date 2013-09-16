@@ -108,6 +108,7 @@
 (defmacro defaction [name next]
   `(defdecision ~name ~next ~next))
 
+
 (defn set-header-maybe [headers name value]
   (if-not (empty? value)
     (assoc headers name value)
@@ -121,6 +122,9 @@
        (remove nil?)
        (interpose ", ")
        (apply str)))
+
+(defn build-allow-header [resource]
+  (clojure.string/join ", " (map (comp clojure.string/upper-case name) ((:allowed-methods resource)))))
 
 (defn run-handler [name status message
                    {:keys [resource request representation] :as context}]
@@ -179,9 +183,12 @@
                  {:status status 
                   :headers {"Content-Type" "text/plain"} 
                   :body (if (fn? message) (message context) message)}))))]
-    (if-not (= :head (:request-method request))
-      response
-      (dissoc response :body))))
+    (cond
+      (or (= :options (:request-method request)) (= 405 (:status response)))
+        (merge-with merge {:headers {"Allow" (build-allow-header resource)}} response)
+      (= :head (:request-method request))
+        (dissoc response :body)
+      :else response)))
 
 (defmacro ^:private defhandler [name status message]
   `(defn ~name [context#]
@@ -451,7 +458,7 @@
   media-type-available?
   accept-language-exists?)
 
-(defhandler handle-options 201 nil)
+(defhandler handle-options 200 nil)
 
 (defdecision is-options? #(= :options (:request-method (:request %))) handle-options accept-exists?)
 

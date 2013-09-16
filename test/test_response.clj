@@ -50,3 +50,25 @@
             (get-in [:headers "Vary"]))
     => "*"))
 
+(facts "Adding `Allow` header automatically"
+  
+  (fact "done for `OPTIONS` request" 
+    (-> (request :options "/")
+        ((resource :handle-ok "ok" :allowed-methods [:get :head :options])))
+    => (header-value "Allow" "GET, HEAD, OPTIONS"))
+
+  (fact "done when method is not allowed"
+    (-> (request :post "/")
+        ((resource :handle-ok "ok" :allowed-methods [:get :head :options])))
+    => (header-value "Allow", "GET, HEAD, OPTIONS"))
+
+  (fact "not done when header already exists"
+    (-> (request :options "/")
+        ((resource :handle-options (ring-response {:headers {"Allow" "GET"}}) :allowed-methods [:get :head :options])))
+    => (header-value "Allow", "GET"))
+
+  (fact "not done any other time"
+    (-> (request :get "/")
+        ((resource :handle-ok "ok")))
+    => (fn [c] (not (contains? (:headers c) "Allow"))))
+)
