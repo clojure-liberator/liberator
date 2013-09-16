@@ -124,7 +124,7 @@
        (apply str)))
 
 (defn build-allow-header [resource]
-  (interpose ", " (map (comp clojure.string/upper-case name) ((:allowed-methods resource)))))
+  (clojure.string/join ", " (map (comp clojure.string/upper-case name) ((:allowed-methods resource)))))
 
 (defn run-handler [name status message
                    {:keys [resource request representation] :as context}]
