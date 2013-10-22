@@ -5,7 +5,7 @@ Liberator is a Clojure library for building RESTful applications.
 
 This gh-pages branch of the liberator repository contains the GitHub pages website for liberator and the user documentation.
 
-# Contributiing
+# Contributing
 
 The Liberator team tries to live an open development model, embracing contribution by others. Currently there are commits by about 10 other developers. We love how Github makes it dead easy to contribute event a one liner fix.
 
