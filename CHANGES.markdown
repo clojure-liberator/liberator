@@ -23,7 +23,7 @@
 * Make liberator build with lein 2.0.0RC1 (manage dependencies)
 * Drop unnecessary methods from Representation
 * Dispatch Representation on MapEquivalence and Sequential which
-  increased robustnes
+  increased robustness
 * Fixes to HTML Table representation (missing tr)
 * Render Clojure Representation using \*print-dup\* 
 * Support "application/edn" representation
