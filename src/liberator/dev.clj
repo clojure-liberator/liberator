@@ -78,6 +78,8 @@
                
                "};"
                "setTimeout(function(){insertStyle()}, 500);"
+               "setTimeout(function(){insertStyle()}, 1000);"
+               "setTimeout(function(){insertStyle()}, 5000);"
                
                ""])]
        [:body
