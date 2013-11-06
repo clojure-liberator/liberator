@@ -1,5 +1,16 @@
 # Changelog
 
+# New in 0.10.0
+
+## Bugs fixed
+
+* Reenable suppport for keyword as a handler function
+* #65 Make sure svg path is highlighted
+* #77 Multiple link header values as vector
+* #49 OPTIONS should return 200 OK and "Allow" header
+* #50 HTTP 405 response must include an Allow-Header
+* #68 handle-options sends 201 created and not 200 or 204
+
 # New in 0.9.0
 
 * Improved documentation
