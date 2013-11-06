@@ -198,8 +198,8 @@
        (let [resp (handler req)]
          (if-let [id (get-in resp [:headers trace-id-header])]
            (update-in resp [:headers "Link"]
-                      #(str % (str "\n</" (trace-url id) ">"
-                                   "; rel=x-liberator-trace")))
+                      #(if %1 [%1 %2] %2)
+                      (format "</%s>; rel=x-liberator-trace" (trace-url id)))
            resp))))))
 
 (defn- wrap-trace-header [handler]
