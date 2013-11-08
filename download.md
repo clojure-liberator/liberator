@@ -13,7 +13,7 @@ included in your project in the standard manner.
 Add the following to your project.clj dependencies:
 
 {% highlight clojure %}
-[liberator "0.9.0"]{% endhighlight %}
+[liberator "0.10.0"]{% endhighlight %}
 
 ## Maven
 
@@ -23,7 +23,7 @@ Add the following to your pom.xml dependencies section:
 <dependency>
     <groupId>liberator</groupId>
     <artifactId>liberator</artifactId>
-    <version>0.9.0</version>
+    <version>0.10.0</version>
 </dependency>
 {% endhighlight %}
 
