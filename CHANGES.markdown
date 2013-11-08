@@ -5,6 +5,7 @@
 ## Bugs fixed
 
 * Reenable suppport for keyword as a handler function
+* #71 Add locations header to 201 created
 * #65 Make sure svg path is highlighted
 * #77 Multiple link header values as vector
 * #49 OPTIONS should return 200 OK and "Allow" header
