@@ -79,9 +79,11 @@
 
 (let [r (resource :method-allowed? (request-method-in :post)
                   :exists? false
+                  :location "foo"
                   :can-post-to-missing? true)
       resp (r (request :post "/")) ]
-  (fact "Post to missing if post to missing is allowed" resp => CREATED))
+  (fact "Post to missing if post to missing is allowed" resp => CREATED)
+  (fact "Location is set" resp => (contains {:headers (contains {"Location" "foo"})})))
 
 (let [r (resource :method-allowed? (request-method-in :post)
                   :exists? false
@@ -96,6 +98,8 @@
                   :can-post-to-missing? false)
       resp (r (request :post "/")) ]
   (fact "Post to existing if post to missing forbidden is allowed" resp => CREATED))
+
+
 
 (let [r (resource :method-allowed? [:put]
                   :exists? false

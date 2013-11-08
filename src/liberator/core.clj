@@ -144,6 +144,12 @@
          ;; Last modified
          (when-let [last-modified (gen-last-modified context)]
            {:headers {"Last-Modified" (http-date last-modified)}})
+
+         ;; 201 created required a location header to be send
+         (when (= 201 status)
+           (if-let [f (or (get context :location)
+                          (get resource :location))]
+             {:headers {"Location" (str ((make-function f) context))}}))
      
          (if-let [handler (get resource (keyword name))]
            (do
