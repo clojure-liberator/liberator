@@ -247,7 +247,7 @@
 
 (defhandler handle-not-found 404 "Resource not found.")
 
-(defhandler handle-gone 410 "Resouce is gone.")
+(defhandler handle-gone 410 "Resource is gone.")
 
 (defaction post! post-redirect?)
 
