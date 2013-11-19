@@ -135,11 +135,6 @@
 
 (defn stringify [type]
   (reduce str (interpose "/" type)))
-
-(defn- first-fn
-  "Return (f x) for the first item in coll for which (f x) is true."
-  [f coll]
-  (first (filter identity (map f coll))))
   
 (defn best-allowed-content-type
   "Return the first type in the Accept header that is acceptable.
@@ -161,10 +156,10 @@
         (first sorted)
         
         (fn? allowed-types)
-        (first-fn (enpair allowed-types) sorted)
+        (some (enpair allowed-types) sorted)
         
         :otherwise
-        (first-fn (allowed-types-filter (enpair allowed-types)) sorted)))))
+        (some (allowed-types-filter (enpair allowed-types)) sorted)))))
 
 (defn split-qval [caq]
   (let [[charset & params] (string/split caq #"[\s\r\n]*;[\s\r\n]*")
