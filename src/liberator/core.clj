@@ -443,7 +443,7 @@
   (try-header "Accept"
               (when-let [type (conneg/best-allowed-content-type 
                                (get-in context [:request :headers "accept"]) 
-                               ((get-in context [:resource :available-media-types] "text/html") context))]
+                               ((get-in context [:resource :available-media-types] (constantly "text/html")) context))]
                 {:representation {:media-type (conneg/stringify type)}})))
 
 (defdecision media-type-available? negotiate-media-type
