@@ -174,3 +174,5 @@ The parameter ````:encoding```` has no further support from liberator.
 While content-encoding will typically be done by a reverse proxy in front
 of your application, nothing prevents you to return a compressed
 representation in the handler if requested.
+
+Continue with [Conditional Requests](conditional.html).

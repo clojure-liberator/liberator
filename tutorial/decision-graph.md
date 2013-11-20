@@ -35,8 +35,10 @@ send a response.
 For every decision in the graph you can supply a function in your
 resource definition which will be called to obtain a boolean value.
 You can e.g. access a request parameter to decide if a certain
-resource exists. We wrap the handler in a ring middleware to gain easy
-access to the parameters:
+resource exists. 
+
+Notice that we added the ````wrap-params```` [ring middleware](http://mmcgrana.github.io/ring/ring.middleware.params.html) to our handler when we created it.  This
+gives us easy access to the parameters in our resource:
 
 {% highlight clojure %}
 (defroutes app
@@ -89,4 +91,5 @@ to lookup an entity from a database. By doing so you can avoid
 repeated costly lookups in later decision functions or in the handler.
 </div>
 
-Continue with [content negotiation](conneg.html).
+Continue with [debugging](debugging.html).
+
