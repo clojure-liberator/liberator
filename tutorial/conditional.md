@@ -115,3 +115,5 @@ Precondition failed.
 Liberator also supports the lesser known sematic of using ````*```` for
 ````If-Match```` and ````If-None-Match````. These are useful for
 conditional updates of resources.
+
+Continue with [Handling POST, PUT and DELETE](post-et-al.html).

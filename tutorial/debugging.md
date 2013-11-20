@@ -95,9 +95,9 @@ was combined with the context at that time and makes the media-type
 available for the handler.
 
 Also visible is that the part for conditional request was skipped. Try
-playing around with resources that use ETags and different methods and
-look how the request was processed. This will give you a good
-understanding of how to implement a more sophisticated resource.
+playing around with resources that use ETags (see [Conditional Requests](conditional.html)) 
+and different methods and look how the request was processed. This will 
+give you a good understanding of how to implement a more sophisticated resource.
 
 ## Trace UI
 
@@ -106,8 +106,9 @@ keyword arguments to wrap-trace: ````:header```` and ````:ui````. The
 first let's liberator include the trace as response headers which is
 nice in the console. Sometimes this is not enough or response
 headers are not easily available. Liberator provides a web resource at
-````/x-liberator/requests```` where a list of recent requests can be
-found. The trace for a single request can be selected there.
+````http://localhost:3000/x-liberator/requests/```` (the trailing slash 
+is required) where a list of recent requests can be found. The trace 
+for a single request can be selected there.
 
 ![Example screenshot of the trace ui](trace-ui.png)
 
@@ -121,3 +122,5 @@ The trace ui shows for a single request the request including
 parameters and headers, the trace of decisions and the decision graph.
 It highlights the path that was taken for the request. The edges are
 colored depending on the boolean value of the decision.
+
+Continue with [content negotiation](conneg.html).

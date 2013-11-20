@@ -10,23 +10,26 @@ This part will give you a quick start into programming with liberator.
 
 Liberator is available from clojars. Add liberator to your project.clj as
 
-````[liberator "0.9.0"]````
+````[liberator "0.10.0"]````
 
 <div class="alert alert-info">The latest release might be newer, but the tutorial works at least
 with this version.</div>
 
-For the tutorial we'll use jetty-ring-adapter and compojure. For a
+For the tutorial we'll use ring-core, ring-jetty-adapter and compojure. For a
 fast setup, we'll use lein:
 
 {% highlight bash session %}
 lein new liberator-tutorial
 {% endhighlight %}
 
+Add dependencies to project.clj
+
 {% highlight clojure %}
 (defproject tutorial "0.1.0-SNAPSHOT"
   :dependencies [[org.clojure/clojure "1.4.0"]
-                 [liberator "0.9.0"]
+                 [liberator "0.10.0"]
                  [compojure "1.1.3"]
+		 [ring/ring-core "1.2.1"]
                  [ring/ring-jetty-adapter "1.1.0"]])  
 {% endhighlight %}
 
@@ -35,13 +38,18 @@ Edit liberator_tutorial/core.clj where we define our first resource:
 {% highlight clojure %}
 (ns liberator-tutorial.core
   (:require [liberator.core :refer [resource defresource]]
+            [ring.middleware.params :refer [wrap-params]]
             [ring.adapter.jetty :refer [run-jetty]]      
             [compojure.core :refer [defroutes ANY]]))
 
 (defroutes app
   (ANY "/" [] (resource)))
-
-(run-jetty #'app {:port 3000})
+  
+(def handler 
+  (-> app 
+      (wrap-params)))  
+  
+(run-jetty #'handler {:port 3000})
 {% endhighlight %}
 
 Load the namespace and jetty will be started on port 3000. However,

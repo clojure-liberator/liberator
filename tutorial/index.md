@@ -14,4 +14,5 @@ Table of contents:
 * [Debugging](debugging.html)
 * [Content Negotiation](conneg.html)
 * [Conditional Requests](conditional.html)
-* [Handling POST, PUT, DELETE](post-et-al.html)
+* [Handling POST, PUT and DELETE](post-et-al.html)
+* [Putting it all together](all-together.html)
