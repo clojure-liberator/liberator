@@ -31,7 +31,7 @@
         {:message "No body"})
       (catch Exception e
         (.printStackTrace e)
-        {:message (format "IOException: " (.getMessage e))}))))
+        {:message (format "IOException: %s" (.getMessage e))}))))
 
 (defn check-content-type [ctx content-types]
   (if (#{:put :post} (get-in ctx [:request :request-method]))
