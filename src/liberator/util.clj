@@ -49,3 +49,49 @@
     (let [m (apply hash-map kvs)
           method (get-in ctx [:request :request-method])]
       (if-let [fd (make-function (or (get m method) (get m :any)))] (fd ctx)))))
+
+(defn merge-with-map
+  "Returns a map that consists of the rest of the maps conj-ed onto
+  the first.  If a key occurs in more than one map, the mapping(s)
+  from the latter (left-to-right) will be combined with the mapping in
+  the result by looking up the proper merge function and in the
+  supplied map of key -> merge-fn and using that for the merge. If a
+  key doesn't have a merge function, the right value wins (as with
+  clojure.core/merge)."
+  [merge-fns & maps]
+  (when (some identity maps)
+    (let [merge-entry (fn [m e]
+			(let [k (key e) v (val e)]
+			  (if-let [f (and (contains? m k)
+                                          (merge-fns k))]
+			    (assoc m k (f (get m k) v))
+			    (assoc m k v))))
+          merge2 (fn [m1 m2]
+		   (reduce merge-entry (or m1 {}) (seq m2)))]
+      (reduce merge2 maps))))
+
+(defn flatten-resource
+  "Accepts a map (or a sequence, which gets turned into a map) of
+  resources; if the map contains the key :base, the kv pairs from THAT
+  map are merged in to the current map. If there are clashes, the new
+  replaces the old by default.
+
+  Combat this by supplying a :merge-with function in the map. This key
+  should point to a map from keyword -> binary function; this function
+  will be used to resolve clashes for that particular keyword."
+  [kvs]
+  (let [m (if (map? kvs)
+            kvs
+            (apply hash-map kvs))
+        trim #(dissoc % :base)]
+    (if-let [base (:base m)]
+      (let [combined (flatten-resource base)
+            trimmed (trim m)]
+        (if-let [merger (if (contains? m :merge-with)
+                          (:merge-with m)
+                          (:merge-with combined))]
+          (if (fn? merger)
+            (merge-with merger combined trimmed)
+            (merge-with-map merger combined trimmed))
+          (merge combined trimmed)))
+      (trim m))))
