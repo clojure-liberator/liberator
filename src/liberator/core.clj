@@ -590,7 +590,7 @@
       `(defn ~name [~@args]
          (resource ~@kvs)))
     `(defn ~name [req#]
-       (l/run-resource req# (flatten-resource [~@kvs])))))
+       (run-resource req# (u/flatten-resource [~@kvs])))))
 
 (defn by-method
   "returns a handler function that uses the request method to
