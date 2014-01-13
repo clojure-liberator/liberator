@@ -11,7 +11,7 @@
   (:use
    [liberator.util :only [parse-http-date http-date as-date make-function]]
    [liberator.representation :only [Representation as-response ring-response]]
-   [clojure.string :only [join]]
+   [clojure.string :only [join upper-case]]
    [clojure.tools.trace :only [trace]])
   (:import (javax.xml.ws ProtocolException)))
 
@@ -127,7 +127,7 @@
        (apply str)))
 
 (defn build-allow-header [resource]
-  (join ", " (map (comp clojure.string/upper-case name) ((:allowed-methods resource)))))
+  (join ", " (map (comp upper-case name) ((:allowed-methods resource)))))
 
 (defn build-options-headers [resource]
   (merge {"Allow" (build-allow-header resource)}
