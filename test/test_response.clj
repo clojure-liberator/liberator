@@ -61,6 +61,12 @@
         ((resource :handle-ok "ok" :allowed-methods [:get :head :options])))
     => (header-value "Allow" "GET, HEAD, OPTIONS"))
 
+  (fact "Accept-Patch check for `OPTIONS` request" 
+    (-> (request :options "/")
+        ((resource :handle-ok "ok" :allowed-methods [:get :head :options :patch]
+                   :patch-content-types ["application/json-patch+json"])))
+    => (header-value "Accept-Patch" "application/json-patch+json"))
+
   (fact "done when method is not allowed"
     (-> (request :post "/")
         ((resource :handle-ok "ok" :allowed-methods [:get :head :options])))

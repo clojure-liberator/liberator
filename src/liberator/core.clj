@@ -11,6 +11,7 @@
   (:use
    [liberator.util :only [parse-http-date http-date as-date make-function]]
    [liberator.representation :only [Representation as-response ring-response]]
+   [clojure.string :only [join]]
    [clojure.tools.trace :only [trace]])
   (:import (javax.xml.ws ProtocolException)))
 
@@ -61,11 +62,13 @@
 
 (defn gen-etag [context]
   (if-let [f (get-in context [:resource :etag])]
-    (format "\"%s\"" (f context))))
+    (if-let [etag-val (f context)]
+      (format "\"%s\"" etag-val))))
 
 (defn gen-last-modified [context]
   (if-let [f (get-in context [:resource :last-modified])]
-    (as-date (f context))))
+    (if-let [lm-val (f context)]
+      (as-date lm-val))))
 
 ;; A more sophisticated update of the request than a simple merge
 ;; provides.  This allows decisions to return maps which modify the
@@ -126,6 +129,12 @@
 (defn build-allow-header [resource]
   (clojure.string/join ", " (map (comp clojure.string/upper-case name) ((:allowed-methods resource)))))
 
+(defn build-options-headers [resource]
+  (merge {"Allow" (build-allow-header resource)}
+         (if (some #{:patch} ((:allowed-methods resource)))
+           {"Accept-Patch" (clojure.string/join "," ((:patch-content-types resource)))}
+           {})))
+
 (defn run-handler [name status message
                    {:keys [resource request representation] :as context}]
   (let [context
@@ -181,8 +190,11 @@
                   :headers {"Content-Type" "text/plain"} 
                   :body (if (fn? message) (message context) message)}))))]
     (cond
-      (or (= :options (:request-method request)) (= 405 (:status response)))
-        (merge-with merge {:headers {"Allow" (build-allow-header resource)}} response)
+     (or (= :options (:request-method request)) (= 405 (:status response)))
+     (merge-with merge
+                 {:headers (build-options-headers resource)}
+                 response)
+      
       (= :head (:request-method request))
         (dissoc response :body)
       :else response)))
@@ -265,6 +277,8 @@
 
 (defhandler handle-conflict 409 "Conflict.")
 
+(defaction patch! respond-with-entity?)
+
 (defaction put! new?)
 
 (defdecision conflict? handle-conflict put!)
@@ -303,10 +317,12 @@
 
 (defaction delete! delete-enacted?)
 
+(defdecision method-patch? (partial =method :patch) patch! post-to-existing?)
+
 (defdecision method-delete?
   (partial =method :delete)
   delete!
-  post-to-existing?)
+  method-patch?)
 
 (defdecision modified-since?
   (fn [context]
@@ -499,7 +515,7 @@
    ;; Decisions
    :service-available?        true
 
-   :known-methods             [:get :head :options :put :post :delete :trace]
+   :known-methods             [:get :head :options :put :post :delete :trace :patch]
    :known-method?             (test-request-method :known-methods)
 
    :uri-too-long?             false
@@ -542,6 +558,11 @@
    :post!                     true
    :put!                      true
    :delete!                   true
+   :patch!                    true
+
+   ;; To support RFC5789 Patch, this is used for OPTIONS Accept-Patch
+   ;; header
+   :patch-content-types [] ;(:patch-content-types resource)
 
    ;; The default function used extract a ring response from a handler's response
    :as-response               as-response
