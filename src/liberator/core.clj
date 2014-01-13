@@ -127,12 +127,12 @@
        (apply str)))
 
 (defn build-allow-header [resource]
-  (clojure.string/join ", " (map (comp clojure.string/upper-case name) ((:allowed-methods resource)))))
+  (join ", " (map (comp clojure.string/upper-case name) ((:allowed-methods resource)))))
 
 (defn build-options-headers [resource]
   (merge {"Allow" (build-allow-header resource)}
          (if (some #{:patch} ((:allowed-methods resource)))
-           {"Accept-Patch" (clojure.string/join "," ((:patch-content-types resource)))}
+           {"Accept-Patch" (join "," ((:patch-content-types resource)))}
            {})))
 
 (defn run-handler [name status message
