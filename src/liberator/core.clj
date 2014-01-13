@@ -581,21 +581,21 @@
 (defn resource [& kvs]
   (fn [request] (run-resource request (apply hash-map kvs))))
 
-(defn split-args
-  "Split the given key-values into a pair of arguments and remaining key values"
+(defn get-options
   [kvs]
-   (if (vector? (first kvs))
-     [(first kvs) (rest kvs)]
-     [[] kvs]))
+  (if (keyword? (first kvs))
+    (apply hash-map kvs)
+    `(merge ~(first kvs) ~(apply hash-map (rest kvs)))))
 
 (defmacro defresource [name & kvs]
-  (let [[args kvs] (split-args kvs)
-        options (if (keyword? (first kvs))
-                  (apply hash-map kvs)
-                  `(merge ~(first kvs) ~(apply hash-map (rest kvs))))]
-    `(defn ~name [~@args]
-       (fn [request#]
-         (run-resource request# ~options)))))
+  (if (vector? (first kvs))
+    (let [args (first kvs)
+          kvs (rest kvs)]
+      `(defn ~name [~@args]
+         (fn [request#]
+           (run-resource request# ~(get-options kvs)))))
+    `(defn ~name [request#]
+       (run-resource request# ~(get-options kvs)))))
 
 (defn by-method
   "returns a handler function that uses the request method to

@@ -1,6 +1,7 @@
 (ns test-defresource
   (:require [midje.sweet :refer [facts fact]]
-            [liberator.core :refer [defresource]]))
+            [liberator.core :refer [defresource]]
+            [ring.mock.request :refer [request header]]))
 
 (defresource without-param
   :handle-ok (fn [_] (format "The text is %s" "test")))
@@ -31,12 +32,12 @@
 
 (facts "about defresource"
        (fact "its simple form should behave as it always has"
-             ((without-param) {:request-method :get})
+             (without-param {:request-method :get})
              => {:headers {"Content-Type" "text/plain;charset=UTF-8"}, :body "The text is test", :status 200}
              ((parameter "a test") {:request-method :get})
              => {:headers {"Vary" "Accept", "Content-Type" "application/xml;charset=UTF-8"}, :body "The text is a test", :status 200})
        (fact "when provided a standard config, it should add this to the keyword list"
-             ((with-options) {:request-method :get})
+             (with-options {:request-method :get})
              => {:headers {"Vary" "Accept", "Content-Type" "application/json;charset=UTF-8"}, :body "The text is this", :status 200}
              ((with-options-and-params "something") {:request-method :get})
              => {:headers {"Vary" "Accept", "Content-Type" "application/xml;charset=UTF-8"}, :body "The text is something", :status 200})
