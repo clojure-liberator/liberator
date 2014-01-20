@@ -40,7 +40,7 @@
 (defn parse-http-date [date-string]
   (if (nil? date-string)
     nil
-    (try 		      
+    (try
       (.parse (http-date-format) date-string)
       (catch java.text.ParseException e nil))))
 
@@ -76,10 +76,10 @@
   map are merged in to the current map. If there are clashes, the new
   replaces the old by default.
 
-  Combat this by supplying a :merge-with function in the map. This key
-  should point to a map from keyword -> binary function; this function
-  will be used to resolve clashes for that particular keyword."
-  [kvs]
+  Combat this by supplying a :base-merge-with function in the
+  map. This key should point to a map from keyword -> binary function;
+  this function will be used to resolve clashes for that particular
+  keyword."  [kvs]
   (let [m (if (map? kvs)
             kvs
             (apply hash-map kvs))
@@ -87,9 +87,9 @@
     (if-let [base (:base m)]
       (let [combined (flatten-resource base)
             trimmed (trim m)]
-        (if-let [merger (if (contains? m :merge-with)
-                          (:merge-with m)
-                          (:merge-with combined))]
+        (if-let [merger (if (contains? m :base-merge-with)
+                          (:base-merge-with m)
+                          (:base-merge-with combined))]
           (if (fn? merger)
             (merge-with merger combined trimmed)
             (merge-with-map merger combined trimmed))

@@ -20,7 +20,7 @@
   => {:a 6, :b 5, :c "ho!"})
 
 (defn sans-merge [m]
-  (chatty-checker [l] (= m (dissoc l :merge-with))))
+  (chatty-checker [l] (= m (dissoc l :base-merge-with))))
 
 (fact "Merging maps with flatten-resource works:"
   (flatten-resource
@@ -30,16 +30,16 @@
   (flatten-resource
    {:base {:a "a"} :a "b"}) => {:a "b"}
 
-  "Or merged with the :merge-with binary function:"
+  "Or merged with the :base-merge-with binary function:"
   (flatten-resource
    {:base {:a "a"}
-    :merge-with (fn [a b] a)
+    :base-merge-with (fn [a b] a)
     :a "b"}) => (sans-merge {:a "a"})
 
   (let [base {:a "a"
               :base {:key "value"
                      :a "deepest"}
-              :merge-with (fn [a b] a)}
+              :base-merge-with (fn [a b] a)}
         nested {:base base
                 :a "b"
                 :new "old"}]
@@ -55,7 +55,7 @@
       (flatten-resource
        {:base base
         :a "b"
-        :merge-with nil
+        :base-merge-with nil
         :new "old"})
       => (sans-merge {:a "b"
                       :key "value"
