@@ -233,7 +233,7 @@
 
 (defhandler handle-no-content 204 nil)
 
-(defhandler handle-multiple-representations 310 nil) ; nil body because the body is reserved to reveal the actual representations available.
+(defhandler handle-multiple-representations 300 nil) ; nil body because the body is reserved to reveal the actual representations available.
 
 (defdecision multiple-representations? handle-multiple-representations handle-ok)
 
