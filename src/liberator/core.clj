@@ -180,7 +180,7 @@
                 (when-not (or (map? response) (nil? response))
                   (throw (Exception. (format "%s as-response function did not return a map (or nil) for instance of %s"
                                              'Representation (type handler-response)))))
-                response)))
+                (as-response ((:post-handle resource) (assoc context :response response)) context))))
 
            ;; If there is no handler we just return the information we
            ;; have so far.
@@ -551,6 +551,10 @@
    :post!                     true
    :put!                      true
    :delete!                   true
+
+   ;; Hooks. Work like imperatives only do not belong to the actual decision graph.
+   ;; Can be used modify context or responses across multiple cuts in the decision graph with a single function.
+   :post-handle               (comp ring-response :response)
 
    ;; Directives
    :available-media-types     []
