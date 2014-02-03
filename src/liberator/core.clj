@@ -7,11 +7,10 @@
 ;; this software.
 
 (ns liberator.core
-  (:require [liberator.conneg :as conneg])
-  (:use
-   [liberator.util :only [parse-http-date http-date as-date make-function]]
-   [liberator.representation :only [Representation as-response ring-response]]
-   [clojure.tools.trace :only [trace]])
+  (:require [liberator.conneg :as conneg]
+            [liberator.util :as u :refer [parse-http-date http-date as-date make-function]]
+            [liberator.representation :refer [Representation as-response ring-response]]
+            [clojure.tools.trace :refer [trace]])
   (:import (javax.xml.ws ProtocolException)))
 
 (defmulti coll-validator
@@ -578,18 +577,20 @@
        :body (.getMessage e)
        ::throwable e}))) ; ::throwable gets picked up by an error renderer
 
-(defn resource [& kvs]
-  (fn [request] (run-resource request (apply hash-map kvs))))
+(defn resource
+  "Functional version of defresource. Takes any number of kv pairs,
+  returns a resource function."
+  [& kvs]
+  (fn [request]
+    (run-resource request (u/flatten-resource kvs))))
 
 (defmacro defresource [name & kvs]
   (if (vector? (first kvs))
-    (let [args (first kvs)
-          kvs (rest kvs)]
+    (let [[args & kvs] kvs]
       `(defn ~name [~@args]
-         (fn [request#]
-           (run-resource request# ~(apply hash-map kvs)))))
-    `(defn ~name [request#] 
-       (run-resource request# ~(apply hash-map kvs)))))
+         (resource ~@kvs)))
+    `(defn ~name [req#]
+       (run-resource req# (u/flatten-resource [~@kvs])))))
 
 (defn by-method
   "returns a handler function that uses the request method to
