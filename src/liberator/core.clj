@@ -86,18 +86,23 @@
    (fn? context-update) (context-update)
    :otherwise context))
 
+(declare handle-exception)
+
 (defn decide [name test then else {:keys [resource request] :as context}]
   (if (or (fn? test) (contains? resource name))
-    (let [ftest (or (resource name) test)
-	  ftest (make-function ftest)
-	  fthen (make-function then)
-	  felse (make-function else)
-	  decision (ftest context)
-	  result (if (vector? decision) (first decision) decision)
-	  context-update (if (vector? decision) (second decision) decision)
-	  context (update-context context context-update)]
-      (log! :decision name decision)
-      ((if result fthen felse) context))
+    (try
+      (let [ftest (or (resource name) test)
+            ftest (make-function ftest)
+            fthen (make-function then)
+            felse (make-function else)
+            decision (ftest context)
+            result (if (vector? decision) (first decision) decision)
+            context-update (if (vector? decision) (second decision) decision)
+            context (update-context context context-update)]
+        (log! :decision name decision)
+        ((if result fthen felse) context))
+      (catch Exception e
+        (handle-exception (assoc context :exception e))))
     {:status 500 :body (str "No handler found for key \""  name "\"."
                             " Keys defined for resource are " (keys resource))}))
 
@@ -507,6 +512,8 @@
 
 (defhandler handle-service-not-available 503 "Service not available.")
 (defdecision service-available? known-method? handle-service-not-available)
+
+(defhandler handle-exception 500 "Internal server error.")
 
 (defn test-request-method [valid-methods-key]
   (fn [{{m :request-method} :request
