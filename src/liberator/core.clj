@@ -581,15 +581,21 @@
 (defn resource [& kvs]
   (fn [request] (run-resource request (apply hash-map kvs))))
 
+(defn get-options
+  [kvs]
+  (if (keyword? (first kvs))
+    (apply hash-map kvs)
+    `(merge ~(first kvs) ~(apply hash-map (rest kvs)))))
+
 (defmacro defresource [name & kvs]
   (if (vector? (first kvs))
     (let [args (first kvs)
           kvs (rest kvs)]
       `(defn ~name [~@args]
          (fn [request#]
-           (run-resource request# ~(apply hash-map kvs)))))
-    `(defn ~name [request#] 
-       (run-resource request# ~(apply hash-map kvs)))))
+           (run-resource request# ~(get-options kvs)))))
+    `(defn ~name [request#]
+       (run-resource request# ~(get-options kvs)))))
 
 (defn by-method
   "returns a handler function that uses the request method to
