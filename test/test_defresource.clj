@@ -1,6 +1,6 @@
 (ns test-defresource
   (:require [midje.sweet :refer [facts fact]]
-            [liberator.core :refer [defresource]]
+            [liberator.core :refer [defresource resource]]
             [ring.mock.request :refer [request header]]))
 
 (defresource without-param
@@ -45,3 +45,20 @@
              ((with-options-parametrized-config "application/json" "a poem") {:request-method :get})
              => {:headers {"Vary" "Accept", "Content-Type" "application/json;charset=UTF-8"}, :body "The text is a poem", :status 200}))
 
+
+(def fn-with-options
+  (resource
+   standard-config
+   :handle-ok (fn [_] (format "The text is %s" "this"))))
+
+(def fn-with-options-and-parametrized-config
+  (resource
+   (parametrized-config "application/json")
+   :handle-ok (fn [_] (format "The text is %s" "this"))))
+
+(facts "using resource function"
+  (fact "when provided a standard config, it should add this to the keyword list"
+    (fn-with-options {:request-method :get})
+    => {:headers {"Vary" "Accept", "Content-Type" "application/json;charset=UTF-8"}, :body "The text is this", :status 200}
+    (fn-with-options-and-parametrized-config {:request-method :get})
+    => {:headers {"Vary" "Accept", "Content-Type" "application/json;charset=UTF-8"}, :body "The text is this", :status 200}))

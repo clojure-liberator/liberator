@@ -578,24 +578,25 @@
        :body (.getMessage e)
        ::throwable e}))) ; ::throwable gets picked up by an error renderer
 
-(defn resource [& kvs]
-  (fn [request] (run-resource request (apply hash-map kvs))))
 
 (defn get-options
   [kvs]
   (if (keyword? (first kvs))
     (apply hash-map kvs)
-    `(merge ~(first kvs) ~(apply hash-map (rest kvs)))))
+    (merge (first kvs) (apply hash-map (rest kvs)))))
+
+(defn resource [& kvs]
+  (fn [request]
+    (run-resource request (get-options kvs))))
 
 (defmacro defresource [name & kvs]
   (if (vector? (first kvs))
     (let [args (first kvs)
           kvs (rest kvs)]
       `(defn ~name [~@args]
-         (fn [request#]
-           (run-resource request# ~(get-options kvs)))))
-    `(defn ~name [request#]
-       (run-resource request# ~(get-options kvs)))))
+         (resource ~@kvs)))
+    `(def ~name 
+       (resource ~@kvs))))
 
 (defn by-method
   "returns a handler function that uses the request method to
