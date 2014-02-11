@@ -581,9 +581,9 @@
 
 (defn get-options
   [kvs]
-  (if (keyword? (first kvs))
-    (apply hash-map kvs)
-    (merge (first kvs) (apply hash-map (rest kvs)))))
+  (if (map? (first kvs))
+    (merge (first kvs) (apply hash-map (rest kvs)))
+    (apply hash-map kvs)))
 
 (defn resource [& kvs]
   (fn [request]
