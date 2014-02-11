@@ -173,7 +173,7 @@
               ;; The rules about who should take responsibility for encoding
               ;; the response are defined in the BodyResponse protocol.
               (let [handler-response (handler context)
-                    response ((:as-response resource) handler-response context)]
+                    response ((or (:as-response resource) as-response) handler-response context)]
                 ;; We get an obscure 'cannot be cast to java.util.Map$Entry'
                 ;; error if our BodyResponse function doesn't return a map,
                 ;; so we check it now.
