@@ -8,6 +8,14 @@
 
 ## Changes
 
+* Bumps version of hiccup to 1.0.3
+* Bumps plugin versions to prepare compatibility with 1.6
+  - lein-midje -> 3.1.3
+  - lein-ring -> 0.8.10
+  - ring-devel -> 1.2.1
+  - ring-jetty-adapter -> 1.2.1
+* Adds lein alias to run tests with different clojure versions
+
 ## Bugs fixed
 
 # New in 0.10.0
