@@ -22,6 +22,9 @@
   :handle-ok (fn [_] (format "The text is %s" txt))
   :available-media-types ["application/xml"])  ;; this actually overrides the standard-config
 
+(defresource with-options-only
+  standard-config)
+
 (defn parametrized-config
   [media-type]
   {:available-media-types [media-type]})
@@ -43,13 +46,20 @@
              => {:headers {"Vary" "Accept", "Content-Type" "application/xml;charset=UTF-8"}, :body "The text is something", :status 200})
        (fact "it should also work with a function providing the standard config"
              ((with-options-parametrized-config "application/json" "a poem") {:request-method :get})
-             => {:headers {"Vary" "Accept", "Content-Type" "application/json;charset=UTF-8"}, :body "The text is a poem", :status 200}))
+             => {:headers {"Vary" "Accept", "Content-Type" "application/json;charset=UTF-8"}, :body "The text is a poem", :status 200})
+       (fact "it should work with only a standard config"
+             (with-options-only {:request-method :get})
+             => {:headers {"Vary" "Accept", "Content-Type" "application/json;charset=UTF-8"}, :body "OK", :status 200}))
 
 
 (def fn-with-options
   (resource
    standard-config
    :handle-ok (fn [_] (format "The text is %s" "this"))))
+
+(def fn-with-options-only
+  (resource
+   standard-config))
 
 (def fn-with-options-and-parametrized-config
   (resource
@@ -61,4 +71,7 @@
     (fn-with-options {:request-method :get})
     => {:headers {"Vary" "Accept", "Content-Type" "application/json;charset=UTF-8"}, :body "The text is this", :status 200}
     (fn-with-options-and-parametrized-config {:request-method :get})
-    => {:headers {"Vary" "Accept", "Content-Type" "application/json;charset=UTF-8"}, :body "The text is this", :status 200}))
+    => {:headers {"Vary" "Accept", "Content-Type" "application/json;charset=UTF-8"}, :body "The text is this", :status 200})
+    (fn-with-options-only {:request-method :get})
+    => {:headers {"Vary" "Accept", "Content-Type" "application/json;charset=UTF-8"}, :body "OK", :status 200})
+
