@@ -173,7 +173,7 @@
               ;; The rules about who should take responsibility for encoding
               ;; the response are defined in the BodyResponse protocol.
               (let [handler-response (handler context)
-                    response (as-response handler-response context)]
+                    response ((or (:as-response resource) as-response) handler-response context)]
                 ;; We get an obscure 'cannot be cast to java.util.Map$Entry'
                 ;; error if our BodyResponse function doesn't return a map,
                 ;; so we check it now.
@@ -551,6 +551,9 @@
    :post!                     true
    :put!                      true
    :delete!                   true
+
+   ;; The default function used extract a ring response from a handler's response
+   :as-response               as-response
 
    ;; Directives
    :available-media-types     []
