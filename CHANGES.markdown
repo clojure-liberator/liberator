@@ -1,5 +1,10 @@
 # Changelog
 
+# New in 0.11.0
+
+* #100 resources can specify :as-response to plug in custom
+  implementations
+
 # New in 0.10.0
 
 ## Bugs fixed
