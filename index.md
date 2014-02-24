@@ -28,10 +28,12 @@ For more Information about adding the web server component required for liberato
 
 # Quickstart
 
-Add the liberator dependency to your project.clj.
+## Setup dependencies
+
+Add the liberator dependency to your project.clj:
 
 {% highlight clojure %}
-[liberator "0.10.0"]{% endhighlight %}
+[liberator "0.11.0"]{% endhighlight %}
 
 <div class="alert alert-warning">Liberator is still under heavy
 development, however, the programming interface is settling down.
