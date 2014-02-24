@@ -169,18 +169,9 @@
                    (set-header-maybe "Vary" (build-vary-header representation)))}
               ;; Finally the result of the handler.  We allow the handler to
               ;; override the status and headers.
-              ;;
-              ;; The rules about who should take responsibility for encoding
-              ;; the response are defined in the BodyResponse protocol.
               (let [handler-response (handler context)
-                    response (as-response handler-response context)]
-                ;; We get an obscure 'cannot be cast to java.util.Map$Entry'
-                ;; error if our BodyResponse function doesn't return a map,
-                ;; so we check it now.
-                (when-not (or (map? response) (nil? response))
-                  (throw (Exception. (format "%s as-response function did not return a map (or nil) for instance of %s"
-                                             'Representation (type handler-response)))))
-                response)))
+                    ring-response ((:as-response resource) handler-response context)]
+                ring-response)))
 
            ;; If there is no handler we just return the information we
            ;; have so far.
@@ -551,6 +542,9 @@
    :post!                     true
    :put!                      true
    :delete!                   true
+
+   ;; The default function used extract a ring response from a handler's response
+   :as-response               as-response
 
    ;; Directives
    :available-media-types     []

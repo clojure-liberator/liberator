@@ -4,7 +4,7 @@
    [ring.mock.request :only [request header]]
    [compojure.core :only [context ANY]]
    [liberator.core :only [defresource resource run-handler]]
-   [liberator.representation :only [ring-response]]
+   [liberator.representation :only [ring-response as-response]]
    [checkers]))
 
 (facts "Content negotiation"
@@ -24,7 +24,8 @@
 (facts "Vary header is added automatically"
   (tabular "Parameter negotiation is added to vary header"
     (-> (run-handler "handle-ok" 200 "ok"
-                     {:resource {:handle-ok (fn [_] "body")}
+                     {:resource {:handle-ok (fn [_] "body")
+                                 :as-response as-response}
                       :representation ?representation})
         (get-in [:headers "Vary"])) => ?vary
         ?representation ?vary
@@ -45,8 +46,11 @@
   
   
   (fact "Vary header can be overriden by handler"
-        (-> (run-handler "handle-ok" 200 "ok" {:resource {:handle-ok (fn [c] (ring-response {:body "ok" :headers {"Vary" "*"}}))}
-                                           :representation {:media-type "text/plain"}})
+        (-> (run-handler "handle-ok" 200 "ok"
+                         {:resource {:handle-ok (fn [c] (ring-response
+                                                        {:body "ok" :headers {"Vary" "*"}}))
+                                     :as-response as-response}
+                          :representation {:media-type "text/plain"}})
             (get-in [:headers "Vary"]))
     => "*"))
 
@@ -64,7 +68,8 @@
 
   (fact "not done when header already exists"
     (-> (request :options "/")
-        ((resource :handle-options (ring-response {:headers {"Allow" "GET"}}) :allowed-methods [:get :head :options])))
+        ((resource :handle-options (ring-response {:headers {"Allow" "GET"}})
+                   :allowed-methods [:get :head :options])))
     => (header-value "Allow", "GET"))
 
   (fact "not done any other time"

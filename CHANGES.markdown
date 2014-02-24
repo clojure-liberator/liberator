@@ -5,6 +5,8 @@
 * #97 Adds support for a default resource definition map parameter
   that simlpifies the reuse of resource definitions. This also
   adresses #95, however in a different way than it was proposed.
+* #100 resources can specify :as-response to plug in custom
+  implementations
 
 ## Changes
 
