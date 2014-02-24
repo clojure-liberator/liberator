@@ -89,3 +89,21 @@ generate the representation most easily like this:
   :available-media-types ["application/css"]
   :handle-ok (fn [_] "body { font-size: 16px; }")
 {% endhighlight %}
+
+### Custom implementation at :as-response
+
+You can also specify a function at the key ```:as-response.``` The
+function will be used instead of ````liberator.representation/as-response````.
+
+A typical use is to decorate the ring response map with custom headers:
+
+{% highlight clojure %}
+(defresource x 
+  :as-response (fn [d ctx]
+                 (-> (as-response d ctx) ;; default implementation
+                     (assoc-in [:headers "X-FOO"] "Bar")))
+  :handle-ok (fn [_] "test"))
+{% endhighlight %}
+
+A function at as-response is required to return a ring response map. Liberator
+will set the status code and various headers (e.g. "Vary") if necessary.
