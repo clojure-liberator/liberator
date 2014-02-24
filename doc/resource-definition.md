@@ -18,6 +18,7 @@ returns a function that is a ring handler. You can also use the macro
 (defresource foo :handle-ok "This is ok")
 
 ;; this is the same as
+
 (def foo (resource :handle-ok "This is ok")
 {% endhighlight %}
 
@@ -28,6 +29,27 @@ values that will be threated like a constant function.
 Liberator uses three types of functions:
 [*decisions*](decisions.html), [*actions*](actions.html) and
 [*handlers*](handlers.html).
+
+## Base implementation
+
+You can optionally pass a map as the first argument to a resource
+definition. The values in the map are used when no other value is
+specified for a key:
+
+{% highlight clojure %}
+(def resource-defaults
+  :handle-not-found (fn [_] "Ops.")
+  :authorized? (fn [_] ...))
+
+(defresource foo resource-defaults :handle-ok "This is ok")
+
+;; this is the same as
+
+(defresource foo resource-defaults
+  :handle-ok "This is ok"
+  :handle-not-found (fn [_] "Ops.")
+  :authorized? (fn [_] ...))
+{% endhighlight %}
 
 ## Parametrized resources
 
