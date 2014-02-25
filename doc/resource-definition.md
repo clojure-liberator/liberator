@@ -45,7 +45,7 @@ specified for a key:
 
 ;; this is the same as
 
-(defresource foo resource-defaults
+(defresource foo
   :handle-ok "This is ok"
   :handle-not-found (fn [_] "Ops.")
   :authorized? (fn [_] ...))
