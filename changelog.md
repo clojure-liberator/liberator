@@ -4,6 +4,23 @@ title: Changelog
 ---
 # Changelog
 
+# New in 0.11.0
+
+* #97 Adds support for a default resource definition map parameter
+  that simlpifies the reuse of resource definitions. This also
+  adresses #95, however in a different way than it was proposed.
+* #100 resources can specify :as-response to plug in custom
+  implementations
+
+## Changes
+
+* Bumps version of hiccup to 1.0.3
+* Bumps plugin versions to prepare compatibility with 1.6
+  - lein-midje -> 3.1.3
+  - lein-ring -> 0.8.10
+  - ring-devel -> 1.2.1
+  - ring-jetty-adapter -> 1.2.1
+
 # New in 0.10.0
 
 ## Bugs fixed
