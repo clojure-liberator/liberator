@@ -32,6 +32,7 @@ handle-precondition-failed      | 412         | |
 handle-request-entity-too-large | 413         | |
 handle-uri-too-long             | 414         | |
 handle-unsupported-media-type   | 415         | |
+handle-unprocessable-entity <span class="label label-info">since 0.9.0</span>     | 422         | |
 handle-not-implemented          | 501         | |
 handle-unknown-method           | 501         | |
 handle-service-not-available    | 503         | |
@@ -41,7 +42,7 @@ handle-service-not-available    | 503         | |
 The handlers that are marked as redirecting will set a "Location"
 header that is generated from the following mechanism:
 
-### Lookup in context
+### Lookup in context <span class="label label-info">since 0.9.0</span>
 
 Liberator uses the lookup key ````:location```` in the context. You
 can set this key from a decision function that decides on the

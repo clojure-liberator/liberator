@@ -30,8 +30,8 @@ false                                                                         |
 can-post-to-missing?                                                          |
 Process a post to a resource that does not exist or send 410 not-found        |
 true |
-can-put-to-missing? |
-Process a put to a resource that does not exist or send 501 not-implemented |
+can-put-to-missing?|
+Process a put to a resource that does not exist or send 501 not-implemented <span class="label label-info">since 0.9.0</span>|
 true |
 conflict?| Does the put request emerge a conflict? |
 false |

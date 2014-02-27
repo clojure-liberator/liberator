@@ -62,7 +62,7 @@ As with maps, there are a couple of representations for sequences:
 * text/plain
 * HTML
 * JSON
-* Clojure
+* Clojure/EDN <span class="label label-info">since 0.9.0</span>
 * text/csv and text/tab-separated-values
 
 You can add a custom media-type representations by extending the
@@ -90,7 +90,7 @@ generate the representation most easily like this:
   :handle-ok (fn [_] "body { font-size: 16px; }")
 {% endhighlight %}
 
-### Custom implementation at :as-response
+### Custom implementation at :as-response <span class="label label-info">since 0.11.0</span>
 
 You can also specify a function at the key ```:as-response.``` The
 function will be used instead of ````liberator.representation/as-response````.

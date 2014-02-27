@@ -30,7 +30,7 @@ Liberator uses three types of functions:
 [*decisions*](decisions.html), [*actions*](actions.html) and
 [*handlers*](handlers.html).
 
-## Base implementation
+## Base implementation <span class="label label-info">since 0.11.0</span>
 
 You can optionally pass a map as the first argument to a resource
 definition. The values in the map are used when no other value is

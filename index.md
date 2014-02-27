@@ -38,8 +38,7 @@ Add the liberator dependency to your project.clj:
 <div class="alert alert-warning">Liberator is still under heavy
 development, however, the programming interface is settling down.
 Compatibility with prior releases is a goal but it cannot always be
-guaranteed. Compatibility notes will be added to the interface in 
-the future.</div>
+guaranteed. Compatibility notes are marked as follows: <span class="label label-info">since 0.9.0</span></div>
 
 Define your first resource using ````defresource````.
 
