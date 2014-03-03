@@ -31,5 +31,5 @@ about liberator and is Liberator's most active evangelist.
 
 The Liberator team tries to live an open development model, embracing
 contribution by others. Currently there are commits by about 10 other
-developers. We love how Github makes it dead easy to contribute event
+developers. We love how Github makes it dead easy to contribute even
 a one liner fix.
