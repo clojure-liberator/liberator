@@ -206,7 +206,7 @@
 
 (defmethod to-location clojure.lang.APersistentMap [this] this)
 
-(defmethod to-location java.net.URL [url] (to-location (.toString url)))
+(defmethod to-location java.net.URL [^java.net.URL url] (to-location (.toString url)))
 
 (defmethod to-location nil [this] this)
 
@@ -310,7 +310,7 @@
 
 (defdecision modified-since?
   (fn [context]
-    (let [last-modified (gen-last-modified context)]
+    (let [^java.util.Date last-modified (gen-last-modified context)]
       [(and last-modified (.after last-modified (::if-modified-since-date context)))
        {::last-modified last-modified}]))
   method-delete?
@@ -346,7 +346,7 @@
 
 (defdecision unmodified-since?
   (fn [context]
-    (let [last-modified (gen-last-modified context)]
+    (let [^java.util.Date last-modified (gen-last-modified context)]
       [(and last-modified
             (.after last-modified
                     (::if-unmodified-since-date context)))
