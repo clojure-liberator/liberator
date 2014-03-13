@@ -4,6 +4,12 @@ title: Changelog
 ---
 # Changelog
 
+# New in 0.12.0
+
+* Async support. Resource functions may now return core.async channels to
+  trigger non blocking mode, in which case the resource execution will
+  itself return a channel onto which the eventual response will be placed.
+
 # New in 0.11.0
 
 * \#97 Adds support for a default resource definition map parameter
