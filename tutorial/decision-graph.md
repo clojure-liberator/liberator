@@ -35,7 +35,12 @@ send a response.
 For every decision in the graph you can supply a function in your
 resource definition which will be called to obtain a boolean value.
 You can e.g. access a request parameter to decide if a certain
-resource exists. 
+resource exists.
+
+<div class="alert alert-info">Note that not every decision function
+returns true to indicate success. Some decisions (such as malformed?
+and uri-too-long?) need to return false in order to continue on to the
+next decision.</div>
 
 Notice that we added the ````wrap-params```` [ring middleware](http://mmcgrana.github.io/ring/ring.middleware.params.html) to our handler when we created it.  This
 gives us easy access to the parameters in our resource:
