@@ -88,7 +88,7 @@ Let's try to be more specific and tell that we accept json and clojure
 but prefer clojure. (This was expected, right?)
 
 {% highlight bash session %}
-url -v -H "Accept: application/json=0.8,application/clojure" http://localhost:3000/babel
+curl -v -H "Accept: application/json=0.8,application/clojure" http://localhost:3000/babel
 * About to connect() to localhost port 3000 (#0)
 *   Trying ::1...
 * connected
