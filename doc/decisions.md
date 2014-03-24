@@ -33,7 +33,8 @@ true |
 can-put-to-missing?|
 Process a put to a resource that does not exist or send 501 not-implemented <span class="label label-info">since 0.9.0</span>|
 true |
-conflict?| Does the put request emerge a conflict? |
+conflict? |
+Does the put request emerge a conflict? |
 false |
 delete-enacted?|
 Was the delete request finally processed? |
@@ -72,7 +73,7 @@ method-allowed? |
 Is the request method allowed for this resource? |
 Uses value at ````:allowed-methods```` |
 modified-since? |
-Was the resource modified since the date given in the headers "If-Modified-Since". | 
+Was the resource modified since the date given in the headers "If-Modified-Since". |
 Uses the value from ````:last-modified```` |
 moved-permanently? |
 Was the resource moved permanently? |
