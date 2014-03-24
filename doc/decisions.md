@@ -73,7 +73,7 @@ method-allowed? |
 Is the request method allowed for this resource? |
 Uses value at ````:allowed-methods```` |
 modified-since? |
-Was the resource modified since the date given in the headers "If-Modified-Since". |
+Was the resource modified since the date given in the headers "If-Modified-Since"? |
 Uses the value from ````:last-modified```` |
 moved-permanently? |
 Was the resource moved permanently? |
