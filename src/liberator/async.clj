@@ -72,14 +72,14 @@ channel)."
        v#)))
 
 (defmacro <let?
-  "Optimistic mixed blocking and non-blocking version of `let*`. Used to write
+  "Optimistic mixed blocking and non-blocking version of `let`. Used to write
 code which receives functions which may be either blocking or non blocking,
 and needs to itself become either blocking or non blocking. This allows
 liberator to optionally work with core.async without forcing it on clients,
 and without requiring two sets of parallel APIs etc. (at the price of a
 rather ugly macro).
 
-Establishes `bindings` as if by `let*`. If any of the resulting bindings
+Establishes `bindings` as if by `let`. If any of the resulting bindings
 are a channel, then a `go` block is initiated, the results of any channel
 bindings are read inside the block and rebound, and `body` is executed
 in the scope of the resulting bindings.
@@ -90,10 +90,10 @@ then `body` is executed in the scope of these bindings (no go block)."
   (let [bind-map (apply hash-map bindings)
         bind-keys (-> bind-map keys vec)
         bind-gs (vec (for [k bind-keys] (gensym)))]
-    `(let* [do-body# (fn ~bind-keys ~@body)
+    `(let [do-body# (fn ~bind-keys ~@body)
             ~@(mapcat (fn [gs k] [gs (get bind-map k)])
                       bind-gs bind-keys)]
-       (if (some channel? ~bind-gs)
+       (if (or ~@(for [gs bind-gs] `(channel? ~gs)))
          (go?
           (<val?
            (do-body# ~@(for [gs bind-gs] `(<val? ~gs)))))

@@ -15,14 +15,24 @@
 <text text-anchor="middle" x="679" y="-3912.4" font-family="Times,serif" font-size="14.00">start</text>
 </g>
 <!-- service&#45;available? -->
-<g id="serviceavailable" class="node"><title>service&#45;available?</title>
+<g id="async" class="node"><title>async?</title>
 <polygon fill="none" stroke="black" points="737.281,-3852 620.719,-3852 620.719,-3816 737.281,-3816 737.281,-3852"/>
-<text text-anchor="middle" x="679" y="-3828.4" font-family="Times,serif" font-size="14.00">service&#45;available?</text>
+<text text-anchor="middle" x="679" y="-3828.4" font-family="Times,serif" font-size="14.00">async?</text>
 </g>
-<!-- start&#45;&gt;service&#45;available? -->
-<g id="start_serviceavailable" class="edge"><title>start&#45;&gt;service&#45;available?</title>
+<!-- start&#45;&gt;async? -->
+<g id="start_async" class="edge"><title>start&#45;&gt;async?</title>
 <path fill="none" stroke="black" d="M679,-3890.15C679,-3881.25 679,-3871.34 679,-3862.4"/>
 <polygon fill="black" stroke="black" points="682.5,-3862.11 679,-3852.11 675.5,-3862.11 682.5,-3862.11"/>
+</g>
+<!-- service&#45;available? -->
+<g id="serviceavailable" class="node"><title>service&#45;available?</title>
+<polygon fill="none" stroke="black" points="737.281,-3752 620.719,-3752 620.719,-3716 737.281,-3716 737.281,-3752"/>
+<text text-anchor="middle" x="679" y="-3728.4" font-family="Times,serif" font-size="14.00">service&#45;available?</text>
+</g>
+<!-- start&#45;&gt;service&#45;available? -->
+<g id="async_serviceavailable" class="edge"><title>async&#45;&gt;service&#45;available?</title>
+<path fill="none" stroke="black" d="M679,-3816.15C679,-3781.25 679,-3771.34 679,-3762.4"/>
+<polygon fill="black" stroke="black" points="682.5,-3762.11 679,-3752.11 675.5,-3762.11 682.5,-3762.11"/>
 </g>
 <!-- handle&#45;service&#45;not&#45;available -->
 <g id="handleservicenotavailable" class="node"><title>handle&#45;service&#45;not&#45;available</title>
@@ -32,7 +42,7 @@
 </g>
 <!-- service&#45;available?&#45;&gt;handle&#45;service&#45;not&#45;available -->
 <g id="serviceavailable_handleservicenotavailable" class="edge"><title>service&#45;available?&#45;&gt;handle&#45;service&#45;not&#45;available</title>
-<path fill="none" stroke="black" d="M620.501,-3830.69C467.278,-3823.86 66,-3800.67 66,-3745 66,-3745 66,-3745 66,-845 66,-824.625 66,-801.685 66,-783.934"/>
+<path fill="none" stroke="black" d="M620.501,-3730.69C467.278,-3723.86 66,-3700.67 66,-3645 66,-3645 66,-3645 66,-845 66,-824.625 66,-801.685 66,-783.934"/>
 <polygon fill="black" stroke="black" points="69.5001,-783.882 66,-773.882 62.5001,-783.882 69.5001,-783.882"/>
 <text text-anchor="middle" x="79.2139" y="-2298.4" font-family="Times,serif" font-size="14.00">false</text>
 </g>
@@ -43,9 +53,9 @@
 </g>
 <!-- service&#45;available?&#45;&gt;known&#45;method? -->
 <g id="serviceavailable_knownmethod" class="edge"><title>service&#45;available?&#45;&gt;known&#45;method?</title>
-<path fill="none" stroke="black" d="M737.33,-3830.16C1008.11,-3816.97 2141.25,-3761.79 2422.57,-3748.09"/>
+<path fill="none" stroke="black" d="M737.33,-3730.16C1008.11,-3716.97 2141.25,-3761.79 2422.57,-3748.09"/>
 <polygon fill="black" stroke="black" points="2422.79,-3751.58 2432.61,-3747.6 2422.45,-3744.59 2422.79,-3751.58"/>
-<text text-anchor="middle" x="1754.88" y="-3783.4" font-family="Times,serif" font-size="14.00">true</text>
+<text text-anchor="middle" x="1754.88" y="-3753.4" font-family="Times,serif" font-size="14.00">true</text>
 </g>
 <!-- post! -->
 <g id="trace_node5" class="node"><title>post!</title>

@@ -81,7 +81,7 @@
          (concat (rank-handler-groups handlers))
          (concat (rank-same actions))
          (apply str)
-         (format "digraph{\nid=\"trace\"; size=\"1000,1000\"; page=\"1000,1000\";\n\nnode[shape=\"box\", splines=ortho]\n\"start\"[id=\"start\" shape=circle];\n\"start\" -> \"service-available?\" [id=start_serviceavailable]\n%s\n}"))))
+         (format "digraph{\nid=\"trace\"; size=\"1000,1000\"; page=\"1000,1000\";\n\nnode[shape=\"box\", splines=ortho]\n\"start\"[id=\"start\" shape=circle];\n\"start\" -> \"async?\" [id=start_async]\n%s\n}"))))
 
 (defn generate-graph-dot-file [f]
   (spit f (generate-graph-dot)))
