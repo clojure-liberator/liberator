@@ -179,7 +179,7 @@
     (render-seq-generic data (assoc-in context [:representation :media-type]
                                        "application/json"))))
 
-(defn in-charset [string charset]
+(defn in-charset [^String string ^String charset]
   (if (and charset (not (.equalsIgnoreCase charset "UTF-8")))
     (java.io.ByteArrayInputStream.
      (.getBytes string (java.nio.charset.Charset/forName charset)))

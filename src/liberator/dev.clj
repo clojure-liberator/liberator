@@ -6,6 +6,8 @@
         [liberator.core :only [defresource]]
         [clojure.string :only [join]])
   (:require [liberator.core :as core]
+            [liberator.async :refer [async-response]]
+            [clojure.core.async :refer [map<]]
             [clojure.string :as string]
             [clojure.data.json :as json])
   (:import java.util.Date))
@@ -185,6 +187,14 @@
 
 (def trace-svg (clojure.java.io/resource "liberator/trace.svg"))
 
+(defn- wrap-trace-ui-response
+  [resp]
+  (if-let [id (get-in resp [:headers trace-id-header])]
+    (update-in resp [:headers "Link"]
+               #(if %1 [%1 %2] %2)
+               (format "</%s>; rel=x-liberator-trace" (trace-url id)))
+    resp))
+
 (defn- wrap-trace-ui [handler]
   (let [base-url (with-slash mount-url)]
     (routes
@@ -196,23 +206,39 @@
      (ANY base-url [] list-handler)
      (fn [req]
        (let [resp (handler req)]
-         (if-let [id (get-in resp [:headers trace-id-header])]
-           (update-in resp [:headers "Link"]
-                      #(if %1 [%1 %2] %2)
-                      (format "</%s>; rel=x-liberator-trace" (trace-url id)))
-           resp))))))
+         (if (async-response resp)
+           (update-in resp [:body]
+                      (partial map< wrap-trace-ui-response))
+           (wrap-trace-ui-response resp)))))))
+
+(defn- wrap-trace-header-response
+  [resp]
+  (if-let [id (get-in resp [:headers trace-id-header])]
+    (let [[_ [_ _ l]] (log-by-id id)]
+      (assoc-in resp [:headers "X-Liberator-Trace"]
+                (map #(clojure.string/join " " %) l)))
+    resp))
 
 (defn- wrap-trace-header [handler]
   (fn [req]
     (let [resp (handler req)]
-      (if-let [id (get-in resp [:headers trace-id-header])]
-        (let [[_ [_ _ l]] (log-by-id id)]
-          (assoc-in resp [:headers "X-Liberator-Trace"]
-                    (map #(clojure.string/join " " %) l)))
-        resp))))
+      (if (async-response resp)
+        (update-in resp [:body] (partial map< wrap-trace-header-response))
+        (wrap-trace-header-response resp)))))
 
 (defn- cond-wrap [fn expr wrapper]
   (if expr (wrapper fn) fn))
+
+(defn wrap-trace-response
+  [request-log request response]
+  (if-not (empty? @request-log)
+    (do
+      (save-log! *current-id*
+                 [(Date.)
+                  (select-keys request [:request-method :uri :headers])
+                  @request-log])
+      (assoc-in response [:headers trace-id-header] *current-id*))
+    response))
 
 (defn wrap-trace
   "Wraps a ring handler such that a request trace is generated.
@@ -228,13 +254,10 @@
        (binding [*current-id* (next-id)]
          (core/with-logger (core/atom-logger request-log)
            (let [resp (handler request)]
-             (if-not (empty? @request-log)
-               (do
-                 (save-log! *current-id*
-                            [(Date.)
-                             (select-keys request [:request-method :uri :headers])
-                             @request-log])
-                 (assoc-in resp [:headers trace-id-header] *current-id*))
-               resp))))))
+             (if (async-response resp)
+               (->> (partial wrap-trace-response request-log request)
+                    (partial map<)
+                    (update-in resp [:body]))
+               (wrap-trace-response request-log request resp)))))))
    (cond-wrap (some #{:ui} opts) wrap-trace-ui)
    (cond-wrap (some #{:header} opts) wrap-trace-header)))

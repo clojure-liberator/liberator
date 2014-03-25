@@ -1,7 +1,7 @@
 #start.node ellipse { stroke: #0000dd; fill: rgba(0,221,0,0.1); stroke-width: 3;}
 #start.node ellipse { stroke: #0000dd; fill: rgba(0,221,0,0.1); stroke-width: 3;}
-#start_serviceavailable path { stroke: #0000dd; stroke-width: 3;}
-#start_serviceavailable polygon { fill: #0000dd; stroke: #0000dd; stroke-width: 3;}
+#start_async path { stroke: #0000dd; stroke-width: 3;}
+#start_async polygon { fill: #0000dd; stroke: #0000dd; stroke-width: 3;}
 
 .node.hl-true polygon { stroke: #0000dd; stroke-width: 3;}
 .node.hl-true text { fill: #0000dd; }

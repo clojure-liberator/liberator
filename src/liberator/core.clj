@@ -7,7 +7,9 @@
 ;; this software.
 
 (ns liberator.core
-  (:require [liberator.conneg :as conneg])
+  (:require [clojure.core.async :refer [map<]]
+            [liberator.conneg :as conneg]
+            [liberator.async :refer [channel? <let?]])
   (:use
    [liberator.util :only [parse-http-date http-date as-date make-function]]
    [liberator.representation :only [Representation as-response ring-response]]
@@ -61,11 +63,13 @@
 
 (defn gen-etag [context]
   (if-let [f (get-in context [:resource :etag])]
-    (format "\"%s\"" (f context))))
+    (<let? [etag (f context)]
+      (format "\"%s\"" etag))))
 
 (defn gen-last-modified [context]
   (if-let [f (get-in context [:resource :last-modified])]
-    (as-date (f context))))
+    (<let? [lm (f context)]
+      (as-date lm))))
 
 ;; A more sophisticated update of the request than a simple merge
 ;; provides.  This allows decisions to return maps which modify the
@@ -81,16 +85,19 @@
 (defn decide [name test then else {:keys [resource request] :as context}]
   (if (or (fn? test) (contains? resource name)) 
     (let [ftest (or (resource name) test)
-	  ftest (make-function ftest)
-	  fthen (make-function then)
-	  felse (make-function else)
-	  decision (ftest context)
-	  result (if (vector? decision) (first decision) decision)
-	  context-update (if (vector? decision) (second decision) decision)
-	  context (if (map? context-update)
-                    (combine context context-update) context)]
-      (log! :decision name decision)
-      ((if result fthen felse) context))
+          ftest (make-function ftest)
+          fthen (make-function then)
+          felse (make-function else)]
+      (<let? [decision (ftest context)]
+        (let [result (if (vector? decision) (first decision) decision)
+              context-update (if (vector? decision)
+                               (second decision)
+                               decision)
+              context (if (map? context-update)
+                        (combine context context-update)
+                        context)]
+          (log! :decision name decision)
+          ((if result fthen felse) context))))
     {:status 500 :body (str "No handler found for key \""  name "\"."
                             " Keys defined for resource are " (keys resource))}))
 
@@ -126,66 +133,86 @@
 (defn build-allow-header [resource]
   (clojure.string/join ", " (map (comp clojure.string/upper-case name) ((:allowed-methods resource)))))
 
-(defn run-handler [name status message
-                   {:keys [resource request representation] :as context}]
-  (let [context
-        (merge {:status status :message message} context)
-        response 
+(defn build-handler-response
+  [handler-response {:keys [resource representation] :as context}]
+  (merge-with
+   merge
+   {:headers
+    (-> {} 
+        (set-header-maybe "Content-Type"
+                          (str (:media-type representation)
+                               (when-let [charset (:charset representation)] (str ";charset=" charset))))
+        (set-header-maybe "Content-Language" (:language representation))
+        (set-header-maybe "Content-Encoding"
+                          (let [e (:encoding representation)]
+                            (if-not (= "identity" e) e)))
+        (set-header-maybe "Vary" (build-vary-header representation)))}
+   ;; Finally the result of the handler.  We allow the handler to
+   ;; override the status and headers.
+   ;;
+   ;; The rules about who should take responsibility for encoding
+   ;; the response are defined in the BodyResponse protocol.
+   ((:as-response resource) handler-response context)))
+
+(defn build-default-handler-response
+  [name status {:keys [message] :as context}]
+  (do
+    (log! :handler (keyword name) "(default implementation)")
+    {:status status 
+     :headers {"Content-Type" "text/plain"} 
+     :body (if (fn? message) (message context) message)}))
+
+(defn finalize-response
+  [name status etag last-modified location handler-response
+   {:keys [request resource] :as context}]
+  (let [response
         (merge-with
          combine
-
          ;; Status
          {:status status}
-
          ;; ETags
-         (when-let [etag (gen-etag context)]
+         (when etag
            {:headers {"ETag" etag}})
-         
          ;; Last modified
-         (when-let [last-modified (gen-last-modified context)]
+         (when last-modified
            {:headers {"Last-Modified" (http-date last-modified)}})
-
          ;; 201 created required a location header to be send
-         (when (= 201 status)
-           (if-let [f (or (get context :location)
-                          (get resource :location))]
-             {:headers {"Location" (str ((make-function f) context))}}))
-     
-         (if-let [handler (get resource (keyword name))]
-           (do
-             (log! :handler (keyword name))
-             ;; Content negotiations         
-             (merge-with
-              merge
-              {:headers
-               (-> {} 
-                   (set-header-maybe "Content-Type"
-                                     (str (:media-type representation)
-                                          (when-let [charset (:charset representation)] (str ";charset=" charset))))
-                   (set-header-maybe "Content-Language" (:language representation))
-                   (set-header-maybe "Content-Encoding"
-                                     (let [e (:encoding representation)]
-                                       (if-not (= "identity" e) e)))
-                   (set-header-maybe "Vary" (build-vary-header representation)))}
-              ;; Finally the result of the handler.  We allow the handler to
-              ;; override the status and headers.
-              (let [handler-response (handler context)
-                    ring-response ((:as-response resource) handler-response context)]
-                ring-response)))
-
+         (when location
+           {:headers {"Location" (str location)}})
+         ;; Handler
+         (if handler-response
+           (build-handler-response handler-response context)
            ;; If there is no handler we just return the information we
            ;; have so far.
-           (let [message (get context :message)]
-             (do (log! :handler (keyword name) "(default implementation)")
-                 {:status status 
-                  :headers {"Content-Type" "text/plain"} 
-                  :body (if (fn? message) (message context) message)}))))]
+           (build-default-handler-response name status context)))]
     (cond
-      (or (= :options (:request-method request)) (= 405 (:status response)))
-        (merge-with merge {:headers {"Allow" (build-allow-header resource)}} response)
-      (= :head (:request-method request))
-        (dissoc response :body)
-      :else response)))
+     (or (= :options (:request-method request)) (= 405 (:status response)))
+     (merge-with merge {:headers {"Allow" (build-allow-header resource)}} response)
+     
+     (= :head (:request-method request))
+     (dissoc response :body)
+     
+     :else response)))
+
+(defn run-handler [name status message
+                   {:keys [resource request representation] :as context}]
+  (let [context (merge {:status status :message message} context)]
+    (<let? [etag (gen-etag context)
+            last-modified (gen-last-modified context)
+            location
+            (when (= 201 status)
+              (if-let [f (or (get context :location)
+                             (get resource :location))]
+                ((make-function f) context)))
+            handler-response
+            (if-let [handler (get resource (keyword name))]
+              (do
+                (log! :handler (keyword name))
+                (handler context)))]
+           (finalize-response name status
+                              etag last-modified
+                              location handler-response
+                              context))))
 
 (defmacro ^:private defhandler [name status message]
   `(defn ~name [context#]
@@ -206,7 +233,7 @@
 
 (defmethod to-location clojure.lang.APersistentMap [this] this)
 
-(defmethod to-location java.net.URL [url] (to-location (.toString url)))
+(defmethod to-location java.net.URL [^java.net.URL url] (to-location (.toString url)))
 
 (defmethod to-location nil [this] this)
 
@@ -310,7 +337,7 @@
 
 (defdecision modified-since?
   (fn [context]
-    (let [last-modified (gen-last-modified context)]
+    (<let? [^java.util.Date last-modified (gen-last-modified context)]
       [(and last-modified (.after last-modified (::if-modified-since-date context)))
        {::last-modified last-modified}]))
   method-delete?
@@ -330,7 +357,7 @@
 
 (defdecision etag-matches-for-if-none?
   (fn [context]
-    (let [etag (gen-etag context)]
+    (<let? [etag (gen-etag context)]
       [(= (get-in context [:request :headers "if-none-match"]) etag)
        {::etag etag}]))
   if-none-match?
@@ -346,7 +373,7 @@
 
 (defdecision unmodified-since?
   (fn [context]
-    (let [last-modified (gen-last-modified context)]
+    (<let? [^java.util.Date last-modified (gen-last-modified context)]
       [(and last-modified
             (.after last-modified
                     (::if-unmodified-since-date context)))
@@ -366,7 +393,7 @@
 
 (defdecision etag-matches-for-if-match?
   (fn [context]
-    (let [etag (gen-etag context)]
+    (<let? [etag (gen-etag context)]
       [(= etag (get-in context [:request :headers "if-match"]))
        (assoc context ::etag etag)]))
   if-unmodified-since-exists?
@@ -387,11 +414,11 @@
 
 (defdecision encoding-available? 
   (fn [ctx]
-    (when-let [encoding (conneg/best-allowed-encoding
-                         (get-in ctx [:request :headers "accept-encoding"])
-                         ((get-in ctx [:resource :available-encodings]) ctx))]
-      {:representation {:encoding encoding}}))
-
+    (<let? [ae ((get-in ctx [:resource :available-encodings]) ctx)]
+      (when-let [encoding (conneg/best-allowed-encoding
+                           (get-in ctx [:request :headers "accept-encoding"])
+                           ae)]
+        {:representation {:encoding encoding}})))
   processable? handle-not-acceptable)
 
 (defmacro try-header [header & body]
@@ -404,13 +431,15 @@
   encoding-available? processable?)
 
 (defdecision charset-available?
-  #(try-header "Accept-Charset"
-               (when-let [charset (conneg/best-allowed-charset
-                                   (get-in % [:request :headers "accept-charset"])
-                                   ((get-in context [:resource :available-charsets]) context))]
-                 (if (= charset "*")
-                   true
-                   {:representation {:charset charset}})))
+  #(<let? [ac ((get-in context [:resource :available-charsets]) context)]
+     (try-header
+      "Accept-Charset"
+      (when-let [charset (conneg/best-allowed-charset
+                          (get-in % [:request :headers "accept-charset"])
+                          ac)]
+        (if (= charset "*")
+          true
+          {:representation {:charset charset}}))))
   accept-encoding-exists? handle-not-acceptable)
 
 (defdecision accept-charset-exists? (partial header-exists? "accept-charset")
@@ -418,24 +447,29 @@
 
 
 (defdecision language-available?
-  #(try-header "Accept-Language"
-               (when-let [lang (conneg/best-allowed-language
-                                (get-in % [:request :headers "accept-language"]) 
-                                ((get-in context [:resource :available-languages]) context))]
-                 (if (= lang "*")
-                   true
-                   {:representation {:language lang}})))
+  #(<let? [al ((get-in context [:resource :available-languages]) context)]
+     (try-header
+      "Accept-Language"
+      (when-let [lang (conneg/best-allowed-language
+                       (get-in % [:request :headers "accept-language"]) 
+                       al)]
+        (if (= lang "*")
+          true
+          {:representation {:language lang}}))))
   accept-charset-exists? handle-not-acceptable)
 
 (defdecision accept-language-exists? (partial header-exists? "accept-language")
   language-available? accept-charset-exists?)
 
 (defn negotiate-media-type [context]
-  (try-header "Accept"
-              (when-let [type (conneg/best-allowed-content-type 
-                               (get-in context [:request :headers "accept"]) 
-                               ((get-in context [:resource :available-media-types] (constantly "text/html")) context))]
-                {:representation {:media-type (conneg/stringify type)}})))
+  (<let? [amt ((get-in context [:resource :available-media-types]
+                       (constantly "text/html")) context)]
+    (try-header
+     "Accept"
+     (when-let [type (conneg/best-allowed-content-type 
+                      (get-in context [:request :headers "accept"]) 
+                      amt)]
+       {:representation {:media-type (conneg/stringify type)}}))))
 
 (defdecision media-type-available? negotiate-media-type
   accept-language-exists? handle-not-acceptable)
@@ -447,11 +481,12 @@
      ;; client accepts all media types" [p100]
      ;; in this case we do content-type negotiaion using */* as the accept
      ;; specification
-     (if-let [type (liberator.conneg/best-allowed-content-type 
-                    "*/*"
-                    ((get-in context [:resource :available-media-types]) context))]
-       [false {:representation {:media-type (liberator.conneg/stringify type)}}]
-       false))
+     (<let? [amt ((get-in context [:resource :available-media-types]) context)]
+       (if-let [type (liberator.conneg/best-allowed-content-type 
+                      "*/*"
+                      amt)]
+         [false {:representation {:media-type (liberator.conneg/stringify type)}}]
+         false)))
   media-type-available?
   accept-language-exists?)
 
@@ -488,6 +523,8 @@
 (defhandler handle-service-not-available 503 "Service not available.")
 (defdecision service-available? known-method? handle-service-not-available)
 
+(defdecision async? service-available? service-available?)
+
 (defn test-request-method [valid-methods-key]
   (fn [{{m :request-method} :request
        {vm valid-methods-key} :resource
@@ -497,6 +534,7 @@
 (def default-functions 
   {
    ;; Decisions
+   :async?                    false
    :service-available?        true
 
    :known-methods             [:get :head :options :put :post :delete :trace]
@@ -558,19 +596,28 @@
    :available-charsets        ["UTF-8"]
    :available-encodings       ["identity"]})
 
+(defn exception->response
+  [maybe-e]
+  (if (instance? ProtocolException maybe-e)
+    {:status 400
+     :headers {"Content-Type" "text/plain"}
+     :body (.getMessage maybe-e)
+     ::throwable maybe-e}
+    maybe-e))
+
 ;; resources are a map of implementation methods
 (defn run-resource [request kvs]
   (try
-    (service-available? {:request request
-                         :resource
-                         (map-values make-function (merge default-functions kvs))
-                         :representation {}})
-    
+    (let [response
+          (async? {:request request
+                   :resource
+                   (map-values make-function (merge default-functions kvs))
+                   :representation {}})]
+      (if (channel? response)
+        {:body (map< exception->response response)}
+        response))
     (catch ProtocolException e         ; this indicates a client error
-      {:status 400
-       :headers {"Content-Type" "text/plain"}
-       :body (.getMessage e)
-       ::throwable e}))) ; ::throwable gets picked up by an error renderer
+      (exception->response e))))       ; ::throwable gets picked up by an error renderer
 
 
 (defn get-options
