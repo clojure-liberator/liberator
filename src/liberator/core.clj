@@ -562,7 +562,7 @@
 
    ;; To support RFC5789 Patch, this is used for OPTIONS Accept-Patch
    ;; header
-   :patch-content-types [] ;(:patch-content-types resource)
+   :patch-content-types []
 
    ;; The default function used extract a ring response from a handler's response
    :as-response               as-response
