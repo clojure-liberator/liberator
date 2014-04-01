@@ -20,7 +20,7 @@
    :available-media-types #(if-let [m (get-in % [::r :media-type])] [m])
    ;; the resource exists if a value is stored in @things at the uri
    ;; store the looked up value at key ::r in the context
-   :exists? #(get % ::r)
+   :exists? ::r
    ;; ...it existed if the stored value is nil (and not some random
    ;; Objeced we use as a setinel)
    :existed? #(nil? (get @things (get-in % [:request :uri]) (Object.)))
