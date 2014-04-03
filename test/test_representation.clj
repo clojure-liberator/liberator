@@ -28,7 +28,7 @@
                   "application/edn" (pr-str entity))))
 
 (facts "Can produce representations from a seq of maps"
-       (let [entity [{:foo 1 :bar 2} {:foo 2 :bar 3}]]
+       (let [entity [(sorted-map :foo 1 :bar 2) (sorted-map :foo 2 :bar 3)]]
          (tabular "Various media types are supported"
                   (as-response entity {:representation {:media-type ?media-type :charset "UTF-8"}})
                   => {:body ?body :headers { "Content-Type" (str ?media-type ";charset=UTF-8")}}
