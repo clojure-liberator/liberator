@@ -11,36 +11,36 @@
     (pr-str x)))
 
 (facts "Can produce representations from map"
-       (let [entity {:foo "bar" :baz "qux"}]
+       (let [entity (sorted-map :foo "bar" :baz "qux")]
          (tabular "Various media types are supported"
                   (as-response entity {:representation {:media-type ?media-type :charset "UTF-8"}})
                   => {:body ?body :headers { "Content-Type" (str ?media-type ";charset=UTF-8")}}
                   ?media-type   ?body
-                  "text/csv"    "name,value\r\n:foo,bar\r\n:baz,qux\r\n"
-                  "text/tab-separated-values" "name\tvalue\r\n:foo\tbar\r\n:baz\tqux\r\n"
-                  "text/plain"  "foo=bar\r\nbaz=qux"
+                  "text/csv"    "name,value\r\n:baz,qux\r\n:foo,bar\r\n"
+                  "text/tab-separated-values" "name\tvalue\r\n:baz\tqux\r\n:foo\tbar\r\n"
+                  "text/plain"  "baz=qux\r\nfoo=bar"
                   "text/html"   (str "<div><table><tbody>"
-                                     "<tr><th>foo</th><td>bar</td></tr>"
                                      "<tr><th>baz</th><td>qux</td></tr>"
+                                     "<tr><th>foo</th><td>bar</td></tr>"
                                      "</tbody></table></div>")
                   "application/json" (clojure.data.json/write-str entity)
                   "application/clojure" (pr-str-dup entity)
                   "application/edn" (pr-str entity))))
 
 (facts "Can produce representations from a seq of maps"
-       (let [entity [{:foo 1 :bar 2} {:foo 2 :bar 3}]]
+       (let [entity [(sorted-map :foo 1 :bar 2) (sorted-map :foo 2 :bar 3)]]
          (tabular "Various media types are supported"
                   (as-response entity {:representation {:media-type ?media-type :charset "UTF-8"}})
                   => {:body ?body :headers { "Content-Type" (str ?media-type ";charset=UTF-8")}}
                   ?media-type   ?body
-                  "text/csv"    "foo,bar\r\n1,2\r\n2,3\r\n"
-                  "text/tab-separated-values" "foo\tbar\r\n1\t2\r\n2\t3\r\n"
-                  "text/plain"  "foo=1\r\nbar=2\r\n\r\nfoo=2\r\nbar=3"
+                  "text/csv"    "bar,foo\r\n2,1\r\n3,2\r\n"
+                  "text/tab-separated-values" "bar\tfoo\r\n2\t1\r\n3\t2\r\n"
+                  "text/plain"  "bar=2\r\nfoo=1\r\n\r\nbar=3\r\nfoo=2"
                   "text/html"   (str "<div><table>"
-                                     "<thead><tr><th>foo</th><th>bar</th></tr></thead>"
+                                     "<thead><tr><th>bar</th><th>foo</th></tr></thead>"
                                      "<tbody>"
-                                     "<tr><td>1</td><td>2</td></tr>"
-                                     "<tr><td>2</td><td>3</td></tr>"
+                                     "<tr><td>2</td><td>1</td></tr>"
+                                     "<tr><td>3</td><td>2</td></tr>"
                                      "</tbody>"
                                      "</table></div>")
                   "application/json" (clojure.data.json/write-str entity)
