@@ -105,7 +105,7 @@
                   :exists? false
                   :can-put-to-missing? false)
       resp (r (request :put "/"))]
-  (fact "Put to missing can give 501" resp => NOT-IMPLEMENTED))
+  (fact "Put to missing can give 404" resp => NOT-FOUND))
 
 (let [r (resource :method-allowed? [:put]
                   :exists? false
@@ -124,12 +124,12 @@
       (fact resp => OK)
       (fact resp => (content-type "text/plain;charset=UTF-8"))
       (fact resp => (no-body))))
-  
+
   (facts "unexisting resource"
     (let [resp ((resource :exists? false :handle-not-found "NOT-FOUND") (request :head "/"))]
       (fact resp => NOT-FOUND)
       (fact resp => (no-body))))
-  
+
   (facts "on moved temporarily"
     (let [resp ((resource :exists? false
                           :existed? true
