@@ -1,4 +1,4 @@
-(ns test-get-put
+(ns test-get-put-patch
   (:use liberator.core
         midje.sweet
         checkers
@@ -12,9 +12,10 @@
 
 (def thing-resource
   (resource
+   :allowed-methods [:delete :get :head :options :patch :put]
    ;; early lookup   
    :service-available? (fn [ctx] {::r (get @things (get-in ctx [:request :uri]))})
-   :method-allowed? (request-method-in :get :put :delete)
+   ;:method-allowed? (request-method-in )
    ;; lookup media types of the requested resource
    :available-media-types #(if-let [m (get-in % [::r :media-type])] [m])
    ;; the resource exists if a value is stored in @things at the uri
@@ -26,6 +27,13 @@
    ;; use the previously stored value at ::r
    :handle-ok #(get-in % [::r :content])
    ;; update the representation
+   :patch! #(dosync
+           (alter things assoc-in
+                  [(get-in % [:request :uri])]
+                  {:content (get-in % [:request :body])
+                   :media-type "text/plain"
+                   :last-modified (java.util.Date.)}))
+   :patch-content-types ["application/example"]
    :put! #(dosync
            (alter things assoc-in
                   [(get-in % [:request :uri])]
@@ -48,9 +56,30 @@
    (fact "get => 200" resp => OK)
    (fact "get body is what was put before"
          resp => (body "r1"))
-   (fact "content type is set correcty"
+   (fact "content type is set correctly"
          resp => (content-type "text/plain;charset=UTF-8"))
-   (future-fact "last-modified header is set"))
+   (fact "last-modified header is set"
+         (nil? (get (:headers resp) "Last-Modified")) => false))
+ (let [resp (thing-resource (-> (request :options "/r1")))]
+   (fact "allowed patch content types"
+         (get (:headers resp) "Accept-Patch") => "application/example")
+   (fact "expected options response - Allow header"
+         (get (:headers resp) "Allow") => "DELETE, GET, HEAD, OPTIONS, PATCH, PUT")
+   (fact "get => 200" resp => OK)
+   (fact "last-modified header is set"
+         (nil? (get (:headers resp) "Last-Modified")) => false))
+ (let [resp (thing-resource (-> (request :patch "/r1")
+                   (assoc :body "Some patch implementation.")
+                   (header "content-type" "application/example")))]
+   (fact "put => 204" resp => NO-CONTENT))
+ (let [resp (thing-resource (-> (request :get "/r1")))]
+   (fact "get => 200" resp => OK)
+   (fact "get body is what was patched in"
+         resp => (body "Some patch implementation."))
+   (fact "content type is set correctly"
+         resp => (content-type "text/plain;charset=UTF-8"))
+   (fact "last-modified header is set"
+         (nil? (get (:headers resp) "Last-Modified")) => false))
  (let [resp (thing-resource (-> (request :delete "/r1")))]
    (fact "delete" resp => NO-CONTENT))
  (let [resp (thing-resource (request :get "/r1"))]
