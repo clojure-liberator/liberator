@@ -232,7 +232,7 @@
                (do
                  (save-log! *current-id*
                             [(Date.)
-                             (select-keys request [:request-method :uri :headers])
+                             (select-keys request [:request-method :uri :headers :params])
                              @request-log])
                  (assoc-in resp [:headers trace-id-header] *current-id*))
                resp))))))
