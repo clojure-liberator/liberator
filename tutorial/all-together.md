@@ -61,7 +61,7 @@ into liberator.
         {:message "No body"})
       (catch Exception e
         (.printStackTrace e)
-        {:message (format "IOException: " (.getMessage e))}))))
+        {:message (format "IOException: %s" (.getMessage e))}))))
 
 ;; For PUT and POST check if the content type is json.
 (defn check-content-type [ctx content-types]
