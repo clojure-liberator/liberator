@@ -80,7 +80,7 @@ useful when we want to pass along a value to a handler:
                                         (get ctx :choice)))
                  :handle-not-found (fn [ctx]
                                      (format "<html>There is no value for the option &quot;%s&quot;"
-                                             (get ctx :choice "")))))
+                                             (get-in ctx [:request :params "choice"] "")))))
 {% endhighlight %}
 
 In this example we check if there is an entry in a map for the
