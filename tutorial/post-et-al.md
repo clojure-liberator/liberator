@@ -33,6 +33,8 @@ details please refer to the decision graph.
 An idiomatic way to support post is the following:
 
 {% highlight clojure %}
+  (def posts (ref []))
+  ;;...
   (ANY "/postbox" []
        (resource
         :allowed-methods [:post :get]
