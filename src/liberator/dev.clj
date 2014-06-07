@@ -2,7 +2,6 @@
   (:use hiccup.core
         hiccup.page
         compojure.core
-        clojure.tools.trace
         [liberator.core :only [defresource]]
         [clojure.string :only [join]])
   (:require [liberator.core :as core]
