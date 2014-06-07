@@ -11,8 +11,7 @@
   (:use
    [liberator.util :only [parse-http-date http-date as-date make-function]]
    [liberator.representation :only [Representation as-response ring-response]]
-   [clojure.string :only [join upper-case]]
-   [clojure.tools.trace :only [trace]])
+   [clojure.string :only [join upper-case]])
   (:import (javax.xml.ws ProtocolException)))
 
 (defmulti coll-validator

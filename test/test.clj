@@ -9,7 +9,6 @@
 (ns test
   (:use [liberator.core]
         [compojure.core :only [context ANY routes defroutes]]
-        [clojure.tools.trace]
         [hiccup.core]
         [ring.adapter.jetty]
         [ring.middleware.stacktrace :only (wrap-stacktrace)]
