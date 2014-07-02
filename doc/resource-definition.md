@@ -26,6 +26,14 @@ The resource takes a sequence of keys and values. The values are
 functions that accept a single parameter, the ````context````, or
 values that will be threated like a constant function.
 
+{% highlight clojure %}
+;Option A
+:handle-ok (fn [context] "We can use a function.")
+
+;Option B
+:handle-ok "We can also use a plain value"
+{% endhighlight %}
+
 Liberator uses three types of functions:
 [*decisions*](decisions.html), [*actions*](actions.html) and
 [*handlers*](handlers.html).
