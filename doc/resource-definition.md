@@ -24,7 +24,7 @@ returns a function that is a ring handler. You can also use the macro
 
 The resource takes a sequence of keys and values. The values are
 functions that accept a single parameter, the ````context````, or
-values that will be threated like a constant function.
+values that will be treated like a constant function.
 
 {% highlight clojure %}
 ;Option A
