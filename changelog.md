@@ -4,6 +4,12 @@ title: Changelog
 ---
 # Changelog
 
+# New in 0.11.1
+
+* \#138 Adds support to return a zero arguments function from a 
+  decision. The return value of the function will be the new
+  context value.
+
 # New in 0.11.0
 
 * \#97 Adds support for a default resource definition map parameter
