@@ -41,6 +41,22 @@ If the resource exists, the context will be merged with the map
 the entity was stored in the context and makes use of the fact that
 a keyword is a function that can "lookup itself" from a map.
 
+<span class="label label-info">since 0.9.0</span>
+In case you want to avoid the deep merge of the context data you can
+also return a function with takes no arguments ("thunk"). The return
+value of the function is used as the new context value:
+
+{% highlight clojure %}
+(defresource foo
+  :service-available? {:a [1]}
+  :exists? (fn [ctx] #(assoc ctx :a [2]))
+  :handle-ok :entity)
+{% endhighlight %}
+
+Without the wrapping in a function the updated context after
+```exists?``` would be ````{:a [1 2]}```` whereas in this case we get
+````{:a [1]}````.
+
 ## Decision functions
 
 Every decision in a resource is implemented by a decision function.
