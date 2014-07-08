@@ -19,7 +19,7 @@ Liberator resources are ring handlers and fit nicely into
 [Ring](https://github.com/ring-clojure/ring), the defacto Clojure
 web development environment. Typically you will use liberator together
 with a routing library like [compojure](https://github.com/weavejester/compojure)
-and a library to generate the resources' representations. The representations may
+or [bidi](https://github.com/juxt/bidi) and a library to generate the resources' representations. The representations may
 be in HTML, generated with a library like [hiccup](https://github.com/weavejester/hiccup),
 or they could be represented in something like JSON or XML by using the appropriate libraries.
 
