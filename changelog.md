@@ -4,19 +4,19 @@ title: Changelog
 ---
 # Changelog
 
-# New in 0.12.0
+## New in 0.12.0
 
 * \#115 Support for PATCH method, thanks to Davig Park
 * Add `:handle-exception` which is invoked when decision functions or
   handlers throw an exception.
 
-# New in 0.11.1
+## New in 0.11.1
 
 * \#138 Adds support to return a zero arguments function from a 
   decision. The return value of the function will be the new
   context value.
 
-# New in 0.11.0
+## New in 0.11.0
 
 * \#97 Adds support for a default resource definition map parameter
   that simlpifies the reuse of resource definitions. This also
@@ -24,7 +24,7 @@ title: Changelog
 * \#100 resources can specify :as-response to plug in custom
   implementations
 
-## Changes
+### Changes
 
 * Bumps version of hiccup to 1.0.3
 * Bumps plugin versions to prepare compatibility with 1.6
@@ -33,9 +33,9 @@ title: Changelog
   - ring-devel -> 1.2.1
   - ring-jetty-adapter -> 1.2.1
 
-# New in 0.10.0
+## New in 0.10.0
 
-## Bugs fixed
+### Bugs fixed
 
 * Reenable suppport for keyword as a handler function
 * \#71 Add locations header to 201 created
