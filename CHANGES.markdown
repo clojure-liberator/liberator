@@ -1,5 +1,10 @@
 # Changelog
 
+# New in 0.12.0
+
+* Add `:handle-exception` which is invoked when decision
+  functions or handlers throw an exception.
+
 # New in 0.11.1
 
 ## Bugs fixed

@@ -20,8 +20,7 @@
   (fn [actual] (nil? (:body actual))))
 
 (defchecker header-value [header expected]
-  (fn [actual]
-    (= (get-in actual [:headers header]) expected)))
+  (contains {:headers (contains {header expected})}))
 
 (defchecker content-type [expected]
   (header-value "Content-Type" expected))
@@ -44,5 +43,6 @@
 (def GONE (is-status 410))
 (def PRECONDITION-FAILED (is-status 412))
 
+(def INTERNAL-SERVER-ERROR (is-status 500))
 (def NOT-IMPLEMENTED (is-status 501))
 
