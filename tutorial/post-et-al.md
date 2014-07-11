@@ -18,7 +18,9 @@ default implementation for this decision uses the resource key
 matches the request method. When adding more methods to your resource,
 make sure that the method is declared as known in
 ````:known-methods````. By default, liberator knows the methods from
-RFC2616: GET, HEAD, PUT, POST, DELETE, OPTIONS, TRACE.
+RFC2616: GET, HEAD, PUT, POST, DELETE, OPTIONS, TRACE. Liberator 
+implemented support for PATCH as of version 0.12.
+See [RFC5789](http://tools.ietf.org/html/rfc5789) for PATCH details.
 
 ## POST
 
@@ -133,5 +135,62 @@ This is not possible for POST requests. On the other hand PUT to a
 nonexistent resource does not allow a response that sends you to a
 different location. The necessary flow can be seen as always on the
 [decision graph](decision-graph.html).
+
+# PATCH request
+
+The PATCH method is similar to PUT except that the entity contains a
+list of differences between the original version of the resource
+identified by the Request-URI and the desired content of the resource
+after the PATCH action has been applied. The list of differences is
+in a format defined by the media type of the entity (e.g.,
+"application/diff") and MUST include sufficient information to allow
+the server to recreate the changes necessary to convert the original
+version of the resource to the desired version.
+
+A rudimentary way to support patch follows:
+
+{% highlight clojure %}
+  (def content (ref ["Replace part or all of this string."]))
+  ;;...
+  (ANY "/patchbox" []
+       (resource
+        :allowed-methods [:patch :get]
+        :available-media-types ["text/html"]
+        :handle-ok (fn [ctx]
+                     (format  (str "<html><body>\n"
+                                   "The current content is:<br/>"
+                                   (last @content)
+                                   "Patch text/plain to this resource.<br/>"
+                                   "Send a string in the format foo|bar.<br/>"
+                                   "Any instance of the string to the left<br/>"
+                                   "of the '|' will be replaced with the<br/>"
+                                   "string to the right.<br/>"
+                                   "There have been %d patches issued.<br/>"
+                                   "</body></html>")
+                              (dec (count @content))))
+        :patch-content-types ["text/plain"]
+        :patch! (fn [ctx]
+                 (dosync 
+                  (let [body (slurp (get-in ctx [:request :body]))
+                        parts (clojure.string/split body #"|")
+                        replaced (clojure.string/replace
+                                     (last content)
+                                     (re-pattern (first parts))
+                                     (last parts))
+                        id   (count (alter content conj replaced))]
+                    {::id id})))))
+{% endhighlight %}
+
+Values specified by :patch-content-types will be returned as part of the
+Accept-Patch header in an OPTIONS request response for the resource.
+
+In practice, one is more likely to implement the patch method using a more
+formalized method of describing changes between documents. If one is managing
+data in an XML format, perhaps XSLT can be used to describe the set of changes.
+
+A more web friendly approach can be taken if the data is represented as JSON.
+A simple library to handle JSON diff and patch can be found at
+https://github.com/daviddpark/clj-json-patch, which was put together to meet a
+need of handling patch requests with liberator.
 
 Continue with [Putting it all together](all-together.html).
