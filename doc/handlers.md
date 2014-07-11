@@ -8,7 +8,7 @@ For every http status code there is a handler function defined in
 liberator. All have sensible defaults and will return a simple english
 error message or an empty response, whatever is appropriate.
 
-## Exception Handler <span class="label label-info">since 0.12.0</span
+## Exception Handler <span class="label label-info">since 0.12.0</span>
 
 If an exception is thrown by a decision or action function, it will be
 caught and the handler ````handle-exception```` is called.
