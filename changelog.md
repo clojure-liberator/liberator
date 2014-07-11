@@ -4,6 +4,12 @@ title: Changelog
 ---
 # Changelog
 
+# New in 0.12.0
+
+* \#115 Support for PATCH method, thanks to Davig Park
+* Add `:handle-exception` which is invoked when decision functions or
+  handlers throw an exception.
+
 # New in 0.11.1
 
 * \#138 Adds support to return a zero arguments function from a 

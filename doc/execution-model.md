@@ -87,3 +87,8 @@ action functions they must accept the context as a single argument.
 Handlers are expected to return a representation for the resource.
 
 Handlers must return a [Representation](representations.html).
+
+## Error handling
+
+Every exception thrown in a decision or action function will trigger
+the handler [`handle-exception`](handlers.html). 

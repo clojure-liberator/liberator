@@ -8,6 +8,13 @@ For every http status code there is a handler function defined in
 liberator. All have sensible defaults and will return a simple english
 error message or an empty response, whatever is appropriate.
 
+## Exception Handler <span class="label label-info">since 0.12.0</span
+
+If an exception is thrown by a decision or action function, it will be
+caught and the handler ````handle-exception```` is called.
+
+## List of all handler
+
 Handler key                     | status code | redirect?
 --------------------------------|-------------|----------
 handle-ok                       | 200         | |
@@ -32,10 +39,12 @@ handle-precondition-failed      | 412         | |
 handle-request-entity-too-large | 413         | |
 handle-uri-too-long             | 414         | |
 handle-unsupported-media-type   | 415         | |
-handle-unprocessable-entity <span class="label label-info">since 0.9.0</span>     | 422         | |
+handle-unprocessable-entity <span class="label label-info">since 0.9.0</span>  | 422 | |
+handle-exception <span class="label label-info">since 0.12.0</span> | 500 | |
 handle-not-implemented          | 501         | |
 handle-unknown-method           | 501         | |
 handle-service-not-available    | 503         | |
+
 
 ## Redirecting
 
