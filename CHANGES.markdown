@@ -2,6 +2,7 @@
 
 # New in 0.12.0
 
+* Support for PATCH method, thanks to Davig Park
 * Add `:handle-exception` which is invoked when decision
   functions or handlers throw an exception.
 
