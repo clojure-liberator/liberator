@@ -80,8 +80,14 @@
    (and (vector? curr) (vector? newval)) (vec (concat curr newval))
    :otherwise newval))
 
+(defn update-context [context context-update]
+  (cond
+   (map? context-update) (combine context context-update)
+   (fn? context-update) (context-update)
+   :otherwise context))
+
 (defn decide [name test then else {:keys [resource request] :as context}]
-  (if (or (fn? test) (contains? resource name)) 
+  (if (or (fn? test) (contains? resource name))
     (let [ftest (or (resource name) test)
 	  ftest (make-function ftest)
 	  fthen (make-function then)
@@ -89,8 +95,7 @@
 	  decision (ftest context)
 	  result (if (vector? decision) (first decision) decision)
 	  context-update (if (vector? decision) (second decision) decision)
-	  context (if (map? context-update)
-                    (combine context context-update) context)]
+	  context (update-context context context-update)]
       (log! :decision name decision)
       ((if result fthen felse) context))
     {:status 500 :body (str "No handler found for key \""  name "\"."

@@ -1,5 +1,12 @@
 # Changelog
 
+# New in 0.11.1
+
+## Bugs fixed
+
+* #138 context update deeply merges values. Support workaround
+  by enabling to evaluate a returned 0-ary function
+
 # New in 0.11.0
 
 * #97 Adds support for a default resource definition map parameter
