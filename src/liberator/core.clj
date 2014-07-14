@@ -619,10 +619,13 @@
   (if (vector? (first kvs))
     (let [args (first kvs)
           kvs (rest kvs)]
+      ;; Rather than call resource, create anonymous fn in callers namespace for better debugability.
       `(defn ~name [~@args]
-         (resource ~@kvs)))
-    `(def ~name 
-       (resource ~@kvs))))
+         (fn [~'request]
+           (run-resource ~'request (get-options (list ~@kvs))))))
+    `(def ~name
+         (fn [~'request]
+           (run-resource ~'request (get-options (list ~@kvs)))))))
 
 (defn by-method
   "returns a handler function that uses the request method to
