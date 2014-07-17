@@ -14,7 +14,8 @@
         :url "https://github.com/clojure-liberator/liberator"}
 
   :plugins [[lein-midje "3.1.3" :exclusions [leiningen-core]]
-            [lein-ring "0.8.10" :exclusions [org.clojure/clojure]]]
+            [lein-ring "0.8.10" :exclusions [org.clojure/clojure]]
+            [perforate "0.3.3"]]
 
   :profiles {:dev {:dependencies [[ring/ring-jetty-adapter "1.2.1" :exclusions [joda-time]]
                                   [ring-mock "0.1.2"]
@@ -30,6 +31,11 @@
 
   :source-paths ["src"]
   :test-paths ["test"]
+
+  :perforate
+  {:environments [{:name :core
+                   :profiles [:dev :1.5]
+                   :namespaces [things-bench]}]}
 
   :ring {:handler examples.server/handler
          :adapter {:port 8000}}

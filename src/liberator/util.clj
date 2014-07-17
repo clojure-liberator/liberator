@@ -24,7 +24,7 @@
   nil
   (as-date [this] nil))
 
-(defn http-date-format []
+(defn ^SimpleDateFormat http-date-format []
   (let [df (new SimpleDateFormat
                 "EEE, dd MMM yyyy HH:mm:ss z"
                 Locale/US)]
@@ -32,7 +32,7 @@
         df)))
 
 (defn relative-date [future]
-  (Date. (+ (System/currentTimeMillis) future)))
+  (Date. (long (+ (System/currentTimeMillis) future))))
 
 (defn http-date [date]
   (format "%s" (.format (http-date-format) date)))
