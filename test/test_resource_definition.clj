@@ -1,7 +1,6 @@
 (ns test-resource-definition
   (:use liberator.core
-        midje.sweet
-        [clojure.tools.trace :only [trace]]))
+        midje.sweet))
 
 ;; test cases for different resource definitions
 

@@ -22,7 +22,19 @@
     (-> (request :get "/")
         ((resource :exists? [true  {:a 1}]
                    :handle-ok #(ring-response %))))
-    => (contains {:a 1 :status 200})))
+    => (contains {:a 1 :status 200}))
+  (fact "vector concated to context value"
+    (-> (request :get "/")
+        ((resource :service-available? {:a [1]}
+                   :exists? {:a [2]}
+                   :handle-ok #(ring-response %))))
+    => (contains {:a [1 2] :status 200}))
+  (fact "function returned as context is evaluated"
+        (-> (request :get "/")
+            ((resource :service-available? {:a [1]}
+                       :exists? (fn [ctx] #(assoc ctx :a [2]))
+                       :handle-ok #(ring-response %))))
+        => (contains {:a [2] :status 200})))
 
 (facts "falsey return values"
   (fact (-> (request :get "/")

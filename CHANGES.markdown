@@ -1,5 +1,18 @@
 # Changelog
 
+# New in 0.12.0
+
+* Support for PATCH method, thanks to Davig Park
+* Add `:handle-exception` which is invoked when decision
+  functions or handlers throw an exception.
+
+# New in 0.11.1
+
+## Bugs fixed
+
+* #138 context update deeply merges values. Support workaround
+  by enabling to evaluate a returned 0-ary function
+
 # New in 0.11.0
 
 * #97 Adds support for a default resource definition map parameter

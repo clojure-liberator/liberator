@@ -3,6 +3,14 @@
             [liberator.core :refer [defresource resource]]
             [ring.mock.request :refer [request header]]))
 
+(defmulti with-multimethod* identity)
+
+(defmethod with-multimethod* :default [_]
+  "with-multimethod")
+
+(defresource with-multimethod
+  :handle-ok with-multimethod*)
+
 (defresource without-param
   :handle-ok (fn [_] (format "The text is %s" "test")))
 
@@ -49,7 +57,10 @@
              => {:headers {"Vary" "Accept", "Content-Type" "application/json;charset=UTF-8"}, :body "The text is a poem", :status 200})
        (fact "it should work with only a standard config"
              (with-options-only {:request-method :get})
-             => {:headers {"Vary" "Accept", "Content-Type" "application/json;charset=UTF-8"}, :body "OK", :status 200}))
+             => {:headers {"Vary" "Accept", "Content-Type" "application/json;charset=UTF-8"}, :body "OK", :status 200})
+       (fact "should allow multi methods as handlers"
+             (with-multimethod {:request-method :get})
+             => {:headers {"Content-Type" "text/plain;charset=UTF-8"}, :body "with-multimethod", :status 200}))
 
 
 (def fn-with-options
@@ -74,4 +85,3 @@
     => {:headers {"Vary" "Accept", "Content-Type" "application/json;charset=UTF-8"}, :body "The text is this", :status 200})
     (fn-with-options-only {:request-method :get})
     => {:headers {"Vary" "Accept", "Content-Type" "application/json;charset=UTF-8"}, :body "OK", :status 200})
-

@@ -11,7 +11,7 @@
   (:use
    [liberator.util :only [parse-http-date http-date as-date make-function]]
    [liberator.representation :only [Representation as-response ring-response]]
-   [clojure.tools.trace :only [trace]])
+   [clojure.string :only [join upper-case]])
   (:import (javax.xml.ws ProtocolException)))
 
 (defmulti coll-validator
@@ -61,11 +61,13 @@
 
 (defn gen-etag [context]
   (if-let [f (get-in context [:resource :etag])]
-    (format "\"%s\"" (f context))))
+    (if-let [etag-val (f context)]
+      (format "\"%s\"" etag-val))))
 
 (defn gen-last-modified [context]
   (if-let [f (get-in context [:resource :last-modified])]
-    (as-date (f context))))
+    (if-let [lm-val (f context)]
+      (as-date lm-val))))
 
 ;; A more sophisticated update of the request than a simple merge
 ;; provides.  This allows decisions to return maps which modify the
@@ -78,19 +80,29 @@
    (and (vector? curr) (vector? newval)) (vec (concat curr newval))
    :otherwise newval))
 
+(defn update-context [context context-update]
+  (cond
+   (map? context-update) (combine context context-update)
+   (fn? context-update) (context-update)
+   :otherwise context))
+
+(declare handle-exception)
+
 (defn decide [name test then else {:keys [resource request] :as context}]
-  (if (or (fn? test) (contains? resource name)) 
-    (let [ftest (or (resource name) test)
-	  ftest (make-function ftest)
-	  fthen (make-function then)
-	  felse (make-function else)
-	  decision (ftest context)
-	  result (if (vector? decision) (first decision) decision)
-	  context-update (if (vector? decision) (second decision) decision)
-	  context (if (map? context-update)
-                    (combine context context-update) context)]
-      (log! :decision name decision)
-      ((if result fthen felse) context))
+  (if (or (fn? test) (contains? resource name))
+    (try
+      (let [ftest (or (resource name) test)
+            ftest (make-function ftest)
+            fthen (make-function then)
+            felse (make-function else)
+            decision (ftest context)
+            result (if (vector? decision) (first decision) decision)
+            context-update (if (vector? decision) (second decision) decision)
+            context (update-context context context-update)]
+        (log! :decision name decision)
+        ((if result fthen felse) context))
+      (catch Exception e
+        (handle-exception (assoc context :exception e))))
     {:status 500 :body (str "No handler found for key \""  name "\"."
                             " Keys defined for resource are " (keys resource))}))
 
@@ -124,7 +136,13 @@
        (apply str)))
 
 (defn build-allow-header [resource]
-  (clojure.string/join ", " (map (comp clojure.string/upper-case name) ((:allowed-methods resource)))))
+  (join ", " (map (comp upper-case name) ((:allowed-methods resource)))))
+
+(defn build-options-headers [resource]
+  (merge {"Allow" (build-allow-header resource)}
+         (if (some #{:patch} ((:allowed-methods resource)))
+           {"Accept-Patch" (join "," ((:patch-content-types resource)))}
+           {})))
 
 (defn run-handler [name status message
                    {:keys [resource request representation] :as context}]
@@ -181,8 +199,11 @@
                   :headers {"Content-Type" "text/plain"} 
                   :body (if (fn? message) (message context) message)}))))]
     (cond
-      (or (= :options (:request-method request)) (= 405 (:status response)))
-        (merge-with merge {:headers {"Allow" (build-allow-header resource)}} response)
+     (or (= :options (:request-method request)) (= 405 (:status response)))
+     (merge-with merge
+                 {:headers (build-options-headers resource)}
+                 response)
+      
       (= :head (:request-method request))
         (dissoc response :body)
       :else response)))
@@ -265,6 +286,8 @@
 
 (defhandler handle-conflict 409 "Conflict.")
 
+(defaction patch! respond-with-entity?)
+
 (defaction put! new?)
 
 (defdecision conflict? handle-conflict put!)
@@ -303,10 +326,12 @@
 
 (defaction delete! delete-enacted?)
 
+(defdecision method-patch? (partial =method :patch) patch! post-to-existing?)
+
 (defdecision method-delete?
   (partial =method :delete)
   delete!
-  post-to-existing?)
+  method-patch?)
 
 (defdecision modified-since?
   (fn [context]
@@ -488,6 +513,8 @@
 (defhandler handle-service-not-available 503 "Service not available.")
 (defdecision service-available? known-method? handle-service-not-available)
 
+(defhandler handle-exception 500 "Internal server error.")
+
 (defn test-request-method [valid-methods-key]
   (fn [{{m :request-method} :request
        {vm valid-methods-key} :resource
@@ -499,7 +526,7 @@
    ;; Decisions
    :service-available?        true
 
-   :known-methods             [:get :head :options :put :post :delete :trace]
+   :known-methods             [:get :head :options :put :post :delete :trace :patch]
    :known-method?             (test-request-method :known-methods)
 
    :uri-too-long?             false
@@ -542,6 +569,11 @@
    :post!                     true
    :put!                      true
    :delete!                   true
+   :patch!                    true
+
+   ;; To support RFC5789 Patch, this is used for OPTIONS Accept-Patch
+   ;; header
+   :patch-content-types []
 
    ;; The default function used extract a ring response from a handler's response
    :as-response               as-response
@@ -587,10 +619,13 @@
   (if (vector? (first kvs))
     (let [args (first kvs)
           kvs (rest kvs)]
+      ;; Rather than call resource, create anonymous fn in callers namespace for better debugability.
       `(defn ~name [~@args]
-         (resource ~@kvs)))
-    `(def ~name 
-       (resource ~@kvs))))
+         (fn [~'request]
+           (run-resource ~'request (get-options (list ~@kvs))))))
+    `(def ~name
+         (fn [~'request]
+           (run-resource ~'request (get-options (list ~@kvs)))))))
 
 (defn by-method
   "returns a handler function that uses the request method to
