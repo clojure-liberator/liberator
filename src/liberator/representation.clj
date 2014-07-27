@@ -7,15 +7,27 @@
 ;; this software.
 
 (ns liberator.representation
+  (:import (java.io ByteArrayOutputStream))
   (:require
    [clojure.data.json :as json]
-   [clojure.data.csv :as csv])
+   [clojure.data.csv :as csv]
+   [cognitect.transit :as transit])
   (:use
    [hiccup.core :only [html]]
    [hiccup.page :only [html5 xhtml]]))
 
 ;; This namespace provides default 'out-of-the-box' web representations
 ;; for many IANA mime-types.
+
+(defn- write
+  "Utility for writing transit."
+  [x t]
+  (let [baos (ByteArrayOutputStream.)
+        w    (transit/writer baos t)
+        _    (transit/write w x)
+        ret  (.toString baos)]
+    (.reset baos)
+    ret))
 
 (defmacro ->when [form pred & term]
   `(if ~pred (-> ~form ~@term) ~form))
@@ -35,9 +47,9 @@
     (str k)))
 
 (defn html-table [data fields lang dictionary]
-  [:div [:table 
+  [:div [:table
          [:thead
-          [:tr 
+          [:tr
            (for [field fields] [:th (or (dictionary field lang)
                                         (default-dictionary field lang))])]]
          [:tbody (for [row data]
@@ -87,13 +99,19 @@
 (defmethod render-map-generic "application/edn" [data context]
   (render-as-edn data))
 
+(defmethod render-map-generic "application/transit+json" [data _]
+  (write data :json))
+
+(defmethod render-map-generic "application/transit+msgpack" [data _]
+  (write data :msgpack))
+
 (defn- render-map-html-table
   [data
    {{:keys [media-type language] :as representation} :representation
     :keys [dictionary fields] :or {dictionary default-dictionary}
     :as context} mode]
   (let [content
-        [:div [:table 
+        [:div [:table
 
                [:tbody (for [[key value] data]
                          [:tr
@@ -139,6 +157,12 @@
 (defmethod render-seq-generic "application/edn" [data _]
   (render-as-edn data))
 
+(defmethod render-seq-generic "application/transit+json" [data _]
+  (write data :json))
+
+(defmethod render-seq-generic "application/transit+msgpack" [data _]
+  (write data :msgpack))
+
 (defn render-seq-csv
   [data
    {{:keys [language] :as representation} :representation
@@ -183,7 +207,7 @@
   (if (and charset (not (.equalsIgnoreCase charset "UTF-8")))
     (java.io.ByteArrayInputStream.
      (.getBytes string (java.nio.charset.Charset/forName charset)))
-      
+
     ;; "If no Accept-Charset header is present, the default is that
     ;; any character set is acceptable." (p101). In the case of Strings, it is unnecessary to convert to a byte stream now, and doing so might even make things harder for test-suites, so we just return the string.
     string))
@@ -220,11 +244,11 @@
       {:body
        (in-charset this charset)
        :headers {"Content-Type" (format "%s;charset=%s" (get representation :media-type "text/plain") charset)}}))
-  
+
   ;; If an input-stream is returned, we have no way of telling whether it's been encoded properly (charset and encoding), so we have to assume it is, given that we told the developer what representation was negotiated.
   java.io.File
   (as-response [this _] {:body this})
-  
+
   ;; We assume the input stream is already in the requested
   ;; charset. Decoding and encoding an existing charset unnecessarily
   ;; would be expensive.
