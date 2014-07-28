@@ -102,9 +102,6 @@
 (defmethod render-map-generic "application/transit+json" [data _]
   (write data :json))
 
-(defmethod render-map-generic "application/transit+msgpack" [data _]
-  (write data :msgpack))
-
 (defn- render-map-html-table
   [data
    {{:keys [media-type language] :as representation} :representation
@@ -159,9 +156,6 @@
 
 (defmethod render-seq-generic "application/transit+json" [data _]
   (write data :json))
-
-(defmethod render-seq-generic "application/transit+msgpack" [data _]
-  (write data :msgpack))
 
 (defn render-seq-csv
   [data
