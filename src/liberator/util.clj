@@ -24,14 +24,14 @@
   nil
   (as-date [this] nil))
 
-(defn http-date-format []
+(defn ^SimpleDateFormat http-date-format []
   (let [df (new SimpleDateFormat
                 "EEE, dd MMM yyyy HH:mm:ss z"
                 Locale/US)]
     (do (.setTimeZone df (TimeZone/getTimeZone "GMT"))
         df)))
 
-(defn relative-date [future]
+(defn relative-date [^long future]
   (Date. (+ (System/currentTimeMillis) future)))
 
 (defn http-date [date]
