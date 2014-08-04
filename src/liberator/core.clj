@@ -64,7 +64,7 @@
     (if-let [etag-val (f context)]
       (format "\"%s\"" etag-val))))
 
-(defn gen-last-modified [context]
+(defn ^java.util.Date gen-last-modified [context]
   (if-let [f (get-in context [:resource :last-modified])]
     (if-let [lm-val (f context)]
       (as-date lm-val))))
@@ -227,7 +227,7 @@
 
 (defmethod to-location clojure.lang.APersistentMap [this] this)
 
-(defmethod to-location java.net.URL [url] (to-location (.toString url)))
+(defmethod to-location java.net.URL [^java.net.URL url] (to-location (.toString url)))
 
 (defmethod to-location nil [this] this)
 
