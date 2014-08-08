@@ -1,7 +1,8 @@
 (ns test-representation
-  (:use
-   midje.sweet
-   [liberator.representation]))
+  (:require [midje.sweet :refer :all]
+            [liberator.representation :refer :all])
+  (:import liberator.representation.RingResponse
+           liberator.representation.HttpRepresentation))
 
 ;; test for issue #19
 ;; https://github.com/clojure-liberator/liberator/pull/19
@@ -48,3 +49,33 @@
                   "application/edn" (pr-str entity))))
 
 
+(facts "HttpRepresentation"
+  (fact "returns a ring-response"
+    (instance? RingResponse (as-response (http-representation {} "") {})))
+  (facts "delegates to default response generation"
+    (fact "for strings"
+      (as-response (http-representation {} "foo") {})
+      => (as-response "foo" {}))
+    (fact "for maps"
+      (let [ctx {:representation {:media-type "application/json"}}]
+        (as-response (http-representation {} {:a 1}) ctx)
+        => (as-response {:a 1} ctx))))
+  (facts "lets override response attributes"
+    (fact "all attributes"
+      (as-response (http-representation
+                    {:body "body"
+                     :headers ["Content-Type" "application/foo"]
+                     :status 999}"foo") {:status 200})
+      => {:body "body"
+          :headers ["Content-Type" "application/foo"]
+          :status 999})
+    (facts "some attributes"
+      (facts "status"
+        (as-response (http-representation {:status 999} "foo") {:status 200})
+        => (contains {:status 999}))
+      (facts "header merged"
+        (as-response (http-representation
+                      {:headers {"X-Foo" "bar"}} "foo")
+                     {:status 200})
+        => (contains {:headers {"X-Foo" "bar"
+                                "Content-Type" "text/plain;charset=UTF-8"}})))))

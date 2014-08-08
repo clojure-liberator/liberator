@@ -7,11 +7,12 @@
 ;; this software.
 
 (ns liberator.core
-  (:require [liberator.conneg :as conneg])
-  (:use
-   [liberator.util :only [parse-http-date http-date as-date make-function]]
-   [liberator.representation :only [Representation as-response ring-response]]
-   [clojure.string :only [join upper-case]])
+  (:require [liberator.conneg :as conneg]
+            [liberator.representation :refer
+             [Representation as-response ring-response]]
+            [liberator.util :refer
+             [as-date http-date parse-http-date combine make-function]]
+            [clojure.string :refer [join upper-case]])
   (:import (javax.xml.ws ProtocolException)))
 
 (defmulti coll-validator
@@ -68,17 +69,6 @@
   (if-let [f (get-in context [:resource :last-modified])]
     (if-let [lm-val (f context)]
       (as-date lm-val))))
-
-;; A more sophisticated update of the request than a simple merge
-;; provides.  This allows decisions to return maps which modify the
-;; original request in the way most probably intended rather than the
-;; over-destructive default merge.
-(defn combine [curr newval]
-  (cond
-   (and (map? curr) (map? newval)) (merge-with combine curr newval)
-   (and (list? curr) (list? newval)) (concat curr newval)
-   (and (vector? curr) (vector? newval)) (vec (concat curr newval))
-   :otherwise newval))
 
 (defn update-context [context context-update]
   (cond
