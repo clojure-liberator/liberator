@@ -19,7 +19,7 @@ on when or whether a certain feature will be available.
   the representation generation to dispatch on the media type first
   and on the data type second. Currently the first dispatch considers
   the data type.
-* Support moder API media types out of the box, like HAL, and JSON-API
+* Support modern API media types out of the box, like HAL, and JSON-API
 * Make adding custom headers easier
 
 ## Request entity processing
