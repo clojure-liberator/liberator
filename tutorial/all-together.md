@@ -37,7 +37,7 @@ can be found.
 In case of a GET we return a simple list of URLs pointing to resources
 for all entries.
 
-First come some helper functions which might some day find it's way
+First come some helper functions which might some day find their way
 into liberator.
 
 {% highlight clojure %}
