@@ -112,7 +112,7 @@ Server: Jetty(7.6.1.v20120215)
 Precondition failed.
 {% endhighlight %}
 
-Liberator also supports the lesser known sematic of using ````*```` for
+Liberator also supports the lesser known semantic of using ````*```` for
 ````If-Match```` and ````If-None-Match````. These are useful for
 conditional updates of resources.
 
