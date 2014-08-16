@@ -1,10 +1,18 @@
 (ns test-representation
+  (:require [cognitect.transit :as transit])
+  (:import [java.io ByteArrayInputStream ByteArrayOutputStream])
   (:use
    midje.sweet
    [liberator.representation]))
 
 ;; test for issue #19
 ;; https://github.com/clojure-liberator/liberator/pull/19
+
+(defn- write-transit [format x]
+  (let [out (ByteArrayOutputStream. 4096)
+        writer (transit/writer out format)]
+    (transit/write writer x)
+    (.toString out)))
 
 (defn- pr-str-dup [x]
   (binding [*print-dup* true]
@@ -25,7 +33,9 @@
                                      "</tbody></table></div>")
                   "application/json" (clojure.data.json/write-str entity)
                   "application/clojure" (pr-str-dup entity)
-                  "application/edn" (pr-str entity))))
+                  "application/edn" (pr-str entity)
+                  "application/transit+json" (write-transit :json entity)
+                  "application/transit+msgpack" (write-transit :msgpack entity))))
 
 (facts "Can produce representations from a seq of maps"
        (let [entity [(sorted-map :foo 1 :bar 2) (sorted-map :foo 2 :bar 3)]]
@@ -45,6 +55,6 @@
                                      "</table></div>")
                   "application/json" (clojure.data.json/write-str entity)
                   "application/clojure" (pr-str-dup entity)
-                  "application/edn" (pr-str entity))))
-
-
+                  "application/edn" (pr-str entity)
+                  "application/transit+json" (write-transit :json entity)
+                  "application/transit+msgpack" (write-transit :msgpack entity))))

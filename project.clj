@@ -3,6 +3,7 @@
   :dependencies [[org.clojure/clojure "1.4.0"]
                  [org.clojure/data.json "0.2.1"]
                  [org.clojure/data.csv "0.1.2"]
+                 [com.cognitect/transit-clj "0.8.247"]
                  [hiccup "1.0.3"]] ;; Used by code rendering default representations.
 
   :license {:name "Eclipse Public License - v 1.0"
