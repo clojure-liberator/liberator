@@ -9,10 +9,12 @@
 (ns liberator.representation
   (:require
    [clojure.data.json :as json]
-   [clojure.data.csv :as csv])
+   [clojure.data.csv :as csv]
+   [cognitect.transit :as transit])
   (:use
    [hiccup.core :only [html]]
-   [hiccup.page :only [html5 xhtml]]))
+   [hiccup.page :only [html5 xhtml]])
+  (:import [java.io ByteArrayInputStream ByteArrayOutputStream]))
 
 ;; This namespace provides default 'out-of-the-box' web representations
 ;; for many IANA mime-types.
@@ -87,6 +89,15 @@
 (defmethod render-map-generic "application/edn" [data context]
   (render-as-edn data))
 
+(defn render-as-transit [format data]
+  (let [out (ByteArrayOutputStream. 4096)
+        writer (transit/writer out :json)]
+    (transit/write writer data)
+    (.toString out)))
+
+(defmethod render-map-generic "application/transit+json" [data context]
+  (render-as-transit :json  data))
+
 (defn- render-map-html-table
   [data
    {{:keys [media-type language] :as representation} :representation
@@ -138,6 +149,9 @@
 
 (defmethod render-seq-generic "application/edn" [data _]
   (render-as-edn data))
+
+(defmethod render-seq-generic "application/transit+json" [data _]
+  (render-as-transit :json data))
 
 (defn render-seq-csv
   [data
