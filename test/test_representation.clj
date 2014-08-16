@@ -34,7 +34,8 @@
                   "application/json" (clojure.data.json/write-str entity)
                   "application/clojure" (pr-str-dup entity)
                   "application/edn" (pr-str entity)
-                  "application/transit+json" (write-transit :json entity))))
+                  "application/transit+json" (write-transit :json entity)
+                  "application/transit+msgpack" (write-transit :msgpack entity))))
 
 (facts "Can produce representations from a seq of maps"
        (let [entity [(sorted-map :foo 1 :bar 2) (sorted-map :foo 2 :bar 3)]]
@@ -55,4 +56,5 @@
                   "application/json" (clojure.data.json/write-str entity)
                   "application/clojure" (pr-str-dup entity)
                   "application/edn" (pr-str entity)
-                  "application/transit+json" (write-transit :json entity))))
+                  "application/transit+json" (write-transit :json entity)
+                  "application/transit+msgpack" (write-transit :msgpack entity))))
