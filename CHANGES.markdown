@@ -1,5 +1,12 @@
 # Changelog
 
+# New in 0.12.1
+
+## Bugs fixed
+
+* Fix a regression and make default `:handle-exception` rethrow the
+  exception. This matches the behaviour before 0.12.0
+
 # New in 0.12.0
 
 * Support for PATCH method, thanks to Davig Park

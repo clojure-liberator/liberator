@@ -5,11 +5,9 @@
         checkers
         [ring.mock.request :only [request header]]))
 
-(facts "default exception handler return 500"
-  (let [resp ((resource :exists? (fn [_] (throw (RuntimeException.))))
-              (request :get "/"))]
-    (fact resp => INTERNAL-SERVER-ERROR)
-    (fact resp => (body #"Internal server error"))))
+(facts "default exception handler rethrows exception"
+  (fact ((resource :exists? (fn [_] (throw (RuntimeException. "test"))))
+         (request :get "/")) => (throws RuntimeException "test")))
 
 (facts "custom exception handler is invoked"
   (let [resp ((resource :exists? (fn [_] (throw (RuntimeException. "foo")))
