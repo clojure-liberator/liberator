@@ -1,4 +1,4 @@
-(defproject liberator "0.12.0"
+(defproject liberator "0.12.0-1"
   :description "Liberator - A REST library for Clojure."
   :dependencies [[org.clojure/clojure "1.4.0"]
                  [org.clojure/data.json "0.2.1"]
