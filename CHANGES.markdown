@@ -6,6 +6,8 @@
 
 * Fix a regression and make default `:handle-exception` rethrow the
   exception. This matches the behaviour before 0.12.0
+* Update the decision graph to include new paths after PATCH
+  support was added.
 
 # New in 0.12.0
 
