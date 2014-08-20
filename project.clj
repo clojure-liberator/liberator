@@ -1,4 +1,4 @@
-(defproject liberator "0.12.1"
+(defproject liberator "0.12.2-SNAPSHOT"
   :description "Liberator - A REST library for Clojure."
   :url "http://clojure-liberator.github.io/liberator"
   :dependencies [[org.clojure/clojure "1.4.0"]
@@ -6,6 +6,7 @@
                  [org.clojure/data.csv "0.1.2"]
                  [hiccup "1.0.3"]] ;; Used by code rendering default representations.
   :deploy-repositories  [["releases" :clojars]]
+  :lein-release {:deploy-via :clojars}
 
   :license {:name "Eclipse Public License - v 1.0"
             :url "http://www.eclipse.org/legal/epl-v10.html"
