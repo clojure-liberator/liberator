@@ -5,9 +5,9 @@ title: Actions
 
 # Actions
 
-For non-idempotent methods, i.e. ````PUT````, ````DELETE```` and
-````POST```` processing the request typically changes the state on the
-server side. After the state was changed either an updated
+The processing of ````PUT````, ````DELETE```` and
+````POST```` methods typically results in a changed state on the 
+server-side. After the state was changed either an updated 
 representation of the changed entity is returned to the client, or one
 of the status codes that redirect the client to a different locations
 is returned.
