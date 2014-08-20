@@ -22,39 +22,37 @@ fast setup, we'll use lein:
 lein new liberator-tutorial
 {% endhighlight %}
 
-Add dependencies to project.clj
+Add dependencies to project.clj:
 
 {% highlight clojure %}
-(defproject tutorial "0.1.0-SNAPSHOT"
+(defproject liberator-tutorial "0.1.0-SNAPSHOT"
+  :plugins [[lein-ring "0.8.11"]]
+  :ring {:handler liberator-tutorial.core/handler}
   :dependencies [[org.clojure/clojure "1.4.0"]
                  [liberator "0.10.0"]
                  [compojure "1.1.3"]
-		 [ring/ring-core "1.2.1"]
-                 [ring/ring-jetty-adapter "1.1.0"]])  
+                 [ring/ring-core "1.2.1"]])
 {% endhighlight %}
 
-Edit liberator_tutorial/core.clj where we define our first resource:
+Edit `src/liberator_tutorial/core.clj` where we define our first resource:
 
 {% highlight clojure %}
 (ns liberator-tutorial.core
   (:require [liberator.core :refer [resource defresource]]
             [ring.middleware.params :refer [wrap-params]]
-            [ring.adapter.jetty :refer [run-jetty]]      
             [compojure.core :refer [defroutes ANY]]))
 
 (defroutes app
   (ANY "/" [] (resource)))
-  
+
 (def handler 
   (-> app 
-      (wrap-params)))  
-  
-(run-jetty #'handler {:port 3000})
+      wrap-params))
 {% endhighlight %}
 
-Load the namespace and jetty will be started on port 3000. However,
+Run with `lein ring server` and jetty will be started on port 3000. However,
 the result of pointing your browser is somewhat disappointing: 
-"OK". To get a more exciting result we simply must
+"No acceptable resource available". To get a more exciting result we simply must
 declare which kind of media type we are able to offer, e.g. 
 "text/html" and set a handler for the status ````200 OK````.
  So change the definition as follows:
@@ -76,7 +74,6 @@ either values or functions that take the context as the only argument.
                            :handle-ok (fn [ctx]
                                         (format "<html>It's %d milliseconds since the beginning of the epoch."
                                                 (System/currentTimeMillis))))))
-
 {% endhighlight %}
 
 ## There comes the confusion
