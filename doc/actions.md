@@ -6,7 +6,8 @@ title: Actions
 # Actions
 
 The processing of ````PUT````, ````DELETE```` and
-````POST```` methods typically result in a changed state on the server-side. After the state was changed either an updated
+````POST```` methods typically results in a changed state on the 
+server-side. After the state was changed either an updated 
 representation of the changed entity is returned to the client, or one
 of the status codes that redirect the client to a different locations
 is returned.
