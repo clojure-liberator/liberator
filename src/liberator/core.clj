@@ -515,13 +515,16 @@
 
 (defhandler handle-exception 500 "Internal server error.")
 
+(defn handle-exception-rethrow [{e :exception}]
+  (throw e))
+
 (defn test-request-method [valid-methods-key]
   (fn [{{m :request-method} :request
        {vm valid-methods-key} :resource
        :as ctx}]
     (some #{m} (vm ctx))))
 
-(def default-functions 
+(def default-functions
   {
    ;; Decisions
    :service-available?        true
@@ -562,7 +565,7 @@
    :handle-see-other          handle-moved
    :handle-moved-temporarily  handle-moved
    :handle-moved-permanently  handle-moved
-   
+   :handle-exception          handle-exception-rethrow
 
    ;; Imperatives. Doesn't matter about decision outcome, both
    ;; outcomes follow the same route.
