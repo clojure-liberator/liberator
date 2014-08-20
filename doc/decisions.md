@@ -136,6 +136,7 @@ if-unmodified-since-valid-date?     | checks if header "If-Unmodified-Since" is 
 is-options?                         | checks if the request method is options
 method-delete?                      | checks if the request method is delete
 method-put?                         | checks if the request method is put
+method-patch?                       | checks if the request method is patch
 post-to-gone?                       | checks if the request method is post for resources that do not exist anymore
 post-to-existing?                   | checks if the request method is post for resources that do exist
 post-to-missing?                    | checks if the request method is post for resources that do not exist

@@ -5,8 +5,8 @@ title: Actions
 
 # Actions
 
-The processing of ````PUT````, ````DELETE```` and
-````POST```` methods typically results in a changed state on the 
+The processing of ````PUT````, ````DELETE````, ````POST```` and
+````PATCH```` methods typically results in a changed state on the 
 server-side. After the state was changed either an updated 
 representation of the changed entity is returned to the client, or one
 of the status codes that redirect the client to a different locations
@@ -21,6 +21,7 @@ actions  | description
 :post!   | called for POST requests
 :put!    | called for PUT requests
 :delete! | called for DELETE requests
+:patch!  | called for PATCH requests
 
 ## When are actions called?
 
