@@ -46,8 +46,8 @@ specified for a key:
 
 {% highlight clojure %}
 (def resource-defaults
-  :handle-not-found (fn [_] "Ops.")
-  :authorized? (fn [_] ...))
+  {:handle-not-found (fn [_] "Ops.")
+   :authorized? (fn [_] ...)})
 
 (defresource foo resource-defaults :handle-ok "This is ok")
 
