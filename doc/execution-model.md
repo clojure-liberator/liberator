@@ -43,7 +43,7 @@ a keyword is a function that can "lookup itself" from a map.
 
 <span class="label label-info">since 0.11.1</span>
 In case you want to avoid the deep merge of the context data you can
-also return a function with takes no arguments ("thunk"). The return
+also return a function which takes no arguments ("thunk"). The return
 value of the function is used as the new context value:
 
 {% highlight clojure %}
