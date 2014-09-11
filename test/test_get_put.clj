@@ -43,7 +43,7 @@
  (let [resp (thing-resource (-> (request :put "/r1")
                    (assoc :body "r1")
                    (header "content-type" "text/plain")))]
-   (fact "put => 202" resp => CREATED))
+   (fact "put => 201" resp => CREATED))
  (let [resp (thing-resource (-> (request :get "/r1")))]
    (fact "get => 200" resp => OK)
    (fact "get body is what was put before"
