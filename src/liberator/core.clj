@@ -594,25 +594,26 @@
    :available-encodings       ["identity"]})
 
 ;; resources are a map of implementation methods
-(defn run-resource [request kvs]
+(defn run-resource [request options]
   (try
     (service-available? {:request request
-                         :resource
-                         (map-values make-function (merge default-functions kvs))
+                         :resource (map-values make-function
+                                               (merge default-functions options))
                          :representation {}})
-    
+
     (catch ProtocolException e         ; this indicates a client error
       {:status 400
        :headers {"Content-Type" "text/plain"}
        :body (.getMessage e)
        ::throwable e}))) ; ::throwable gets picked up by an error renderer
 
-
-(defn get-options
-  [kvs]
-  (if (map? (first kvs))
-    (merge (first kvs) (apply hash-map (rest kvs)))
-    (apply hash-map kvs)))
+(defn get-options [kvs]
+  (let [options (if (map? (first kvs))
+                  (merge (first kvs) (apply hash-map (rest kvs)))
+                  (apply hash-map kvs))
+        valid-resource-key-set (set (keys default-functions))]
+    (assert (every? valid-resource-key-set (keys options)))
+    options))
 
 (defn resource [& kvs]
   (fn [request]
@@ -625,10 +626,10 @@
       ;; Rather than call resource, create anonymous fn in callers namespace for better debugability.
       `(defn ~name [~@args]
          (fn [~'request]
-           (run-resource ~'request (get-options (list ~@kvs))))))
+           (run-resource ~'request ~(get-options kvs)))))
     `(def ~name
-         (fn [~'request]
-           (run-resource ~'request (get-options (list ~@kvs)))))))
+       (fn [~'request]
+         (run-resource ~'request ~(get-options kvs))))))
 
 (defn by-method
   "returns a handler function that uses the request method to
