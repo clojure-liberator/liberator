@@ -11,6 +11,7 @@
   (:use
    [liberator.util :only [parse-http-date http-date as-date make-function]]
    [liberator.representation :only [Representation as-response ring-response]]
+   [clojure.set :as set :exclude [join]]
    [clojure.string :only [join upper-case]])
   (:import (javax.xml.ws ProtocolException)))
 
@@ -593,20 +594,39 @@
    :available-charsets        ["UTF-8"]
    :available-encodings       ["identity"]})
 
+(def ^:private valid-resource-key-set
+  (set (concat (keys default-functions)
+               [:create!
+                :etag
+                :handle-accepted
+                :handle-created
+                :handle-not-found
+                :handle-not-modified
+                :handle-precondition-failed
+                :last-modified])))
+
 ;; resources are a map of implementation methods
-(defn run-resource [request kvs]
+(defn run-resource [request options]
   (try
     (service-available? {:request request
-                         :resource
-                         (map-values make-function (merge default-functions kvs))
+                         :resource (map-values make-function
+                                               (merge default-functions options))
                          :representation {}})
-    
+
     (catch ProtocolException e         ; this indicates a client error
       {:status 400
        :headers {"Content-Type" "text/plain"}
        :body (.getMessage e)
        ::throwable e}))) ; ::throwable gets picked up by an error renderer
 
+(defn validate-options [kvs]
+  (let [validatable-options (if (keyword? (first kvs))
+                              (apply hash-map kvs)
+                              (apply hash-map (rest kvs)))]
+    (assert (every? valid-resource-key-set (keys validatable-options))
+            (str "Found invalid keys: " (vec (set/difference
+                                              (set (keys validatable-options))
+                                              valid-resource-key-set))))))
 
 (defn get-options
   [kvs]
@@ -622,13 +642,17 @@
   (if (vector? (first kvs))
     (let [args (first kvs)
           kvs (rest kvs)]
-      ;; Rather than call resource, create anonymous fn in callers namespace for better debugability.
+      ;; Rather than call resource, create anonymous fn in callers namespace for
+      ;; better debugability.
+      (validate-options kvs)
       `(defn ~name [~@args]
          (fn [~'request]
            (run-resource ~'request (get-options (list ~@kvs))))))
-    `(def ~name
+    (do
+      (validate-options kvs)
+      `(def ~name
          (fn [~'request]
-           (run-resource ~'request (get-options (list ~@kvs)))))))
+           (run-resource ~'request (get-options (list ~@kvs))))))))
 
 (defn by-method
   "returns a handler function that uses the request method to
