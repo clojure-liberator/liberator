@@ -1,5 +1,13 @@
 # Changelog
 
+# New in 0.12.2
+
+## Bugs fixed
+
+* This release actually contains the changes announced for 0.12.1
+  Due to whatever reason the revision in clojars did not match 
+  what was tagged as 0.12.1 in the git repository.
+
 # New in 0.12.1
 
 ## Bugs fixed
