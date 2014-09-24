@@ -64,8 +64,8 @@
          response => (contains {:status ?status}))
        (fact "has expected content-type"
          response => (content-type ?content-type))))
-   
+
    ?accept              ?available         ?status    ?content-type
    "text/html"          ["text/html"]      200        "text/html;charset=UTF-8"
-   "text/plain"         ["text/html"]      406         "text/plain"))
+   "text/plain"         ["text/html"]      406        "text/plain;charset=UTF-8"))
 

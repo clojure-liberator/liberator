@@ -38,7 +38,7 @@
                 (-> (request :get "/")
                     (if-modified-since (http-date (as-date 1000)))))]
       (fact resp => NOT-MODIFIED)
-      (fact resp => (body nil?))
+      (fact resp => (no-body))
       (fact resp => (header-value "Last-Modified" (http-date (as-date 1000))))))
 
   (facts "if-unmodified-since true"
