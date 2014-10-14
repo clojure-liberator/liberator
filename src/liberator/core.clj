@@ -470,7 +470,7 @@
      true
      ;; "If no Accept header field is present, then it is assumed that the
      ;; client accepts all media types" [p100]
-     ;; in this case we do content-type negotiaion using */* as the accept
+     ;; in this case we do content-type negotiation using */* as the accept
      ;; specification
      (if-let [type (liberator.conneg/best-allowed-content-type 
                     "*/*"
