@@ -38,3 +38,8 @@ h1, h2, h3, .navbar, #menu {
 .container td {
     vertical-align: top;
 }
+
+.container tbody>tr {
+    border-bottom: solid lightgray;
+    border-width: 1px 0;
+}
