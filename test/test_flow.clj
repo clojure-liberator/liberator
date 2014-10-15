@@ -123,12 +123,12 @@
     (let [resp ((resource :exists? true :handle-ok "OK") (request :head "/"))]
       (fact resp => OK)
       (fact resp => (content-type "text/plain;charset=UTF-8"))
-      (fact resp => (no-body))))
+      (fact resp => (body "OK"))))
   
   (facts "unexisting resource"
     (let [resp ((resource :exists? false :handle-not-found "NOT-FOUND") (request :head "/"))]
       (fact resp => NOT-FOUND)
-      (fact resp => (no-body))))
+      (fact resp => (body "NOT-FOUND"))))
   
   (facts "on moved temporarily"
     (let [resp ((resource :exists? false
