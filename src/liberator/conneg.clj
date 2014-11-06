@@ -21,7 +21,7 @@
   (min maximum
        (max minimum val)))
 
-(defn- parse-q [#^String str]
+(defn- parse-q [^String str]
   (Double/parseDouble str))
 
 (defn- assoc-param [coll n v]
