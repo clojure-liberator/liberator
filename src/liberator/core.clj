@@ -195,10 +195,8 @@
      (merge-with merge
                  {:headers (build-options-headers resource)}
                  response)
-      
-      (= :head (:request-method request))
-        (dissoc response :body)
-      :else response)))
+
+     :else response)))
 
 (defmacro ^:private defhandler [name status message]
   `(defn ~name [context#]
