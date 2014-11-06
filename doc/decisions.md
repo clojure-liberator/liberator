@@ -41,7 +41,7 @@ multiple-representations?   | Should the response be 310 multiple representation
 new?                        | Was the resource created by this request?                                                                                     | true                                              |
 post-redirect?              | Shall the response redirect after a POST?                                                                                     | false                                             |
 put-to-different-url?       | Should the PUT request be made to a different url?                                                                            | false                                             |
-respond-with-entity?        | Shall the response contain a representation of the entity?                                                                    | true                                              |
+respond-with-entity?        | Shall the response contain a representation of the entity?                                                                    | false                                             |
 service-available?          | Is the service available?                                                                                                     | true                                              |
 unmodified-since?           | Was the resource not modified since the date in "If-Unmodified-Since"?                                                        | Uses the value from ````:last-modified````        |
 uri-too-long?               | Is the request URI to long?                                                                                                   | false                                             |
