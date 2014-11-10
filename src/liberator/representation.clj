@@ -1,10 +1,10 @@
 (ns liberator.representation
   (:require
    [clojure.data.json :as json]
-   [clojure.data.csv :as csv])
-  (:use
-   [hiccup.core :only [html]]
-   [hiccup.page :only [html5 xhtml]]))
+   [clojure.data.csv :as csv]
+   [liberator.util :as util]
+   [hiccup.core :refer [html]]
+   [hiccup.page :refer [html5 xhtml]]))
 
 ;; This namespace provides default 'out-of-the-box' web representations
 ;; for many IANA mime-types.
@@ -228,9 +228,36 @@
 
 ;; define a wrapper to tell a generic Map from a Ring response map
 ;; to return a ring response as the representation
-(defrecord RingResponse [response]
+(defrecord RingResponse [map]
   Representation
   (as-response [this context]
-    response))
+    map))
 
-(defn ring-response [map] (->RingResponse map))
+(defn ring-response
+  "Wraps the map as a liberator representation such that it will used
+  unmodified if returned form a hander.
+
+  Can be used to prevent liberator rendering the map according to the
+  negotiated content type"
+  [map] (->RingResponse map))
+
+(deftype ^:private HttpRepresentation [ring-response value]
+  Representation
+  (as-response [_ context]
+    (util/combine (as-response value context)
+                 ring-response)))
+
+(defn http-representation
+  "Make the response generation merge with a given ring response
+  after the value has been converted to a ring-response with as-response.
+
+  The merge is done using `liberator.core/combine` and merges resursively.
+
+  E.g. if a handler returns
+
+  (http-representation {:status 999} {:a \"b\"})
+
+  The final response will have the overriden status code 999."
+  [ring-response value]
+  (HttpRepresentation. ring-response value))
+
