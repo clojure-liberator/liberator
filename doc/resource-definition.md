@@ -11,8 +11,8 @@ but instead provide functions for decision points, actions and handlers.
 ## resource and defresource
 
 A resource is created using the functions ````resource```` which
-returns a function that is a ring handler. You can also use the macro
-````defresource```` which binds also binds the function to a var.
+returns a function that is a ring handler. You can also use the
+````defresource```` macro which binds the function to a var.
 
 {% highlight clojure %}
 (defresource foo :handle-ok "This is ok")
