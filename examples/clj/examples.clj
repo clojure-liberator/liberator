@@ -4,7 +4,7 @@
             [clojure.data.json :as json]
             [liberator.dev :as dev])
   (:use [liberator.core :only [defresource request-method-in]]
-        [liberator.representation :only [Representation]]
+        [liberator.representation :only [Representation ring-response]]
         [compojure.core :only [context ANY routes defroutes]]
         [hiccup.page :only [html5]]
         [clojure.string :only [split]]
@@ -49,7 +49,9 @@
 
 ;; Olympics
 (defresource olympic-games-index
-  :handle-ok (fn [_] (olympics/get-olympic-games-index)))
+  :available-media-types ["text/html" "application/xhtml+xml;q=0.8" "*/*;q=0.6"]
+  :handle-ok (fn [_] (ring-response (olympics/get-olympic-games-index)
+                                    {:headers {"Cache-Control" "public,max-age=60s"}})))
 
 ;; We define a view that will pull in 
 (defrecord OlympicsHtmlPage [main]

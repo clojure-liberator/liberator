@@ -1,7 +1,6 @@
 (ns test-representation
-  (:use
-   midje.sweet
-   [liberator.representation]))
+  (:require [midje.sweet :refer :all]
+            [liberator.representation :refer :all]))
 
 ;; test for issue #19
 ;; https://github.com/clojure-liberator/liberator/pull/19
@@ -48,3 +47,33 @@
                   "application/edn" (pr-str entity))))
 
 
+(facts "Can give ring response map to override response values"
+   (facts "returns single ring response unchanged"
+     (let [response {:status 123 
+                     :headers {"Content-Type" "application/json;charset=UTF-8"
+                               "X-Foo" "Bar"}
+                     :body "123" }]
+       (as-response (ring-response response) {}) => response))
+   (facts "delegates to default response generation when value is given"
+         (fact "for strings"
+           (as-response (ring-response "foo" {}) {}) => (as-response "foo" {}))
+         (fact "for maps"
+           (let [ctx {:representation {:media-type "application/json"}}]
+             (as-response (ring-response {:a 1} {}) ctx)
+             => (as-response {:a 1} ctx))))
+       (facts "lets override response attributes"
+         (fact "all attributes"
+           (let [overidden {:body "body"
+                           :headers ["Content-Type" "application/foo"]
+                           :status 999}]
+           (as-response (ring-response "foo" overidden)
+                        {:status 200}) => overidden))
+         (facts "some attributes"
+           (facts "status"
+             (as-response (ring-response "foo" {:status 999}) {:status 200})
+             => (contains {:status 999}))
+           (facts "header merged"
+             (as-response (ring-response "foo" {:headers {"X-Foo" "bar"}})
+               {:status 200})
+             => (contains {:headers {"X-Foo" "bar"
+                                     "Content-Type" "text/plain;charset=UTF-8"}})))))

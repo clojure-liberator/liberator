@@ -2,6 +2,11 @@
 
 # New in 0.12.3
 
+* Optionally a value can be specified for ring-response
+  together with a ring map. This value is coerced to a response
+  like liberator does by default while the ring map makes it
+  possible to override whatever part of the response.
+
 ## Bugs fixed
 
 * #169 Always call as-response, even for default handlers
