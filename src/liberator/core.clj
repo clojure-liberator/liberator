@@ -140,7 +140,7 @@
                    {:keys [resource request representation] :as context}]
   (let [context
         (merge {:status status :message message} context)
-        response 
+        response
         (merge-with
          combine
 
@@ -150,7 +150,7 @@
          ;; ETags
          (when-let [etag (gen-etag context)]
            {:headers {"ETag" etag}})
-         
+
          ;; Last modified
          (when-let [last-modified (gen-last-modified context)]
            {:headers {"Last-Modified" (http-date last-modified)}})
@@ -160,45 +160,42 @@
            (if-let [f (or (get context :location)
                           (get resource :location))]
              {:headers {"Location" (str ((make-function f) context))}}))
-     
-         (if-let [handler (get resource (keyword name))]
-           (do
-             (log! :handler (keyword name))
-             ;; Content negotiations         
-             (merge-with
-              merge
-              {:headers
-               (-> {} 
-                   (set-header-maybe "Content-Type"
-                                     (str (:media-type representation)
-                                          (when-let [charset (:charset representation)] (str ";charset=" charset))))
-                   (set-header-maybe "Content-Language" (:language representation))
-                   (set-header-maybe "Content-Encoding"
-                                     (let [e (:encoding representation)]
-                                       (if-not (= "identity" e) e)))
-                   (set-header-maybe "Vary" (build-vary-header representation)))}
-              ;; Finally the result of the handler.  We allow the handler to
-              ;; override the status and headers.
-              (let [handler-response (handler context)
-                    ring-response ((:as-response resource) handler-response context)]
-                ring-response)))
 
-           ;; If there is no handler we just return the information we
-           ;; have so far.
-           (let [message (get context :message)]
-             (do (log! :handler (keyword name) "(default implementation)")
-                 {:status status 
-                  :headers {"Content-Type" "text/plain"} 
-                  :body (if (fn? message) (message context) message)}))))]
+
+         (do
+           (log! :handler (keyword name))
+           ;; Content negotiations
+           (merge-with
+            merge
+            {:headers
+             (-> {}
+                 (set-header-maybe "Content-Type"
+                                   (str (:media-type representation)
+                                        (when-let [charset (:charset representation)]
+                                          (str ";charset=" charset))))
+                 (set-header-maybe "Content-Language" (:language representation))
+                 (set-header-maybe "Content-Encoding"
+                                   (let [e (:encoding representation)]
+                                     (if-not (= "identity" e) e)))
+                 (set-header-maybe "Vary" (build-vary-header representation)))}
+            ;; Finally the result of the handler.  We allow the handler to
+            ;; override the status and headers.
+
+
+            (let [as-response (:as-response resource)]
+              (as-response
+               (if-let [handler (get resource (keyword name))]
+                 (handler context)
+                 (get context :message))
+               context)))))]
     (cond
      (or (= :options (:request-method request)) (= 405 (:status response)))
      (merge-with merge
                  {:headers (build-options-headers resource)}
                  response)
-      
-      (= :head (:request-method request))
-        (dissoc response :body)
-      :else response)))
+     (= :head (:request-method request))
+     (dissoc response :body)
+     :else response)))
 
 (defmacro ^:private defhandler [name status message]
   `(defn ~name [context#]
