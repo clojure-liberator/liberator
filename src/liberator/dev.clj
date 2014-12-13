@@ -22,11 +22,11 @@
   (swap! logs #(->> (conj % [id msg])
                     (take log-size))))
 
-(defn- with-slash [s] (if (.endsWith s "/") s (str s "/")))
+(defn- with-slash [^String s] (if (.endsWith s "/") s (str s "/")))
 
 (def ^:dynamic *current-id* nil)
 
-(defn seconds-ago [d]
+(defn seconds-ago [^Date d]
   (int  (/ (- ( System/currentTimeMillis) (.getTime d)) 1000)))
 
 (defn log-by-id [id]

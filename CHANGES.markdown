@@ -1,5 +1,33 @@
 # Changelog
 
+# New in 0.12.3
+
+* Optionally a value can be specified for ring-response
+  together with a ring map. This value is coerced to a response
+  like liberator does by default while the ring map makes it
+  possible to override whatever part of the response.
+
+## Bugs fixed
+
+* #169 Always call as-response, even for default handlers
+
+# New in 0.12.2
+
+## Bugs fixed
+
+* #162 This release actually contains the changes announced for 0.12.1
+  Due to whatever reason the revision in clojars did not match 
+  what was tagged as 0.12.1 in the git repository.
+
+# New in 0.12.1
+
+## Bugs fixed
+
+* Fix a regression and make default `:handle-exception` rethrow the
+  exception. This matches the behaviour before 0.12.0
+* Update the decision graph to include new paths after PATCH
+  support was added.
+
 # New in 0.12.0
 
 * Support for PATCH method, thanks to Davig Park

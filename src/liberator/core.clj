@@ -1,17 +1,10 @@
-;; Copyright (c) Philipp Meier (meier@fnogol.de). All rights reserved.
-;; The use and distribution terms for this software are covered by the Eclipse
-;; Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php) which
-;; can be found in the file epl-v10.html at the root of this distribution. By
-;; using this software in any fashion, you are agreeing to be bound by the
-;; terms of this license. You must not remove this notice, or any other, from
-;; this software.
-
 (ns liberator.core
-  (:require [liberator.conneg :as conneg])
-  (:use
-   [liberator.util :only [parse-http-date http-date as-date make-function]]
-   [liberator.representation :only [Representation as-response ring-response]]
-   [clojure.string :only [join upper-case]])
+  (:require [liberator.conneg :as conneg]
+            [liberator.representation :refer
+             [Representation as-response ring-response]]
+            [liberator.util :refer
+             [as-date http-date parse-http-date combine make-function]]
+            [clojure.string :refer [join upper-case]])
   (:import (javax.xml.ws ProtocolException)))
 
 (defmulti coll-validator
@@ -64,21 +57,10 @@
     (if-let [etag-val (f context)]
       (format "\"%s\"" etag-val))))
 
-(defn gen-last-modified [context]
+(defn ^java.util.Date gen-last-modified [context]
   (if-let [f (get-in context [:resource :last-modified])]
     (if-let [lm-val (f context)]
       (as-date lm-val))))
-
-;; A more sophisticated update of the request than a simple merge
-;; provides.  This allows decisions to return maps which modify the
-;; original request in the way most probably intended rather than the
-;; over-destructive default merge.
-(defn combine [curr newval]
-  (cond
-   (and (map? curr) (map? newval)) (merge-with combine curr newval)
-   (and (list? curr) (list? newval)) (concat curr newval)
-   (and (vector? curr) (vector? newval)) (vec (concat curr newval))
-   :otherwise newval))
 
 (defn update-context [context context-update]
   (cond
@@ -148,7 +130,7 @@
                    {:keys [resource request representation] :as context}]
   (let [context
         (merge {:status status :message message} context)
-        response 
+        response
         (merge-with
          combine
 
@@ -158,7 +140,7 @@
          ;; ETags
          (when-let [etag (gen-etag context)]
            {:headers {"ETag" etag}})
-         
+
          ;; Last modified
          (when-let [last-modified (gen-last-modified context)]
            {:headers {"Last-Modified" (http-date last-modified)}})
@@ -168,45 +150,42 @@
            (if-let [f (or (get context :location)
                           (get resource :location))]
              {:headers {"Location" (str ((make-function f) context))}}))
-     
-         (if-let [handler (get resource (keyword name))]
-           (do
-             (log! :handler (keyword name))
-             ;; Content negotiations         
-             (merge-with
-              merge
-              {:headers
-               (-> {} 
-                   (set-header-maybe "Content-Type"
-                                     (str (:media-type representation)
-                                          (when-let [charset (:charset representation)] (str ";charset=" charset))))
-                   (set-header-maybe "Content-Language" (:language representation))
-                   (set-header-maybe "Content-Encoding"
-                                     (let [e (:encoding representation)]
-                                       (if-not (= "identity" e) e)))
-                   (set-header-maybe "Vary" (build-vary-header representation)))}
-              ;; Finally the result of the handler.  We allow the handler to
-              ;; override the status and headers.
-              (let [handler-response (handler context)
-                    ring-response ((:as-response resource) handler-response context)]
-                ring-response)))
 
-           ;; If there is no handler we just return the information we
-           ;; have so far.
-           (let [message (get context :message)]
-             (do (log! :handler (keyword name) "(default implementation)")
-                 {:status status 
-                  :headers {"Content-Type" "text/plain"} 
-                  :body (if (fn? message) (message context) message)}))))]
+
+         (do
+           (log! :handler (keyword name))
+           ;; Content negotiations
+           (merge-with
+            merge
+            {:headers
+             (-> {}
+                 (set-header-maybe "Content-Type"
+                                   (str (:media-type representation)
+                                        (when-let [charset (:charset representation)]
+                                          (str ";charset=" charset))))
+                 (set-header-maybe "Content-Language" (:language representation))
+                 (set-header-maybe "Content-Encoding"
+                                   (let [e (:encoding representation)]
+                                     (if-not (= "identity" e) e)))
+                 (set-header-maybe "Vary" (build-vary-header representation)))}
+            ;; Finally the result of the handler.  We allow the handler to
+            ;; override the status and headers.
+
+
+            (let [as-response (:as-response resource)]
+              (as-response
+               (if-let [handler (get resource (keyword name))]
+                 (handler context)
+                 (get context :message))
+               context)))))]
     (cond
      (or (= :options (:request-method request)) (= 405 (:status response)))
      (merge-with merge
                  {:headers (build-options-headers resource)}
                  response)
-      
-      (= :head (:request-method request))
-        (dissoc response :body)
-      :else response)))
+     (= :head (:request-method request))
+     (dissoc response :body)
+     :else response)))
 
 (defmacro ^:private defhandler [name status message]
   `(defn ~name [context#]
@@ -227,7 +206,7 @@
 
 (defmethod to-location clojure.lang.APersistentMap [this] this)
 
-(defmethod to-location java.net.URL [url] (to-location (.toString url)))
+(defmethod to-location java.net.URL [^java.net.URL url] (to-location (.toString url)))
 
 (defmethod to-location nil [this] this)
 
@@ -470,7 +449,7 @@
      true
      ;; "If no Accept header field is present, then it is assumed that the
      ;; client accepts all media types" [p100]
-     ;; in this case we do content-type negotiaion using */* as the accept
+     ;; in this case we do content-type negotiation using */* as the accept
      ;; specification
      (if-let [type (liberator.conneg/best-allowed-content-type 
                     "*/*"
@@ -515,13 +494,16 @@
 
 (defhandler handle-exception 500 "Internal server error.")
 
+(defn handle-exception-rethrow [{e :exception}]
+  (throw e))
+
 (defn test-request-method [valid-methods-key]
   (fn [{{m :request-method} :request
        {vm valid-methods-key} :resource
        :as ctx}]
     (some #{m} (vm ctx))))
 
-(def default-functions 
+(def default-functions
   {
    ;; Decisions
    :service-available?        true
@@ -562,7 +544,7 @@
    :handle-see-other          handle-moved
    :handle-moved-temporarily  handle-moved
    :handle-moved-permanently  handle-moved
-   
+   :handle-exception          handle-exception-rethrow
 
    ;; Imperatives. Doesn't matter about decision outcome, both
    ;; outcomes follow the same route.

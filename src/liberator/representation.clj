@@ -1,18 +1,10 @@
-;; Copyright (c) Philipp Meier (meier@fnogol.de). All rights reserved.
-;; The use and distribution terms for this software are covered by the Eclipse
-;; Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php) which
-;; can be found in the file epl-v10.html at the root of this distribution. By
-;; using this software in any fashion, you are agreeing to be bound by the
-;; terms of this license. You must not remove this notice, or any other, from
-;; this software.
-
 (ns liberator.representation
   (:require
    [clojure.data.json :as json]
-   [clojure.data.csv :as csv])
-  (:use
-   [hiccup.core :only [html]]
-   [hiccup.page :only [html5 xhtml]]))
+   [clojure.data.csv :as csv]
+   [liberator.util :as util]
+   [hiccup.core :refer [html]]
+   [hiccup.page :refer [html5 xhtml]]))
 
 ;; This namespace provides default 'out-of-the-box' web representations
 ;; for many IANA mime-types.
@@ -179,7 +171,7 @@
     (render-seq-generic data (assoc-in context [:representation :media-type]
                                        "application/json"))))
 
-(defn in-charset [string charset]
+(defn in-charset [^String string ^String charset]
   (if (and charset (not (.equalsIgnoreCase charset "UTF-8")))
     (java.io.ByteArrayInputStream.
      (.getBytes string (java.nio.charset.Charset/forName charset)))
@@ -235,10 +227,44 @@
        :headers {"Content-Type" (format "%s;charset=%s" (get representation :media-type "text/plain") charset)}})))
 
 ;; define a wrapper to tell a generic Map from a Ring response map
-;; to return a ring response as the representation
-(defrecord RingResponse [response]
+;; and to return a ring response as the representation
+(defrecord RingResponse [ring-response value]
   Representation
-  (as-response [this context]
-    response))
+  (as-response [_ context]
+    (let [base (when value (as-response value context))]
+      (util/combine base ring-response))))
 
-(defn ring-response [map] (->RingResponse map))
+(defn ring-response
+  "Returns the given map as a ring response. The map is not converted
+  with `as-response`.
+
+  An optional representation value will be converted to a ring-response
+  using `as-response` as usual  and the ring-response parameter will be
+  merged over it.
+
+  The merge is done with `liberator.core/combine` and thus merges
+  recursively.
+
+  Example:
+
+  A handler returns
+
+    (ring-response {:foo :bar}
+                   {:status 999
+                    :headers {\"X-Custom\" \"value\"})
+
+  The final response will have the overriden status code 999 and a
+  custom header set. Assuming the negotiated content type was
+  application/json the response will be
+
+    {:headers {\"Content-Type\" \"application/json\"
+               \"X-Custom\" \"value\"}
+     :status 999
+     :body \"{'foo': 'bar'}\"} "
+  ([ring-response-map] (ring-response nil ring-response-map))
+  ([value ring-response-map] (->RingResponse ring-response-map value)))
+
+;; Copyright (c) Philipp Meier (meier@fnogol.de). All rights reserved.
+;; The use and distribution terms for this software are covered by the Eclipse
+;; Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php) which
+;; can be found in the file epl-v10.html at the root of this distribution. By
