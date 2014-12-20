@@ -201,10 +201,6 @@
   (as-response [this context]
     (as-response (render-map-generic this context) context))
 
-  clojure.lang.MultiFn
-  (as-response [multi-fn context]
-    (as-response (multi-fn context) context))
-
   ;; If a string is returned, we should carry out the conversion of both the charset and the encoding.
   String
   (as-response [this {representation :representation}]
