@@ -64,7 +64,7 @@ Example:
 {% highlight clojure %}
 (defresource postbox
   :allowed-methods [:post]
-  :post-redirect? (fn [ctx] {:location "http://example.com/look-here/}))
+  :post-redirect? (fn [ctx] {:location "http://example.com/look-here/"}))
 {% endhighlight %}
 
 You could also use a constant value for :post-redirect like the
