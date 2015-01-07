@@ -197,7 +197,7 @@
     (fn [req]
       (if (.startsWith (:uri req) base-url)
         (let [subpath (s/replace (:uri req) base-url "")]
-          (case subpath
+          (condp = subpath
             "trace.svg" (response/content-type (response/url-response  trace-svg) "image/svg+xml")
             "styles.css" (styles req)
             "" (list-handler req)
