@@ -8,11 +8,10 @@
 ;; it back later. Will use the content-type of the PUT body
 ;; Generates last-modified header for conditional requests.
 
-(def things (ref nil))
 
-(def thing-resource
+(defn thing-resource [things]
   (resource
-   ;; early lookup   
+   ;; early lookup
    :service-available? (fn [ctx] {::r (get @things (get-in ctx [:request :uri]))})
    :method-allowed? (request-method-in :get :put :delete)
    ;; lookup media types of the requested resource
@@ -25,11 +24,13 @@
    :existed? #(nil? (get @things (get-in % [:request :uri]) (Object.)))
    ;; use the previously stored value at ::r
    :handle-ok #(get-in % [::r :content])
+   ;; known request content types
+   :known-content-types ["application/edn"]
    ;; update the representation
    :put! #(dosync
            (alter things assoc-in
                   [(get-in % [:request :uri])]
-                  {:content (get-in % [:request :body])
+                  {:content (get % :entity)
                    :media-type (get-in % [:request :headers "content-type"]
                                        "application/octet-stream")
                    :last-modified (java.util.Date.)}))
@@ -37,21 +38,28 @@
    :delete! #(dosync (alter things assoc (get-in % [:request :uri]) nil))
    :last-modified #(get-in % [::r :last-modified])))
 
-(facts
- (let [resp (thing-resource (request :get "/r1"))]
-   (fact "get => 404" resp => NOT-FOUND))
- (let [resp (thing-resource (-> (request :put "/r1")
-                   (assoc :body "r1")
-                   (header "content-type" "text/plain")))]
-   (fact "put => 202" resp => CREATED))
- (let [resp (thing-resource (-> (request :get "/r1")))]
-   (fact "get => 200" resp => OK)
-   (fact "get body is what was put before"
-         resp => (body "r1"))
-   (fact "content type is set correcty"
-         resp => (content-type "text/plain;charset=UTF-8"))
-   (future-fact "last-modified header is set"))
- (let [resp (thing-resource (-> (request :delete "/r1")))]
-   (fact "delete" resp => NO-CONTENT))
- (let [resp (thing-resource (request :get "/r1"))]
-   (fact "get => gone" resp => GONE)))
+(let [things (ref nil)
+      thing-resource (thing-resource things)]
+  (facts
+    (fact "entity does not exists, yet"
+      (let [resp (thing-resource (request :get "/r1"))]
+        (fact "get => 404" resp => NOT-FOUND)))
+    (fact "create entity with put"
+      (let [resp (thing-resource (-> (request :put "/r1")
+                                     (assoc :body "r1")
+                                     (header "content-type" "text/plain")))]
+        (fact "put => 202" resp => CREATED)))
+    (fact "get newly created entity"
+      (let [resp (thing-resource (-> (request :get "/r1")))]
+        (fact "get => 200" resp => OK)
+        (fact "get body is what was put before"
+          resp => (body "r1"))
+        (fact "content type is set correcty"
+          resp => (content-type "text/plain;charset=UTF-8"))
+        (future-fact "last-modified header is set")))
+    (fact "delete entity"
+      (let [resp (thing-resource (-> (request :delete "/r1")))]
+        (fact "delete" resp => NO-CONTENT)))
+    (fact "entity is gone"
+      (let [resp (thing-resource (request :get "/r1"))]
+        (fact "get => gone" resp => GONE)))))
