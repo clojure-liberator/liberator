@@ -7,9 +7,6 @@
   (fn [actual] (or (and (nil? actual) (nil? expected))
                   (= (lower-case actual) (lower-case expected)))))
 
-(defchecker all [& checkers]
-  (fn [actual] (every? #(% actual) checkers)))
-
 (defchecker is-status [code]
   (contains {:status code}))
 
@@ -28,11 +25,11 @@
 (def OK (is-status 200))
 (def CREATED (is-status 201))
 (def ACCEPTED (is-status 202))
-(def NO-CONTENT (all (is-status 204) (body nil?)))
+(def NO-CONTENT (every-checker (is-status 204) (body nil?)))
 
 (defn status-location [status location]
-  (all (is-status status) 
-       (header-value "Location" location)))
+  (every-checker (is-status status)
+                 (header-value "Location" location)))
 
 (defn MOVED-PERMANENTLY [location] (status-location 301 location))
 (defn SEE-OTHER [location] (status-location 303 location))
