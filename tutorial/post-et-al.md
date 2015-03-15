@@ -172,13 +172,17 @@ A rudimentary way to support patch follows:
         :patch! (fn [ctx]
                  (dosync 
                   (let [body (slurp (get-in ctx [:request :body]))
-                        parts (clojure.string/split body #"|")
+                        parts (clojure.string/split body #"\|")
                         replaced (clojure.string/replace
-                                     (last content)
+                                     (last @content)
                                      (re-pattern (first parts))
                                      (last parts))
                         id   (count (alter content conj replaced))]
                     {::id id})))))
+{% endhighlight %}
+
+{% highlight bash session %}
+$ curl --header 'Content-Type: text/plain' --request PATCH --data 'all|ALL' http://localhost:3000/patchbox
 {% endhighlight %}
 
 Values specified by :patch-content-types will be returned as part of the
