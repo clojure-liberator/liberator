@@ -142,7 +142,7 @@ context.
 {% endhighlight %}
 
 Here we use the syntax to define parametrized resources:
-````(defresource entry-resource \[id\])````, these go
+````(defresource entry-resource [id])````, these go
 hand-in-hand with compojure's routing parameters:
 
 {% highlight clojure %}
@@ -155,5 +155,5 @@ hand-in-hand with compojure's routing parameters:
 
 This example is far from being feature complete. It can be extended
 to support conditional requests and more media types. You can use
-````authorized?```` to restrict access to the resourses.
+````authorized?```` to restrict access to the resources.
 
