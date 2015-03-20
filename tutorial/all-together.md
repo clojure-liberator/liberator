@@ -52,10 +52,10 @@ into liberator.
 
 ;; For PUT and POST parse the body as json and store in the context
 ;; under the given key.
-(defn parse-json [context key]
-  (when (#{:put :post} (get-in context [:request :request-method]))
+(defn parse-json [ctx key]
+  (when (#{:put :post} (get-in ctx [:request :request-method]))
     (try
-      (if-let [body (body-as-string context)]
+      (if-let [body (body-as-string ctx)]
         (let [data (json/read-str body)]
           [false {key data}])
         {:message "No body"})
