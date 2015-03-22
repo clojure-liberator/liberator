@@ -52,10 +52,10 @@ into liberator.
 
 ;; For PUT and POST parse the body as json and store in the context
 ;; under the given key.
-(defn parse-json [context key]
-  (when (#{:put :post} (get-in context [:request :request-method]))
+(defn parse-json [ctx key]
+  (when (#{:put :post} (get-in ctx [:request :request-method]))
     (try
-      (if-let [body (body-as-string context)]
+      (if-let [body (body-as-string ctx)]
         (let [data (json/read-str body)]
           [false {key data}])
         {:message "No body"})
@@ -142,18 +142,43 @@ context.
 {% endhighlight %}
 
 Here we use the syntax to define parametrized resources:
-````(defresource entry-resource \[id\])````, these go
+````(defresource entry-resource [id])````, these go
 hand-in-hand with compojure's routing parameters:
 
 {% highlight clojure %}
 (defroute collection-example
-    (ANY ["/collection/:id" #".*"] [id] (entry-resource id))
+    (ANY ["/collection/:id{[0-9]+}"] [id] (entry-resource id))
     (ANY "/collection" [] list-resource))
+{% endhighlight %}
+
+Sample curl session:
+
+{% highlight bash session %}
+$ curl -i -XPOST -H 'Content-Type: application/json' -d '{"data" : "Smile :-)"}' http://localhost:3000/collection
+HTTP/1.1 303 See Other
+Date: Fri, 20 Mar 2015 19:05:11 GMT
+Location: http://localhost:3000/collection/61479
+Vary: Accept
+Content-Type: application/json;charset=ISO-8859-1
+Content-Length: 0
+Server: Jetty(7.6.13.v20130916)
+
+$ curl -i -XPUT -H 'Content-Type: application/json' -d '{"data" : "Update here"}' http://localhost:3000/collection/61479
+HTTP/1.1 204 No Content
+Date: Fri, 20 Mar 2015 20:42:38 GMT
+Content-Type: text/plain
+Server: Jetty(7.6.13.v20130916)
+
+$ curl -i -XDELETE http://localhost:3000/collection/61479
+HTTP/1.1 204 No Content
+Date: Fri, 20 Mar 2015 20:50:01 GMT
+Content-Type: text/plain
+Server: Jetty(7.6.13.v20130916)
 {% endhighlight %}
 
 ## Possible extensions
 
 This example is far from being feature complete. It can be extended
 to support conditional requests and more media types. You can use
-````authorized?```` to restrict access to the resourses.
+````authorized?```` to restrict access to the resources.
 
