@@ -19,7 +19,7 @@ allowed?                    | Is the request allowed?                           
 authorized?                 | Is the request authorized?                                                                                                    | true                                              |
 charset-available?          | Is any of requested charsets available? Should set ````:charset```` in representation to the negotiated character set.        | Uses value at ````:available-charsets````         |
 can-post-to-gone?           | Process a post to a resource that existed before or trigger response 410 gone                                                 | false                                             |
-can-post-to-missing?        | Process a post to a resource that does not exist or send 410 not-found                                                        | true                                              |
+can-post-to-missing?        | Process a post to a resource that does not exist or send 404 not-found                                                        | true                                              |
 can-put-to-missing?         | Process a put to a resource that does not exist or send 501 not-implemented <span class="label label-info">since 0.9.0</span> | true                                              |
 conflict?                   | Does the put request emerge a conflict?                                                                                       | false                                             |
 delete-enacted?             | Was the delete request finally processed?                                                                                     | true                                              |
