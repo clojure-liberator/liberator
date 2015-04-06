@@ -361,7 +361,8 @@
 (defdecision  if-unmodified-since-valid-date?
   (fn [context]   
     (if-let [date (parse-http-date (get-in context [:request :headers  "if-unmodified-since"]))]
-      (assoc context ::if-unmodified-since-date date) context))
+      {::if-unmodified-since-date date}
+      {}))
   unmodified-since?
   if-none-match-exists?)
 
@@ -372,7 +373,7 @@
   (fn [context]
     (let [etag (gen-etag context)]
       [(= etag (get-in context [:request :headers "if-match"]))
-       (assoc context ::etag etag)]))
+       {::etag etag}]))
   if-unmodified-since-exists?
   handle-precondition-failed)
 
