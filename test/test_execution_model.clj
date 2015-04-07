@@ -8,7 +8,7 @@
 
 (facts "truethy return values"
   (fact (-> (request :get "/")
-             ((resource :exists?y true)))
+             ((resource :exists? true)))
     => (contains {:status 200}))
   (fact (-> (request :get "/")
              ((resource :exists? 1)))
@@ -55,3 +55,23 @@
         ((resource :exists? {:some-key "foo"}
                    :handle-ok :some-key)))
     => (contains {:status 200 :body "foo"})))
+
+(facts "context merge leaves nested objects intact (see #206)"
+  (fact "using etag and if-match"
+    (-> (request :put "/")
+        (header "if-match" "\"1\"")
+        ((resource :allowed-methods [:put]
+                   :available-media-types ["application/edn"]
+                   :malformed? [false {:my-entity {:deeply [:nested :object]}}]
+                   :handle-created :my-entity
+                   :etag "1")))
+    => (contains {:status 201, :body "{:deeply [:nested :object]}"}))
+  (fact "using if-unmodified-since"
+    (-> (request :put "/")
+        (header "if-unmodified-since" "Tue, 15 Nov 1994 12:45:26 GMT")
+        ((resource :allowed-methods [:put]
+                   :available-media-types ["application/edn"]
+                   :malformed? [false {:my-entity {:deeply [:nested :object]}}]
+                   :handle-created :my-entity
+                   :last-modified (java.util.Date. 0))))
+    => (contains {:status 201, :body "{:deeply [:nested :object]}"})))
