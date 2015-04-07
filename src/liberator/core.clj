@@ -360,9 +360,8 @@
 
 (defdecision  if-unmodified-since-valid-date?
   (fn [context]   
-    (if-let [date (parse-http-date (get-in context [:request :headers  "if-unmodified-since"]))]
-      {::if-unmodified-since-date date}
-      {}))
+    (when-let [date (parse-http-date (get-in context [:request :headers "if-unmodified-since"]))]
+      {::if-unmodified-since-date date}))
   unmodified-since?
   if-none-match-exists?)
 
