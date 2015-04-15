@@ -59,7 +59,7 @@ specified for a key:
   :authorized? (fn [_] ...))
 {% endhighlight %}
 
-## Parametrized resources
+## Parameterized resources
 
 Routing libraries like compojure support the extraction and binding of
 request parameters from the URL. This frees the developer from
@@ -67,17 +67,14 @@ extracting the parameters from the request in the resource functions
 and typically enhances the code legibility.
 
 With liberator you can use ````resource```` and simply close over the
-parameter, however, liberator simplifies this with parametrized resources.
+parameter, however, liberator simplifies this with parameterized resources.
 
 {% highlight clojure %}
-(defresource parametrized [x]
+(defresource parameterized [x]
   :handle-ok (fn [_] (format "This is x: %s" x)))
 
 (defroutes params
   ;; these are equivalent:
   (ANY "/a/:x" [x] (fn [req] (resource :handle-ok (fn [_] (format "This is x: %s" x)))))
-  (ANY "/b/:x" [x] (parametrized x)))
+  (ANY "/b/:x" [x] (parameterized x)))
 {% endhighlight %}
-
-
-
