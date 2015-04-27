@@ -1,6 +1,6 @@
-# Liberator
+# Liberator [![Build Status](https://travis-ci.org/clojure-liberator/liberator.svg?branch=master)](https://travis-ci.org/clojure-liberator/liberator)
 
-Liberator is a Clojure library for building RESTful applications. 
+Liberator is a Clojure library for building RESTful applications.
 
 ## Quick Links
 
@@ -10,7 +10,7 @@ If you have any questions, visit our fine google group at https://groups.google.
 
 ### Similar projects
 
-Liberator used to be known as compojure-rest. It got renamed in July 2012. 
+Liberator used to be known as compojure-rest. It got renamed in July 2012.
 
 Liberator is loosely modeled after webmachine and shares the same aims as Bishop.
 
@@ -29,7 +29,7 @@ A set of examples is included.
 If you want to see the examples in a browser, run
 
     lein examples
-    
+
 This will start a web server on port 8000 (but you can specify a alternative port with an argument, eg. ```lein examples 8001```). Alternatively you can run the web server with ```lein ring server```).
 
 ### Ensuring the tests pass
