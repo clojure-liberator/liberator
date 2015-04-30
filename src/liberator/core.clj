@@ -1,7 +1,7 @@
 (ns liberator.core
   (:require [liberator.conneg :as conneg]
             [liberator.representation :refer
-             [Representation as-response ring-response]]
+             [Representation as-response ring-response parse-entity]]
             [liberator.util :refer
              [as-date http-date parse-http-date combine make-function]]
             [clojure.string :refer [join upper-case]])
@@ -384,8 +384,23 @@
 
 (defdecision exists? if-match-exists? if-match-star-exists-for-missing?)
 
+
 (defhandler handle-unprocessable-entity 422 "Unprocessable entity.")
-(defdecision processable? exists? handle-unprocessable-entity)
+
+(defdecision valid-entity? exists? handle-unprocessable-entity)
+
+(defn parse-request-entity [{:keys [request resource] :as ctx}]
+  (or (#{:get :options :head :delete} (:request-method request))
+      (if-let [body (:body request)]
+        (let [content-type (get-in request [:headers "content-type"] "application/octet-stream")
+              result ((:parse-entity resource) ctx (:body request))
+              [result data] (if (vector? result) result [true result])]
+          (if result
+            {:entity data}
+            [false data]))
+        true)))
+
+(defdecision processable? parse-request-entity valid-entity? handle-unprocessable-entity)
 
 (defhandler handle-not-acceptable 406 "No acceptable resource available.")
 
@@ -467,7 +482,8 @@
 (defdecision valid-entity-length? is-options? handle-request-entity-too-large)
 
 (defhandler handle-unsupported-media-type 415 "Unsupported media type.")
-(defdecision known-content-type? valid-entity-length? handle-unsupported-media-type)
+
+(defdecision known-content-type? parse-request-entity valid-entity-length? handle-unsupported-media-type)
 
 (defdecision valid-content-header? known-content-type? handle-not-implemented)
 
@@ -537,7 +553,7 @@
    :moved-permanently?        false
    :moved-temporarily?        false
    :delete-enacted?           true
-   :processable?              true
+   :valid-entity?             true
 
    ;; Handlers
    :handle-ok                 "OK"
@@ -559,6 +575,8 @@
 
    ;; The default function used extract a ring response from a handler's response
    :as-response               as-response
+   ;; The default function used to parse the request entity (body)
+   :parse-entity              parse-entity
 
    ;; Directives
    :available-media-types     []

@@ -1,10 +1,12 @@
 (ns liberator.representation
-  (:require
-   [clojure.data.json :as json]
-   [clojure.data.csv :as csv]
-   [liberator.util :as util]
-   [hiccup.core :refer [html]]
-   [hiccup.page :refer [html5 xhtml]]))
+  (:require [clojure.data.csv :as csv]
+            [clojure.data.json :as json]
+            [clojure.java.io :as io]
+            [clojure.string :as str]
+            [hiccup.core :refer [html]]
+            [hiccup.page :refer [html5 xhtml]]
+            [liberator.util :as util])
+  (:import [java.io.PushbackReader]))
 
 ;; This namespace provides default 'out-of-the-box' web representations
 ;; for many IANA mime-types.
@@ -20,6 +22,8 @@
     does all the charset conversion and encoding and returns are Ring
     response map so no further post-processing of the response will be
     carried out."))
+
+
 
 (defn default-dictionary [k lang]
   (if (instance? clojure.lang.Named k)
@@ -264,7 +268,45 @@
   ([ring-response-map] (ring-response nil ring-response-map))
   ([value ring-response-map] (->RingResponse ring-response-map value)))
 
-;; Copyright (c) Philipp Meier (meier@fnogol.de). All rights reserved.
-;; The use and distribution terms for this software are covered by the Eclipse
-;; Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php) which
-;; can be found in the file epl-v10.html at the root of this distribution. By
+(defmulti parse-entity-by-type (fn [[type type-params] ctx entity-representation] type))
+
+(defn parse-entity
+  "Convert a representation of the request entity (body) to a clojure
+  data structure."
+  [ctx entity-representation]
+  (let [[content-type & type-params]
+        (str/split (get-in ctx [:request :headers "content-type"] "") #";")]
+    (parse-entity-by-type [content-type type-params] ctx entity-representation)))
+
+(defmethod parse-entity-by-type "application/octet-stream"
+  [[content-type type-params] ctx representation]
+  (cond
+    (string? representation)
+    (.getBytes representation "iso-8859-1") ;; todo use charset parameter
+
+    (instance? java.io.InputStream representation)
+    representation))
+
+(defmethod parse-entity-by-type "application/edn"
+  [[content-type type-params] ctx representation]
+  ;; mega fail. this is unsafe. use clojure.core/edn!
+  (if (string? representation)
+    (read-string representation)
+    (read (java.io.PushbackReader. (io/reader representation)))))
+
+(defmethod parse-entity-by-type "application/json"
+  [[content-type type-params] ctx representation]
+  ;; mega fail. this is unsafe. use clojure.core/edn!
+  (try
+    (if (string? representation)
+      (json/read-str representation)
+      (json/read (io/reader representation)))
+    (catch Exception e
+      [false {:message (.getMessage e)}])))
+
+(defmethod parse-entity-by-type "text/plain"
+  [[content-type type-params] ctx representation]
+  ;; mega fail. this is unsafe. use clojure.core/edn!
+  (if (string? representation)
+    representation
+    (slurp representation)))
