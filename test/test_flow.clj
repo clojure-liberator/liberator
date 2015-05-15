@@ -24,6 +24,15 @@
               (request :get "/"))]
     (fact resp => (MOVED-TEMPORARILY "http://new.example.com/"))))
 
+(facts "get on moved temporarily with custom handler"
+       (let [resp ((resource :exists? false
+                             :existed? true
+                             :moved-temporarily? {:location "http://new.example.com/"}
+                             :handle-moved-temporarily "Temporary redirection...")
+              (request :get "/"))]
+         (fact resp => (MOVED-TEMPORARILY "http://new.example.com/"))
+         (fact resp => (body "Temporary redirection..."))))
+
 (facts "get on moved permantently"
   (let [resp ((resource :exists? false :existed? true
                         :moved-permanently? true
@@ -33,14 +42,13 @@
 
 (facts "get on moved permantently with custom response"
   (let [resp ((resource :exists? false :existed? true
-                        :moved-permanently? true
-                        :handle-moved-permanently (ring-response {:body "Not here, there!"
-                                                                  :headers {"Location" "http://other.example.com/"}}))
+                        :moved-permanently? {:location "http://other.example.com/"}
+                        :handle-moved-permanently "Not here, there!")
               (request :get "/"))]
     (fact resp => (MOVED-PERMANENTLY "http://other.example.com/"))
     (fact resp => (body "Not here, there!"))))
 
-(facts "get on moved permantently with custom response"
+(facts "get on moved permantently with custom response and explicit header"
   (let [resp ((resource :exists? false :existed? true
                         :moved-permanently? true
                         :handle-moved-permanently (ring-response {:body "Not here, there!"
@@ -124,12 +132,12 @@
       (fact resp => OK)
       (fact resp => (content-type "text/plain;charset=UTF-8"))
       (fact resp => (no-body))))
-  
+
   (facts "unexisting resource"
     (let [resp ((resource :exists? false :handle-not-found "NOT-FOUND") (request :head "/"))]
       (fact resp => NOT-FOUND)
       (fact resp => (no-body))))
-  
+
   (facts "on moved temporarily"
     (let [resp ((resource :exists? false
                           :existed? true
