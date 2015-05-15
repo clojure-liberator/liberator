@@ -70,10 +70,34 @@ multi-method ````liberator.representation/render-seq-generic````
 
 ### RingResponse
 
-The function ````(liberator.representation/ring-response)```` will
-create a response which is used unaltered as the ring response. This is
-necessary because simple maps would be transformed to the above
-media-types.
+With ````(liberator.representation/ring-response)```` you can 
+create a response which is used unaltered as the ring response, or
+which alters the representation:
+
+#### Returning a ring response map
+
+{% highlight clojure %}
+(defresource x
+  :available-media-types ["application/json"]
+  :handle-ok (fn [ctx] (ring-response
+                          {:status 666 :body "\"this is json\""})))
+;; will return the outcome of `handle-ok` as the response
+{% endhighlight %}
+
+#### Altering a generated response <span class="label label-info">since 0.13</span>
+
+`ring-response` can also make use of liberator's response generation. This
+is especially useful to set individual headers in the response.
+
+{% highlight clojure %}
+(defresource x
+  :available-media-types ["application/json"]
+  :handle-ok (fn [ctx] (ring-response
+                         {:some "json"}
+                         {:headers {"X-Foo-Header" "This is liberator"}})))
+;; This creates the same response as without ring-response but additionally
+;; sets the header "X-Foo-Header"
+{% endhighlight %}
 
 ### More media types
 

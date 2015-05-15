@@ -4,6 +4,20 @@ title: Changelog
 ---
 # Changelog
 
+## New in 0.13
+
+* Optionally a value can be specified for ring-response
+  together with a ring map. This value is coerced to a response
+  like liberator does by default while the ring map makes it
+  possible to override whatever part of the response.
+
+### Bugs fixed
+
+* \#169 Always call as-response, even for default handlers
+* \#206 avoid undesired deep merge of context
+* \#212 For status 201, 301, 303 and 307 the location header is added
+  automatically. This used to be the case only for 201.
+
 ## New in 0.12.2
 
 ### Bugs fixed
