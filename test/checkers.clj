@@ -31,6 +31,11 @@
   (every-checker (is-status status)
                  (header-value "Location" location)))
 
+(defn status-location [status location]
+  (every-checker
+   (is-status status)
+   (header-value "Location" location)))
+
 (defn MOVED-PERMANENTLY [location] (status-location 301 location))
 (defn SEE-OTHER [location] (status-location 303 location))
 (def  NOT-MODIFIED (is-status 304))

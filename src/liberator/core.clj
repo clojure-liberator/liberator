@@ -146,7 +146,7 @@
            {:headers {"Last-Modified" (http-date last-modified)}})
 
          ;; 201 created required a location header to be send
-         (when (= 201 status)
+         (when (#{201 301 303 307} status)
            (if-let [f (or (get context :location)
                           (get resource :location))]
              {:headers {"Location" (str ((make-function f) context))}}))
