@@ -25,7 +25,7 @@
 (def OK (is-status 200))
 (def CREATED (is-status 201))
 (def ACCEPTED (is-status 202))
-(def NO-CONTENT (every-checker (is-status 204) (body nil?)))
+(def NO-CONTENT (every-checker (is-status 204) (no-body)))
 
 (defn status-location [status location]
   (every-checker (is-status status)
@@ -42,4 +42,3 @@
 
 (def INTERNAL-SERVER-ERROR (is-status 500))
 (def NOT-IMPLEMENTED (is-status 501))
-

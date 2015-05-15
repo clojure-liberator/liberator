@@ -12,7 +12,7 @@
 
 (def thing-resource
   (resource
-   ;; early lookup   
+   ;; early lookup
    :service-available? (fn [ctx] {::r (get @things (get-in ctx [:request :uri]))})
    :method-allowed? (request-method-in :get :put :delete)
    ;; lookup media types of the requested resource
@@ -32,7 +32,7 @@
                   {:content (get-in % [:request :body])
                    :media-type (get-in % [:request :headers "content-type"]
                                        "application/octet-stream")
-                   :last-modified (java.util.Date.)}))
+                   :last-modified (java.util.Date. (long 1e9))}))
    ;; ...store a nil value to marke the resource as gone
    :delete! #(dosync (alter things assoc (get-in % [:request :uri]) nil))
    :last-modified #(get-in % [::r :last-modified])))
@@ -50,7 +50,8 @@
          resp => (body "r1"))
    (fact "content type is set correcty"
          resp => (content-type "text/plain;charset=UTF-8"))
-   (future-fact "last-modified header is set"))
+   (fact "last-modified header is set"
+         resp => (header-value "Last-Modified" "Mon, 12 Jan 1970 13:46:40 GMT")))
  (let [resp (thing-resource (-> (request :delete "/r1")))]
    (fact "delete" resp => NO-CONTENT))
  (let [resp (thing-resource (request :get "/r1"))]
