@@ -1,6 +1,6 @@
 # Changelog
 
-# New in 0.12.3
+# New in 0.13
 
 * Optionally a value can be specified for ring-response
   together with a ring map. This value is coerced to a response
