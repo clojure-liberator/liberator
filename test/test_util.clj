@@ -5,7 +5,7 @@
 (facts "combine function"
   (facts "simple combinations"
     (fact "merges map" (combine {:a 1} {:b 2}) => {:a 1 :b 2})
-    (fact "concats list" (combine '(1 2) #{3 4}) => '(1 2 3 4))
+    (fact "concats list" (combine '(1 2) [3 4]) => '(1 2 3 4))
     (fact "concats vector" (combine [1 2] '(3 4)) => [1 2 3 4])
     (fact "concats set" (combine #{1 2} [3 4]) => #{1 2 3 4})
     (facts "replaces other types"
@@ -50,4 +50,3 @@
         :body "foo"
         :headers {"Content-Type" "text/something+plain"
                   "X-Dummy" ["banana" "apple" "peach"]}}))
-
