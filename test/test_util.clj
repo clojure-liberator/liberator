@@ -10,8 +10,8 @@
     (fact "concats set" (combine #{1 2} [3 4]) => #{1 2 3 4})
     (facts "replaces other types"
       (fact (combine 123 456) => 456)
-      (fact (combine "abc" 123 => 123))
-      (fact (combine [] "abc" => "abc")))
+      (fact (combine "abc" 123) => 123)
+      (fact (combine [] "abc") => "abc"))
     (facts "replaces for different types"
       (fact (combine [1 2 3] 1) => 1)
       (fact  (combine '(1 2 3) 1) => 1)
