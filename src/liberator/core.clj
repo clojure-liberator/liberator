@@ -138,8 +138,9 @@
          {:status status}
 
          ;; ETags
-         (when-let [etag (gen-etag context)]
-           {:headers {"ETag" etag}})
+         (when (and (= 200 status) (#{:get :head} (:request-method request)))
+           (when-let [etag (gen-etag context)]
+             {:headers {"ETag" etag}}))
 
          ;; Last modified
          (when-let [last-modified (gen-last-modified context)]
