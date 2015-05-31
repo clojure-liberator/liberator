@@ -1,5 +1,10 @@
 # Changelog
 
+# Unreleased
+
+* Values can be added to the context at the beginning of the execution
+  flow using the :initialize-context action.
+
 # New in 0.13
 
 * Optionally a value can be specified for ring-response
