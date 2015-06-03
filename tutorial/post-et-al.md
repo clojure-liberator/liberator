@@ -43,7 +43,7 @@ An idiomatic way to support post is the following:
         :available-media-types ["text/html"]
         :handle-ok (fn [ctx]
                      (format  (str "<html>Post text/plain to this resource.<br>\n"
-                                   "There are %d posts at the moment.")
+                                   "There are %d posts at the moment.</html>")
                               (count @posts)))
         :post! (fn [ctx]
                  (dosync 
@@ -66,7 +66,7 @@ was made since it checked the resource:
         :available-media-types ["text/html"]
         :handle-ok (fn [ctx]
                      (format  (str "<html>Post text/plain to this resource.<br>\n"
-                                   "There are %d posts at the moment.")
+                                   "There are %d posts at the moment.</html>")
                               (count @posts)))
         :post! (fn [ctx]
                  (dosync 

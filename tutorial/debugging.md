@@ -40,7 +40,7 @@ make the trace ui easily accessible:
   (ANY "/dbg-count" [] dbg-resource))
 
 (def handler
-  (-> app
+  (-> dbg
       (wrap-trace :header :ui)))
 {% endhighlight %}
 
