@@ -30,7 +30,7 @@ Add dependencies to project.clj:
   :ring {:handler liberator-tutorial.core/handler}
   :dependencies [[org.clojure/clojure "1.4.0"]
                  [liberator "0.10.0"]
-                 [compojure "1.1.3"]
+                 [compojure "1.3.4"]
                  [ring/ring-core "1.2.1"]])
 {% endhighlight %}
 
