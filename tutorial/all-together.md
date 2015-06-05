@@ -146,7 +146,7 @@ Here we use the syntax to define parametrized resources:
 hand-in-hand with compojure's routing parameters:
 
 {% highlight clojure %}
-(defroute collection-example
+(defroutes collection-example
     (ANY ["/collection/:id{[0-9]+}"] [id] (entry-resource id))
     (ANY "/collection" [] list-resource))
 {% endhighlight %}
