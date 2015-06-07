@@ -5,22 +5,32 @@
  xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
 <script xlink:href="../js/svgpan.js"/>
 
-<g id="viewport" class="graph" transform="scale(1 1) rotate(0) translate(4 3860)">
+<g id="viewport" class="graph" transform="scale(1 1) rotate(0) translate(4 3930)">
 <title>Liberator Decision Graph</title>
-<polygon fill="white" stroke="white" points="-4,5 -4,-3860 2553,-3860 2553,5 -4,5"/>
+<polygon fill="white" stroke="white" points="-4,5 -4,-3930 2553,-3930 2553,5 -4,5"/>
 <!-- start -->
 <g id="start" class="node"><title>start</title>
-<ellipse fill="none" stroke="black" cx="642.69" cy="-3818.33" rx="25.166" ry="25.166"/>
-<text text-anchor="middle" x="642.69" y="-3814.13" font-family="Times,serif" font-size="14.00">start</text>
+<ellipse fill="none" stroke="black" cx="642.69" cy="-3890.166" rx="25.166" ry="25.166"/>
+<text text-anchor="middle" x="642.69" y="-3886" font-family="Times,serif" font-size="14.00">start</text>
+</g>
+<!-- initialize-context -->
+<g id="g7868">
+<ellipse fill="none" stroke="black" cx="642.69" cy="-3813" rx="52.98" ry="17.95" id="ellipse7862"/>
+<text text-anchor="middle" x="642.69" y="-3809" font-family="Times,serif" font-size="14.00" id="text7864">initialize-context</text>
+</g>
+<!-- start&#45;&gt;initialize-context -->
+<g id="start_initialize" class="edge"><title>start&#45;&gt;initialize</title>
+<path fill="none" stroke="black" d="M642.69,-3865L642.69,-3830.95"/>
+<polygon fill="black" stroke="black" points="646.19,-3840.95 642.69,-3830.95 639.19,-3840.95 646.19,-3840.95"/>
 </g>
 <!-- service&#45;available? -->
 <g id="serviceavailable" class="node"><title>service&#45;available?</title>
 <polygon fill="none" stroke="black" points="701.232,-3756 584.148,-3756 584.148,-3720 701.232,-3720 701.232,-3756"/>
 <text text-anchor="middle" x="642.69" y="-3733.8" font-family="Times,serif" font-size="14.00">service&#45;available?</text>
 </g>
-<!-- start&#45;&gt;service&#45;available? -->
-<g id="start_serviceavailable" class="edge"><title>start&#45;&gt;service&#45;available?</title>
-<path fill="none" stroke="black" d="M642.69,-3792.98C642.69,-3784.55 642.69,-3775.04 642.69,-3766.39"/>
+<!-- initialize&#45;&gt;service&#45;available? -->
+<g id="initialize_serviceavailable" class="edge"><title>initialize&#45;&gt;service&#45;available?</title>
+<path fill="none" stroke="black" d="M642.69,-3796.05C642.69,-3784.55 642.69,-3775.04 642.69,-3766.39"/>
 <polygon fill="black" stroke="black" points="646.19,-3766.38 642.69,-3756.38 639.19,-3766.38 646.19,-3766.38"/>
 </g>
 <!-- handle&#45;service&#45;not&#45;available -->
