@@ -5,10 +5,11 @@ title: Tutorial - Handling POST, et al.
 # Handling POST, et al.
 
 There's more than GET and HEAD requests. To be a useful web library
-you better support POST, PUT and DELETE as well, and so does
-liberator. While there are even more HTTP methods than those, liberator
-has no out-of-the-box support for them and treat them like GET requests.
-In any case you need to declare them as known and allowed.
+you better support POST, PUT, PATCH and DELETE as well, and so does
+liberator. While there are even more HTTP methods than those,
+liberator has no out-of-the-box support for them and treats them like
+GET requests. In any case you need to declare them as known and
+allowed.
 
 ## Enabling the methods
 
@@ -18,9 +19,9 @@ default implementation for this decision uses the resource key
 matches the request method. When adding more methods to your resource,
 make sure that the method is declared as known in
 ````:known-methods````. By default, liberator knows the methods from
-RFC2616: GET, HEAD, PUT, POST, DELETE, OPTIONS, TRACE. Liberator 
-implemented support for PATCH as of version 0.12.
-See [RFC5789](http://tools.ietf.org/html/rfc5789) for PATCH details.
+RFC2616: GET, HEAD, PUT, POST, DELETE, OPTIONS, TRACE as well as PATCH
+from [RFC5789](http://tools.ietf.org/html/rfc5789) (since version
+0.12).
 
 ## POST
 

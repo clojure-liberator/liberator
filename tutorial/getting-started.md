@@ -10,7 +10,7 @@ This part will give you a quick start into programming with liberator.
 
 Liberator is available from clojars. Add liberator to your project.clj as
 
-````[liberator "0.10.0"]````
+````[liberator "0.13"]````
 
 <div class="alert alert-info">The latest release might be newer, but the tutorial works at least
 with this version.</div>
@@ -29,7 +29,7 @@ Add dependencies to project.clj:
   :plugins [[lein-ring "0.8.11"]]
   :ring {:handler liberator-tutorial.core/handler}
   :dependencies [[org.clojure/clojure "1.4.0"]
-                 [liberator "0.10.0"]
+                 [liberator "0.13"]
                  [compojure "1.3.4"]
                  [ring/ring-core "1.2.1"]])
 {% endhighlight %}
