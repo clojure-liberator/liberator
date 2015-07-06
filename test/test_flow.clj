@@ -5,7 +5,10 @@
         checkers
         [ring.mock.request :only [request header]]))
 
-
+(facts "customize the initial context"
+       (let [resp ((resource :initialize-context {::field "some initial context"}
+                             :handle-ok ::field) (request :get "/"))]
+         (fact resp => (body "some initial context"))))
 
 (facts "get existing resource"
   (let [resp ((resource :exists? true :handle-ok "OK") (request :get "/"))]

@@ -492,6 +492,8 @@
 (defhandler handle-service-not-available 503 "Service not available.")
 (defdecision service-available? known-method? handle-service-not-available)
 
+(defaction initialize-context service-available?)
+
 (defhandler handle-exception 500 "Internal server error.")
 
 (defn handle-exception-rethrow [{e :exception}]
@@ -505,6 +507,8 @@
 
 (def default-functions
   {
+   :initialize-context {}
+
    ;; Decisions
    :service-available?        true
 
@@ -575,9 +579,8 @@
 ;; resources are a map of implementation methods
 (defn run-resource [request kvs]
   (try
-    (service-available? {:request request
-                         :resource
-                         (map-values make-function (merge default-functions kvs))
+    (initialize-context {:request request
+                         :resource (map-values make-function (merge default-functions kvs))
                          :representation {}})
     
     (catch ProtocolException e         ; this indicates a client error
