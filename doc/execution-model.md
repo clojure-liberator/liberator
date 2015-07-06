@@ -21,6 +21,9 @@ The context initially contains the following keys
 *  ````:request```` - the original ring request
 *  ````:resource```` - the map that defines the resource, including decision
    function etc.
+* <span class="label label-info">Not released as of 0.13</span>
+  Additional values can be included in the initial context using the
+  ````:initialize-context```` action.
 
 The context is updated by the outcome of decision and action functions.
 When the outcome is a map it is deeply merged with the context. "Deeply merged"

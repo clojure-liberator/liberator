@@ -3,6 +3,19 @@ layout: default
 title: Actions
 ---
 
+# Initializing the context
+
+<span class="label label-info">Not released as of 0.13</span>
+````:initialize-context```` is the first action performed when a request
+is being handled --- its purpose is to allow additional values to be
+inserted into the context (in addition to the standard
+````:representation````, ````:request```` and ````:resource```` keys --- see
+the [execution model](execution-model.html) documentation) before the
+request is processed further.  Note that this action should not, in
+general, modify the state of the server --- it is intended solely to
+provide a convenient way to thread additional values through the
+execution flow.
+
 # Actions
 
 The processing of ````PUT````, ````DELETE````, ````POST```` and
