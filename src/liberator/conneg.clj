@@ -2,14 +2,13 @@
   (:require [clojure.string :as string])
   (:import (javax.xml.ws ProtocolException)))
 
-;;;
 ;;; TODO: sort by level for text/html. Maybe also sort by charset.
 ;;; Finally, compare by precedence rules:
 ;;;   1. text/html;level=1
 ;;;   2. text/html
 ;;;   3. text/*
 ;;;   4. */*
-;;;   
+;;;
 
 (def accept-fragment-re
   #"^\s*(\*|[^()<>@,;:\"/\[\]?={}         ]+)/(\*|[^()<>@,;:\"/\[\]?={}         ]+)$")
@@ -18,8 +17,9 @@
   #"([^()<>@,;:\"/\[\]?={} 	]+)=([^()<>@,;:\"/\[\]?={} 	]+|\"[^\"]*\")$")
 
 (defn- clamp [minimum maximum val]
-  (min maximum
-       (max minimum val)))
+  (->> val
+    (min maximum)
+    (max minimum)))
 
 (defn- parse-q [^String str]
   (Double/parseDouble str))
@@ -27,13 +27,13 @@
 (defn- assoc-param [coll n v]
   (try
     (assoc coll
-           (keyword n) 
+           (keyword n)
            (if (= "q" n)
              (clamp 0 1 (parse-q v))
              v))
     (catch Throwable e
       coll)))
-    
+
 (defn params->map [params]
   (loop
     [p (first params)
@@ -50,7 +50,7 @@
           (first ps)
           (rest ps)
           accumulated)))))
- 
+
 (defn accept-fragment
   "Take something like
     \"text/html\"
@@ -59,7 +59,7 @@
   and return a map like
     {:type [\"image\" \"*\"]
       :q 0.8}
-    
+
   If the fragment is invalid, nil is returned."
 
   ([f]
@@ -77,22 +77,22 @@
   "Compare two type pairs. If the pairing is acceptable,
    return the most specific.
   E.g., for
-  
+
     [\"text\" \"plain\"] [\"*\" \"*\"]
-  
+
   returns
-  
+
     [\"text\" \"plain\"]."
   [type-pair acceptable-pair]
-  
+
   (cond
     (or (= type-pair acceptable-pair)
         (= ["*" "*"] acceptable-pair))
     type-pair
-    
+
     (= ["*" "*"] type-pair)
     acceptable-pair
-    
+
     true
     ;; Otherwise, maybe one has a star.
     (let [[tmaj tmin] type-pair
@@ -101,10 +101,10 @@
         (cond
           (= "*" tmin)
           acceptable-pair
-          
+
           (= "*" amin)
           type-pair)))))
-              
+
 (defn assoc-server-weight-fn [allowed-types]
   (let [server-fragments (map accept-fragment allowed-types)]
     (fn [accept-fragment]
@@ -135,12 +135,12 @@
 
 (defn stringify [type]
   (reduce str (interpose "/" type)))
-  
+
 (defn best-allowed-content-type
   "Return the first type in the Accept header that is acceptable.
   allowed-types is a set containing pairs (e.g., [\"text\" \"*\"])
   or strings (e.g., \"text/plain\").
-  
+
   Definition of \"acceptable\":
   An Accept header fragment of \"text/*\" is acceptable when allowing
   \"text/plain\".
@@ -154,10 +154,10 @@
        (cond
         (contains? #{:all nil true} allowed-types)
         (first sorted)
-        
+
         (fn? allowed-types)
         (some (enpair allowed-types) sorted)
-        
+
         :otherwise
         (some (allowed-types-filter (enpair allowed-types)) sorted)))))
 
@@ -218,8 +218,8 @@
                   (fn [encoding]
                     (or (get accepts encoding)
                         (get accepts "*"))))
-     
-     
+
+
      ;; The "identity" content-coding is always acceptable, unless
      ;; specifically refused because the Accept-Encoding field includes
      ;; "identity;q=0", or because the field includes "*;q=0" and does not
@@ -248,11 +248,11 @@
   (let [accepts (->> (string/split accepts-header #"[\s\r\n]*,[\s\r\n]*")
                      (map split-qval)
                      (into {}))
-        
+
         score (fn [langtag]
                 (or
                  ;; "A language-range matches a language-tag if it exactly equals the tag"
-                 (get accepts langtag)  
+                 (get accepts langtag)
                  (->> langtag
                       ;; "The language quality factor assigned to a
                       ;; language-tag by the Accept-Language field is
