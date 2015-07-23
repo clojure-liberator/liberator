@@ -47,7 +47,7 @@
 (declare if-none-match-exists?)
 
 (defn map-values [f m]
-  (apply hash-map (apply concat (map (fn [k] [k (f (m k))]) (keys m)))))
+  (persistent! (reduce-kv (fn [out-m k v] (assoc! out-m k (f v))) (transient {}) m)))
 
 (defn request-method-in [& methods]
   #(some #{(:request-method (:request %))} methods))
