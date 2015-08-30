@@ -134,7 +134,7 @@
                x)))
 
 (defn stringify [type]
-  (reduce str (interpose "/" type)))
+  (string/join "/" type))
 
 (defn best-allowed-content-type
   "Return the first type in the Accept header that is acceptable.
