@@ -44,8 +44,6 @@
   (doseq [l *loggers*]
     (l category values)))
 
-(declare if-none-match-exists?)
-
 (defn map-values [f m]
   (persistent! (reduce-kv (fn [out-m k v] (assoc! out-m k (f v))) (transient {}) m)))
 
@@ -190,12 +188,6 @@
   `(defn ~name [context#]
      (run-handler '~name ~status ~message context#)))
 
-(defn header-exists? [header context]
-  (get-in context [:request :headers header]))
-
-(defn if-match-star [context]
-  (= "*" (get-in context [:request :headers "if-match"])))
-
 (defn =method [method context]
   (= (get-in context [:request :request-method]) method))
 
@@ -281,7 +273,7 @@
 (defhandler handle-precondition-failed 412 "Precondition failed.")
 
 (defdecision if-match-star-exists-for-missing?
-  if-match-star
+  (fn [context] (= "*" (get-in context [:request :headers "if-match"])))
   handle-precondition-failed
   method-put?)
 
@@ -312,78 +304,50 @@
   method-patch?)
 
 (defdecision modified-since?
-  (fn [context]
-    (let [last-modified (gen-last-modified context)]
-      [(and last-modified (.after last-modified (::if-modified-since-date context)))
-       {::last-modified last-modified}]))
+  (fn [{:keys [request] :as context}]
+    (let [modified-since (parse-http-date (get-in request [:headers "if-modified-since"]))]
+      (or (nil? modified-since)
+          (let [last-modified (gen-last-modified context)]
+            [(and last-modified (.after last-modified modified-since))
+             {::last-modified last-modified}]))))
   method-delete?
   handle-not-modified)
 
-(defdecision if-modified-since-valid-date?
-  (fn [context]
-    (if-let [date (parse-http-date (get-in context [:request :headers "if-modified-since"]))]
-      {::if-modified-since-date date}))
-  modified-since?
-  method-delete?)
-
-(defdecision if-modified-since-exists?
-  (partial header-exists? "if-modified-since")
-  if-modified-since-valid-date?
-  method-delete?)
-
 (defdecision etag-matches-for-if-none?
-  (fn [context]
-    (let [etag (gen-etag context)]
-      [(= (get-in context [:request :headers "if-none-match"]) etag)
-       {::etag etag}]))
+  (fn [{:keys [request] :as context}]
+    (if-let [if-none-match (get-in context [:request :headers "if-none-match"])]
+      (let [etag (gen-etag context)]
+        [(#{"*" etag} if-none-match)
+         {::etag etag}])))
   if-none-match?
-  if-modified-since-exists?)
-
-(defdecision if-none-match-star?
-  #(= "*" (get-in % [:request :headers "if-none-match"]))
-  if-none-match?
-  etag-matches-for-if-none?)
-
-(defdecision if-none-match-exists? (partial header-exists? "if-none-match")
-  if-none-match-star? if-modified-since-exists?)
+  modified-since?)
 
 (defdecision unmodified-since?
-  (fn [context]
-    (let [last-modified (gen-last-modified context)]
-      [(and last-modified
-            (.after last-modified
-                    (::if-unmodified-since-date context)))
-       {::last-modified last-modified}]))
+  (fn [{:keys [request] :as context}]
+    (when-let [unmodified-since (parse-http-date (get-in request [:headers "if-unmodified-since"]))]
+      (let [last-modified (gen-last-modified context)]
+        [(and last-modified (.after last-modified unmodified-since))
+         {::last-modified last-modified}])))
   handle-precondition-failed
-  if-none-match-exists?)
+  etag-matches-for-if-none?)
 
-(defdecision  if-unmodified-since-valid-date?
-  (fn [context]
-    (when-let [date (parse-http-date (get-in context [:request :headers "if-unmodified-since"]))]
-      {::if-unmodified-since-date date}))
-  unmodified-since?
-  if-none-match-exists?)
-
-(defdecision if-unmodified-since-exists? (partial header-exists? "if-unmodified-since")
-  if-unmodified-since-valid-date? if-none-match-exists?)
+(defn- match-etag-for-existing [{:keys [request resource] :as context}]
+  (let [if-match (get-in request [:headers "if-match"])]
+    (or (empty? if-match)
+        (= "*" if-match)
+        (let [etag (gen-etag context)]
+          [(= etag if-match)
+           {::etag etag}]))))
 
 (defdecision etag-matches-for-if-match?
-  (fn [context]
-    (let [etag (gen-etag context)]
-      [(= etag (get-in context [:request :headers "if-match"]))
-       {::etag etag}]))
-  if-unmodified-since-exists?
+  match-etag-for-existing
+  unmodified-since?
   handle-precondition-failed)
 
-(defdecision if-match-star?
-  if-match-star if-unmodified-since-exists? etag-matches-for-if-match?)
-
-(defdecision if-match-exists? (partial header-exists? "if-match")
-  if-match-star? if-unmodified-since-exists?)
-
-(defdecision exists? if-match-exists? if-match-star-exists-for-missing?)
+(defdecision exists? etag-matches-for-if-match? if-match-star-exists-for-missing?)
 
 (defhandler handle-unprocessable-entity 422 "Unprocessable entity.")
+
 (defdecision processable? exists? handle-unprocessable-entity)
 
 (defhandler handle-not-acceptable 406 "No acceptable resource available.")
@@ -412,7 +376,7 @@
                 (or (empty? accept)
                     (when-let [charset (conneg/best-allowed-charset
                                         accept
-                                        ((get resource :available-charsets) context))]
+                                        ((:available-charsets resource) context))]
                       {:representation {:charset charset}})))))
 
 (defdecision charset-available? negotiate-charset
@@ -423,7 +387,7 @@
               (let [accept (get-in request [:headers "accept-language"])]
                 (if-let [lang (conneg/best-allowed-language
                                (if-not (empty? accept) accept "*" )
-                               ((get resource :available-languages) context))]
+                               ((:available-languages resource) context))]
                   (or (= "*" lang) {:representation {:language lang}})
                   (empty? accept)))))
 
@@ -435,7 +399,7 @@
               (let [accept (get-in request [:headers "accept"])]
                 (if-let [type (conneg/best-allowed-content-type
                                (if-not (empty? accept) accept "*/*")
-                               ((get resource :available-media-types) context))]
+                               ((:available-media-types resource) context))]
                   {:representation {:media-type (conneg/stringify type)}}
                   ;; if there's no accept headers and we cannot negotiate a
                   ;; media type then continue
