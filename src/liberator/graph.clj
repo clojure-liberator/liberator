@@ -10,13 +10,21 @@
 (defn to-graph [[& args]]
   (condp = (first args)
     'defdecision
-    (let [[name then else] (apply extract args)]
-      (format (str "\"%s\" [id = \"%s\"] \n "
-                   "\"%s\" -> \"%s\" [label = \"true\",  id = \"%s\"] \n"
-                   "\"%s\" -> \"%s\" [label = \"false\", id = \"%s\"]\n")
-              name (clean-id name)
-              name then (clean-id (str name "_" then))
-              name else (clean-id (str name "_" else))))
+   (let [[name then else] (apply extract args)
+          internal? (#{"is-options?"
+                       "method-put?"
+                       "method-delete?"
+                       "method-patch?"
+                       "post-to-existing?"
+                       "post-to-missing?"
+                       "post-to-gone?"
+                       "put-to-existing?"} (str name))]
+      (format (str "\"%s\" [id = \"%s\" %s] \n "
+                   "\"%s\" -> \"%s\" [label = \"true\", id = \"%s\"] \n"
+                   "\"%s\" -> \"%s\" [label=\"false\", id = \"%s\"]\n")
+              name (clean-id name) (if internal? "style=\"filled\" fillcolor=\"#CCCCCC\"" "")
+              name then (clean-id (str name "_" then)) 
+              name else (clean-id (str name "_" else ))))
     'defaction
     (let [[_ name then] args]
       (format (str "\"%s\"[shape=\"ellipse\" id = \"%s\"];\n"
@@ -78,7 +86,7 @@
   (let [{:keys [nodes handlers actions]} (parse-source-definitions)]
     (->> nodes
          (map to-graph)
-         (filter identity)
+         (remove nil?)
          (concat (rank-handler-groups handlers))
          (concat (rank-same (remove #{'initialize-context} actions)))
          (apply str)
