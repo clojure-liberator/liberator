@@ -71,7 +71,9 @@
 (declare handle-exception)
 
 (defn decide [name test then else {:keys [resource request] :as context}]
-  (if (or (fn? test) (contains? resource name))
+  (if (or (fn? test)
+          (instance? clojure.lang.MultiFn test)
+          (contains? resource name))
     (try
       (let [ftest (or (resource name) test)
             ftest (make-function ftest)

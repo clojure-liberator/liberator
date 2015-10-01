@@ -11,6 +11,17 @@
 (defresource with-multimethod
   :handle-ok with-multimethod*)
 
+(defmulti with-service-available?-multimethod*
+  (comp :service-available? :request))
+
+(defmethod with-service-available?-multimethod* :available [_] true)
+
+(defmethod with-service-available?-multimethod* :not-available [_] false)
+
+(defresource with-decisions-multimethod
+  :service-available? with-service-available?-multimethod*
+  :handle-ok (fn [_] "with-service-available?-multimethod"))
+
 (defresource without-param
   :handle-ok (fn [_] (format "The text is %s" "test")))
 
@@ -60,7 +71,13 @@
              => {:headers {"Vary" "Accept", "Content-Type" "application/json;charset=UTF-8"}, :body "OK", :status 200})
        (fact "should allow multi methods as handlers"
              (with-multimethod {:request-method :get})
-             => {:headers {"Content-Type" "text/plain;charset=UTF-8"}, :body "with-multimethod", :status 200}))
+             => {:headers {"Content-Type" "text/plain;charset=UTF-8"}, :body "with-multimethod", :status 200})
+       (fact "should allow multi methods as decisions"
+             (with-decisions-multimethod {:request-method :get :service-available? :available})
+             => {:headers {"Content-Type" "text/plain;charset=UTF-8"}, :body "with-service-available?-multimethod", :status 200})
+       (fact "should allow multi methods as decisions alternate path"
+             (with-decisions-multimethod {:request-method :get :service-available? :not-available})
+             => {:headers {"Content-Type" "text/plain;charset=UTF-8"}, :body "Service not available.", :status 503}))
 
 
 (def fn-with-options
