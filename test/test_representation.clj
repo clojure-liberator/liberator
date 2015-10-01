@@ -1,6 +1,10 @@
 (ns test-representation
   (:require [midje.sweet :refer :all]
-            [liberator.representation :refer :all]))
+            [liberator.representation :refer :all]
+            [liberator.core :refer :all]
+            [checkers :refer :all]
+            [ring.mock.request :as mock]
+            [clojure.data.json :as json]))
 
 ;; test for issue #19
 ;; https://github.com/clojure-liberator/liberator/pull/19
@@ -49,7 +53,7 @@
 
 (facts "Can give ring response map to override response values"
    (facts "returns single ring response unchanged"
-     (let [response {:status 123 
+     (let [response {:status 123
                      :headers {"Content-Type" "application/json;charset=UTF-8"
                                "X-Foo" "Bar"}
                      :body "123" }]
@@ -77,3 +81,61 @@
                {:status 200})
              => (contains {:headers {"X-Foo" "bar"
                                      "Content-Type" "text/plain;charset=UTF-8"}})))))
+(facts "about entity parsing"
+
+  (fact "it parses a json entity"
+    (let [request-entity (atom nil)
+          r (resource :allowed-methods [:post]
+                      :handle-created (fn [ctx] (reset! request-entity (:request-entity ctx)) "created")
+                      :processable? parse-request-entity)
+          resp (r (-> (mock/request :post "/" )
+                      (mock/body (json/write-str {:foo "bar"}))
+                      (mock/content-type "application/json")))]
+      resp => (is-status 201)
+      @request-entity => {:foo "bar"}))
+
+  (fact "it parses a json entity when media-type parameters are present"
+    (let [request-entity (atom nil)
+          r (resource :allowed-methods [:post]
+                      :handle-created (fn [ctx] (reset! request-entity (:request-entity ctx)) "created")
+                      :processable? parse-request-entity)
+          resp (r (-> (mock/request :post "/" )
+                      (mock/body (json/write-str {:foo "bar"}))
+                      (mock/content-type "application/json;charset=iso8859-15;profile=x-vnd-foo")))]
+      resp => (is-status 201)
+      @request-entity => {:foo "bar"}))
+
+  (fact "it parses a json entity with UTF-8"
+    (let [request-entity (atom nil)
+          r (resource :allowed-methods [:post]
+                      :handle-created (fn [ctx] (reset! request-entity (:request-entity ctx)) "created")
+                      :processable? parse-request-entity)
+          resp (r (-> (mock/request :post "/" )
+                      (mock/body "{\"foo\": \"ɦ\"}")
+                      (mock/content-type "application/json;charset=utf-8")))]
+      resp => (is-status 201)
+      @request-entity => {:foo "ɦ"}))
+
+  (fact "it parses a json entity with US-ASCII"
+    (let [request-entity (atom nil)
+          r (resource :allowed-methods [:post]
+                      :handle-created (fn [ctx] (reset! request-entity (:request-entity ctx)) "created")
+                      :processable? parse-request-entity)
+          resp (r (-> (mock/request :post "/" )
+                      (mock/body "{\"foo\": \"ɦ\"}")
+                      (mock/content-type "application/json;charset=us-ascii")))]
+      resp => (is-status 201)
+      @request-entity => {:foo "��"}))
+
+  (fact "it can cope with missing content-type"
+    (let [r (resource :allowed-methods [:post]
+                      :processable? parse-request-entity)
+          resp (r (-> (mock/request :post "/" )
+                      (mock/body "{\"foo\": \"bar\"}")))]
+      resp => (is-status 201)))
+
+  (fact "it can parse json"
+    (parsable-content-type? {:request {:headers {"content-type" "application/json"}}}) => true)
+
+  (fact "it cannot parse exotic content"
+    (parsable-content-type? {:request {:headers {"content-type" "foobar/foo"}}}) => false))
