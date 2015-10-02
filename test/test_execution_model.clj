@@ -50,11 +50,24 @@
     => (contains {:a 1 :status 404})))
 
 (facts "handler functions"
-  (fact "keyword as handler"
+  (fact "handler is a function"
     (-> (request :get "/")
-        ((resource :exists? {:some-key "foo"}
-                   :handle-ok :some-key)))
-    => (contains {:status 200 :body "foo"})))
+        ((resource :exists? false
+                   :handle-not-found (fn [ctx] "not found"))))
+    => (contains {:status 404 :body "not found"}))
+  (fact "keyword as handler"
+        (-> (request :get "/")
+            ((resource :exists? {:some-key "foo"}
+                       :handle-ok :some-key)))
+        => (contains {:status 200 :body "foo"}))
+  (fact "default handler uses message key"
+        (-> (request :get "/")
+            ((resource :exists? [false {:message "absent"}])))
+        => (contains {:status 404 :body "absent"}))
+  (fact "decisions can override status"
+        (-> (request :get "/")
+            ((resource :exists? [false {:status 444 :message "user defined status code"}])))
+        => (contains {:status 444 :body "user defined status code"})))
 
 (facts "context merge leaves nested objects intact (see #206)"
   (fact "using etag and if-match"

@@ -6,7 +6,13 @@
 
 * Values can be added to the context at the beginning of the execution
   flow using the :initialize-context action.
+* If no handler is specified, the key :message is looked up from the
+  context to create a default response.
 
+## Bugs fixed
+
+* #76 Nullpointer with post options
+* Allow decisions to override status in context
 * JSON body can be parsed into :request-entity by setting representation/parse-request-entity for :processable?
 
 ## Bugs fixed
