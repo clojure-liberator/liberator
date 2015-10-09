@@ -2,6 +2,7 @@
   (:require
    [clojure.data.json :as json]
    [clojure.data.csv :as csv]
+   [clojure.string :refer [split trim]]
    [liberator.util :as util]
    [hiccup.core :refer [html]]
    [hiccup.page :refer [html5 xhtml]]))
@@ -27,9 +28,9 @@
     (str k)))
 
 (defn html-table [data fields lang dictionary]
-  [:div [:table 
+  [:div [:table
          [:thead
-          [:tr 
+          [:tr
            (for [field fields] [:th (or (dictionary field lang)
                                         (default-dictionary field lang))])]]
          [:tbody (for [row data]
@@ -85,7 +86,7 @@
     :keys [dictionary fields] :or {dictionary default-dictionary}
     :as context} mode]
   (let [content
-        [:div [:table 
+        [:div [:table
 
                [:tbody (for [[key value] data]
                          [:tr
@@ -175,7 +176,7 @@
   (if (and charset (not (.equalsIgnoreCase charset "UTF-8")))
     (java.io.ByteArrayInputStream.
      (.getBytes string (java.nio.charset.Charset/forName charset)))
-      
+
     ;; "If no Accept-Charset header is present, the default is that
     ;; any character set is acceptable." (p101). In the case of Strings, it is unnecessary to convert to a byte stream now, and doing so might even make things harder for test-suites, so we just return the string.
     string))
@@ -208,11 +209,11 @@
       {:body
        (in-charset this charset)
        :headers {"Content-Type" (format "%s;charset=%s" (get representation :media-type "text/plain") charset)}}))
-  
+
   ;; If an input-stream is returned, we have no way of telling whether it's been encoded properly (charset and encoding), so we have to assume it is, given that we told the developer what representation was negotiated.
   java.io.File
   (as-response [this _] {:body this})
-  
+
   ;; We assume the input stream is already in the requested
   ;; charset. Decoding and encoding an existing charset unnecessarily
   ;; would be expensive.
@@ -259,6 +260,37 @@
      :body \"{'foo': 'bar'}\"} "
   ([ring-response-map] (ring-response nil ring-response-map))
   ([value ring-response-map] (->RingResponse ring-response-map value)))
+
+(defn- content-type [ctx]
+  (get-in ctx [:request :headers "content-type"]))
+
+(defn- encoding [ctx]
+  (or
+   (second (flatten (re-seq #"charset=([^;]+)" (content-type ctx))))
+   "ISO-8859-1"))
+
+(defmulti parse-request-entity
+  (fn [ctx]
+    (when-let [media-type (content-type ctx)]
+      (-> media-type
+          (split #"\s*;\s*")
+          first))))
+
+(defmethod parse-request-entity "application/json" [ctx]
+  (if-let [body (:body (:request ctx))]
+    {:request-entity (json/read-str (slurp body :encoding (encoding ctx)) :key-fn keyword)}
+    true))
+
+(defmethod parse-request-entity :default [ctx]
+  (if-let [body (:body (:request ctx))]
+    {:request-entity body}
+    true))
+
+(defn parsable-content-type?
+  "Tells if the request has a content-type that can be parsed by
+  the default implementation for :processable?"
+  [ctx]
+  (contains? (methods parse-request-entity) (content-type ctx)))
 
 ;; Copyright (c) Philipp Meier (meier@fnogol.de). All rights reserved.
 ;; The use and distribution terms for this software are covered by the Eclipse
