@@ -254,8 +254,6 @@
 
 (defdecision can-post-to-gone? post! handle-gone)
 
-
-
 (defdecision post-to-gone? (partial =method :post) can-post-to-gone? handle-gone)
 
 (defdecision moved-temporarily? handle-moved-temporarily post-to-gone?)
@@ -591,15 +589,35 @@
        ::throwable e}))) ; ::throwable gets picked up by an error renderer
 
 
+(defrecord Update [f])
+
+(defn update [f] (Update. f))
+
+(defrecord Wrap [f])
+(defn wrap [f] (Wrap. f))
+
+(defmulti combine-option (fn [x y] (type y)))
+
+(defmethod combine-option Update [x y]
+  (fn [& args]
+    ((.f y) (apply (make-function x) args))))
+
+(defmethod combine-option Wrap [x y]
+  ((.f y) (make-function x)))
+
+(defmethod combine-option :default [x y]
+  y)
+
 (defn get-options
-  [kvs]
-  (if (map? (first kvs))
-    (merge (first kvs) (apply hash-map (rest kvs)))
-    (apply hash-map kvs)))
+  [head & tail]
+  (if (map? head)
+    (merge-with combine-option head (when tail (apply get-options tail)))
+    (apply hash-map head tail)))
 
 (defn resource [& kvs]
-  (fn [request]
-    (run-resource request (get-options kvs))))
+  (let [options (apply get-options kvs)]
+    (fn [request]
+      (run-resource request options))))
 
 (defmacro defresource [name & kvs]
   (if (vector? (first kvs))
@@ -607,11 +625,13 @@
           kvs (rest kvs)]
       ;; Rather than call resource, create anonymous fn in callers namespace for better debugability.
       `(defn ~name [~@args]
-         (fn [~'request]
-           (run-resource ~'request (get-options (list ~@kvs))))))
+         (let [options# (get-options ~@kvs)]
+           (fn [request#]
+             (run-resource request# options#)))))
     `(def ~name
-         (fn [~'request]
-           (run-resource ~'request (get-options (list ~@kvs)))))))
+       (fn [request#]
+         (let [options# (get-options ~@kvs)]
+           (run-resource request# options#))))))
 
 (defn by-method
   "returns a handler function that uses the request method to
