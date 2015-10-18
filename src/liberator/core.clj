@@ -8,10 +8,10 @@
   (:import (javax.xml.ws ProtocolException)))
 
 (defmulti coll-validator
-  "Return a function that evaluaties if the give argument 
-             a) is contained in a collection 
+  "Return a function that evaluaties if the give argument
+             a) is contained in a collection
              b) equals an argument
-             c) when applied to a function evaluates as true" 
+             c) when applied to a function evaluates as true"
   (fn [x] (cond
           (coll? x) :col
           (fn? x) :fn)))
@@ -23,10 +23,10 @@
 (defmethod coll-validator :default [x]
   (partial = x))
 
-(defn console-logger [category values] 
+(defn console-logger [category values]
   #(apply println "LOG " category " " values))
 
-(def ^:dynamic *loggers* nil) 
+(def ^:dynamic *loggers* nil)
 
 (defmacro with-logger [logger & body]
   `(binding [*loggers* (conj (or *loggers* []) ~logger)]
@@ -94,7 +94,7 @@
   `(defn ~name [~'context]
      (decide ~(keyword name) ~test ~then ~else ~'context)))
 
-(defmacro defdecision 
+(defmacro defdecision
   ([name then else]
      (defdecision* name nil then else))
   ([name test then else]
@@ -282,14 +282,14 @@
 
 (defhandler handle-precondition-failed 412 "Precondition failed.")
 
-(defdecision if-match-star-exists-for-missing? 
+(defdecision if-match-star-exists-for-missing?
   if-match-star
   handle-precondition-failed
   method-put?)
 
 (defhandler handle-not-modified 304 nil)
 
-(defdecision if-none-match? 
+(defdecision if-none-match?
   #(#{ :head :get} (get-in % [:request :request-method]))
   handle-not-modified
   handle-precondition-failed)
@@ -297,7 +297,7 @@
 (defdecision put-to-existing? (partial =method :put)
   conflict? multiple-representations?)
 
-(defdecision post-to-existing? (partial =method :post) 
+(defdecision post-to-existing? (partial =method :post)
   post! put-to-existing?)
 
 (defhandler handle-accepted 202 "Accepted")
@@ -322,7 +322,7 @@
   handle-not-modified)
 
 (defdecision if-modified-since-valid-date?
-  (fn [context] 
+  (fn [context]
     (if-let [date (parse-http-date (get-in context [:request :headers "if-modified-since"]))]
       {::if-modified-since-date date}))
   modified-since?
@@ -341,7 +341,7 @@
   if-none-match?
   if-modified-since-exists?)
 
-(defdecision if-none-match-star? 
+(defdecision if-none-match-star?
   #(= "*" (get-in % [:request :headers "if-none-match"]))
   if-none-match?
   etag-matches-for-if-none?)
@@ -360,7 +360,7 @@
   if-none-match-exists?)
 
 (defdecision  if-unmodified-since-valid-date?
-  (fn [context]   
+  (fn [context]
     (when-let [date (parse-http-date (get-in context [:request :headers "if-unmodified-since"]))]
       {::if-unmodified-since-date date}))
   unmodified-since?
@@ -377,7 +377,7 @@
   if-unmodified-since-exists?
   handle-precondition-failed)
 
-(defdecision if-match-star? 
+(defdecision if-match-star?
   if-match-star if-unmodified-since-exists? etag-matches-for-if-match?)
 
 (defdecision if-match-exists? (partial header-exists? "if-match")
@@ -390,7 +390,7 @@
 
 (defhandler handle-not-acceptable 406 "No acceptable resource available.")
 
-(defdecision encoding-available? 
+(defdecision encoding-available?
   (fn [ctx]
     (when-let [encoding (conneg/best-allowed-encoding
                          (get-in ctx [:request :headers "accept-encoding"])
@@ -425,7 +425,7 @@
 (defdecision language-available?
   #(try-header "Accept-Language"
                (when-let [lang (conneg/best-allowed-language
-                                (get-in % [:request :headers "accept-language"]) 
+                                (get-in % [:request :headers "accept-language"])
                                 ((get-in context [:resource :available-languages]) context))]
                  (if (= lang "*")
                    true
@@ -437,8 +437,8 @@
 
 (defn negotiate-media-type [context]
   (try-header "Accept"
-              (when-let [type (conneg/best-allowed-content-type 
-                               (get-in context [:request :headers "accept"]) 
+              (when-let [type (conneg/best-allowed-content-type
+                               (get-in context [:request :headers "accept"])
                                ((get-in context [:resource :available-media-types] (constantly "text/html")) context))]
                 {:representation {:media-type (conneg/stringify type)}})))
 
@@ -452,7 +452,7 @@
      ;; client accepts all media types" [p100]
      ;; in this case we do content-type negotiation using */* as the accept
      ;; specification
-     (if-let [type (liberator.conneg/best-allowed-content-type 
+     (if-let [type (liberator.conneg/best-allowed-content-type
                     "*/*"
                     ((get-in context [:resource :available-media-types]) context))]
        [false {:representation {:media-type (liberator.conneg/stringify type)}}]
@@ -583,7 +583,7 @@
     (initialize-context {:request request
                          :resource (map-values make-function (merge default-functions kvs))
                          :representation {}})
-    
+
     (catch ProtocolException e         ; this indicates a client error
       {:status 400
        :headers {"Content-Type" "text/plain"}
@@ -607,11 +607,11 @@
           kvs (rest kvs)]
       ;; Rather than call resource, create anonymous fn in callers namespace for better debugability.
       `(defn ~name [~@args]
-         (fn [~'request]
-           (run-resource ~'request (get-options (list ~@kvs))))))
+         (fn [request#]
+           (run-resource request# (get-options (list ~@kvs))))))
     `(def ~name
-         (fn [~'request]
-           (run-resource ~'request (get-options (list ~@kvs)))))))
+         (fn [request#]
+           (run-resource request# (get-options (list ~@kvs)))))))
 
 (defn by-method
   "returns a handler function that uses the request method to
@@ -623,4 +623,3 @@
                :delete \"Entity was deleted successfully.\"})"
   [map]
   (fn [ctx] ((make-function (get map (get-in ctx [:request :request-method]) ctx)) ctx)))
-

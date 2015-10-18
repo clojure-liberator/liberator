@@ -2,6 +2,8 @@
 
 # Unreleased
 
+* The `defresource` macro no longer implicitly bind `request`.
+
 * Values can be added to the context at the beginning of the execution
   flow using the :initialize-context action.
 
@@ -30,7 +32,7 @@
 ## Bugs fixed
 
 * #162 This release actually contains the changes announced for 0.12.1
-  Due to whatever reason the revision in clojars did not match 
+  Due to whatever reason the revision in clojars did not match
   what was tagged as 0.12.1 in the git repository.
 
 # New in 0.12.1
@@ -105,14 +107,14 @@
   location from context key :location
 * Extractor for graphivz dot file that reads core.clj
 * Bump hiccup dependency to 1.0.2
-* Add can-put-to-missing? 
+* Add can-put-to-missing?
 * Fix representation render-map-csv
 * Make liberator build with lein 2.0.0RC1 (manage dependencies)
 * Drop unnecessary methods from Representation
 * Dispatch Representation on MapEquivalence and Sequential which
   increased robustness
 * Fixes to HTML Table representation (missing tr)
-* Render Clojure Representation using \*print-dup\* 
+* Render Clojure Representation using \*print-dup\*
 * Support "application/edn" representation
 
 ## Bugs fixed
@@ -129,12 +131,12 @@
 
 * Include olympics example data with source
 
-## Bugs fixes 
+## Bugs fixes
 * Handle line-break and whitespace in Accept headers
 * Ignore case in character set negotiation
 * #12 String representation sets character set
 * #9 Missing media-type for "hello george" example
-* #11 
+* #11
 * #14 Use newer org.clojure:data.csv
 
 # New in 0.7.0
