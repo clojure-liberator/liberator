@@ -55,7 +55,6 @@
 (defresource non-anamorphic-request [request]
   :handle-ok (str request))
 
-
 (facts "about defresource"
        (fact "its simple form should behave as it always has"
              (without-param {:request-method :get})
@@ -82,7 +81,7 @@
        (fact "should allow multi methods as decisions alternate path"
              (with-decisions-multimethod {:request-method :get :service-available? :not-available})
              => {:headers {"Content-Type" "text/plain;charset=UTF-8"}, :body "Service not available.", :status 503})
-       (fact "request should not be anamorphic"
+       (fact "should allow 'request' to be used as a resource parameter name, this was a bug at a time."
              (:body ((non-anamorphic-request "test") {:request-method :get}))
              => "test"))
 

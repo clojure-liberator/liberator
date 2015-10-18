@@ -2,7 +2,7 @@
 
 # Unreleased
 
-* The `defresource` macro no longer implicitly bind `request`.
+* The `defresource` macro no longer implicitly binds `request`.
 
 * Values can be added to the context at the beginning of the execution
   flow using the :initialize-context action.
