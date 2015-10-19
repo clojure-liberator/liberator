@@ -127,6 +127,11 @@
            {"Accept-Patch" (join "," ((:patch-content-types resource)))}
            {})))
 
+(defn handler-result->response
+  [{:keys [as-response]} context handler-result]
+  (when-let [response (as-response handler-result context)]
+    (vary-meta response assoc :liberator/value handler-result)))
+
 (defn run-handler [name status message
                    {:keys [resource request representation] :as context}]
   (let [context
@@ -173,12 +178,10 @@
             ;; override the status and headers.
 
 
-            (let [as-response (:as-response resource)]
-              (as-response
-               (if-let [handler (get resource (keyword name))]
-                 (handler context)
-                 (get context :message))
-               context)))))]
+            (->> (if-let [handler (get resource (keyword name))]
+                   (handler context)
+                   (get context :message))
+                 (handler-result->response resource context)))))]
     (cond
      (or (= :options (:request-method request)) (= 405 (:status response)))
      (merge-with merge
