@@ -76,7 +76,7 @@ useful when we want to pass along a value to a handler:
                                           (get-in ctx [:request :params "choice"]))]
                               {:choice choice}))
                  :handle-ok (fn [ctx]
-                              (format "<html>Your choice: &quot;%s&quot;."
+                              (format "<html>Your choice: &quot;%s&quot;.</html>"
                                         (get ctx :choice)))
                  :handle-not-found (fn [ctx]
                                      (format "<html>There is no value for the option &quot;%s&quot;"
