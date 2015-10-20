@@ -59,3 +59,13 @@
                       :handle-exception (fn [_ _] (throw (RuntimeException. "bar"))))]
     (fact (res (-> (request :get "/")
                    (header "Accept" "text/plain"))) => (throws RuntimeException))))
+
+(facts "error throw by liberator itself don't get handle managment"
+       (let [resp ((resource
+                    :service-available? (fn [_] {:resource [1 2]})
+                    :exists? (fn [_] (throw (RuntimeException. "right")))
+                    :handle-exception (fn [{ex :exception}]
+                                        (str "error: " (.getMessage ex))))
+                   (request :get "/"))]
+         (fact resp => INTERNAL-SERVER-ERROR)
+         (fact resp => (body #"error: right"))))
