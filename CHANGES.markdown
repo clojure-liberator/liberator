@@ -1,6 +1,6 @@
 # Changelog
 
-# Unreleased
+# New in 0.14
 
 * The `defresource` macro no longer implicitly binds `request`.
 
@@ -8,12 +8,15 @@
   flow using the :initialize-context action.
 * If no handler is specified, the key :message is looked up from the
   context to create a default response.
+* JSON body can be parsed into :request-entity by setting
+  representation/parse-request-entity for :processable?
+  parse-request-entity is a multimethod which can be extended for
+  additional media types.
 
 ## Bugs fixed
 
 * #76 Nullpointer with post options
 * Allow decisions to override status in context
-* JSON body can be parsed into :request-entity by setting representation/parse-request-entity for :processable?
 
 ## Bugs fixed
 
