@@ -55,7 +55,7 @@
     (fact resp => (content-type #"text/plain;charset=.*"))))
 
 (facts "custom exception handler not invoked if handler throws exception"
-  (let [res (resource :service-available? (fn [_ _] (throw (RuntimeException. "foo")))
-                      :handle-exception (fn [_ _] (throw (RuntimeException. "bar"))))]
+  (let [res (resource :service-available? (fn [_] (throw (RuntimeException. "error in service-available")))
+                      :handle-exception (fn [_] (throw (RuntimeException. "error in handle-exception"))))]
     (fact (res (-> (request :get "/")
-                   (header "Accept" "text/plain"))) => (throws RuntimeException))))
+                   (header "Accept" "text/plain"))) => (throws #"handle-exception"))))

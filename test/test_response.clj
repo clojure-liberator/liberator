@@ -83,3 +83,26 @@
         ((resource :handle-ok "ok")))
     => (fn [c] (not (contains? (:headers c) "Allow"))))
 )
+
+
+(facts "Options can return a body"
+      (fact "return a simple response"
+             (-> (request :options "/")
+                 ((resource :allowed-methods [:get :options]
+                            :handle-ok "ok"
+                            :handle-options "options")))
+             => (body "options"))
+      (fact "return a ring response"
+            (let [resp (-> (request :options "/")
+                           ((resource :allowed-methods [:get :options]
+                                      :available-media-types ["text/plain" "text/html"]
+                                      :handle-ok "ok"
+                                      :handle-options (fn [ctx]
+                                                        ;; workaround until issue #152 is fixed
+                                                        (-> "options"
+                                                            (as-response (assoc-in ctx [:representation :media-type]
+                                                                                   "text/plain"))
+                                                            (assoc-in [:headers "X-Foo"] "bar")
+                                                            (ring-response))))))]
+              resp => (body "options")
+              resp) => (header-value "X-Foo" "bar")))

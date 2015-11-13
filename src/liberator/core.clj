@@ -136,7 +136,7 @@
          combine
 
          ;; Status
-         {:status status}
+         {:status (:status context)}
 
          ;; ETags
          (when-let [etag (gen-etag context)]
@@ -147,7 +147,7 @@
            {:headers {"Last-Modified" (http-date last-modified)}})
 
          ;; 201 created required a location header to be send
-         (when (#{201 301 303 307} status)
+         (when (#{201 301 303 307} (:status context))
            (if-let [f (or (get context :location)
                           (get resource :location))]
              {:headers {"Location" (str ((make-function f) context))}}))
@@ -171,17 +171,14 @@
                  (set-header-maybe "Vary" (build-vary-header representation)))}
             ;; Finally the result of the handler.  We allow the handler to
             ;; override the status and headers.
-
-
-            (let [as-response (:as-response resource)]
-              (as-response
-               (if-let [handler (get resource (keyword name))]
-                 (handler context)
-                 (get context :message))
-               context)))))]
+            (when-let [result (if-let [handler (get resource (keyword name))]
+                                (handler context)
+                                (get context :message))]
+              (let [as-response (:as-response resource)]
+                (as-response result context))))))]
     (cond
      (or (= :options (:request-method request)) (= 405 (:status response)))
-     (merge-with merge
+     (merge-with combine
                  {:headers (build-options-headers resource)}
                  response)
      (= :head (:request-method request))
@@ -563,7 +560,8 @@
    :patch-content-types []
 
    ;; The default function used extract a ring response from a handler's response
-   :as-response               as-response
+   :as-response               (fn [data ctx]
+                                (when data (as-response data ctx)))
 
    ;; Directives
    :available-media-types     []
