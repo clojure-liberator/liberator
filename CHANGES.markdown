@@ -1,6 +1,6 @@
 # Changelog
 
-# New in 0.14
+# New in 0.14.0
 
 * The `defresource` macro no longer implicitly binds `request`.
 
