@@ -29,14 +29,19 @@ Liberator provides so called action functions that you can declare
 with your resource definitions which are called at well suited points
 during request processing.
 
-actions  | description
----------|-----------------------------
-:post!   | called for POST requests
-:put!    | called for PUT requests
-:delete! | called for DELETE requests
-:patch!  | called for PATCH requests
+actions             | description
+--------------------|-----------------------------
+:initialize-context | first function to be called. Can be used to initialize the context <span class="label label-info">since 0.14.0</span>
+:post!              | called for POST requests
+:put!               | called for PUT requests
+:delete!            | called for DELETE requests
+:patch!             | called for PATCH requests
 
 ## When are actions called?
+
+The action `:initialize-context` is the first callback called for
+a resource. It's a convenient place to initialize the resource for
+every request and seed the context with data.
 
 The action functions are called after content negotiation, existence
 checks and conditional request processing -- just before deciding on

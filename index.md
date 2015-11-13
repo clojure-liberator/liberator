@@ -33,7 +33,7 @@ For more Information about adding the web server component required for liberato
 Add the liberator dependency to your project.clj:
 
 {% highlight clojure %}
-[liberator "0.13"]{% endhighlight %}
+[liberator "0.14.0"]{% endhighlight %}
 
 <div class="alert alert-warning">Liberator is still under heavy
 development, however, the programming interface is settling down.
