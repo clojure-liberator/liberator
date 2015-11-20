@@ -2,6 +2,8 @@
 
 # Unreleased
 
+* Map serialization supports java.util.Map
+
 # New in 0.14.0
 
 * The `defresource` macro no longer implicitly binds `request`.

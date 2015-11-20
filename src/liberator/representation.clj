@@ -204,7 +204,7 @@
 
   java.util.Map
   (as-response [this context]
-    (as-response (render-map-generic this context) context))
+    (as-response (render-map-generic (into {} this) context) context))
 
   ;; If a string is returned, we should carry out the conversion of both the charset and the encoding.
   String
