@@ -31,7 +31,7 @@
                   "application/edn" (pr-str entity))))
 
 (facts "Can produce representation from java.util.Map"
-       (let [entity (doto (java.util.HashMap.)
+       (let [entity (doto (java.util.TreeMap.)
                       (.put :foo "bar")
                       (.put :baz "qux"))]
          (tabular "Various media types are supported"
