@@ -2,7 +2,7 @@
 
 # Unreleased
 
-* Map serialization supports java.util.Map
+* Representation generator supports java.util.Map
 
 # New in 0.14.0
 
