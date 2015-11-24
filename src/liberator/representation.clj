@@ -53,9 +53,10 @@
        (apply str)))
 
 (defn- render-map-csv [data sep]
-  (with-out-str
-    (csv/write-csv *out* [["name" "value"]] :newline :cr+lf :separator sep)
-    (csv/write-csv *out* (seq data) :newline :cr+lf :separator sep)))
+  (let [data (if (coll? data) data (into {} data))]
+    (with-out-str
+      (csv/write-csv *out* [["name" "value"]] :newline :cr+lf :separator sep)
+      (csv/write-csv *out* (seq data) :newline :cr+lf :separator sep))))
 
 (defmethod render-map-generic "text/csv" [data context]
   (render-map-csv data \,))
@@ -199,6 +200,10 @@
     (as-response (render-seq-generic data context) context))
 
   clojure.lang.MapEquivalence
+  (as-response [this context]
+    (as-response (render-map-generic this context) context))
+
+  java.util.Map
   (as-response [this context]
     (as-response (render-map-generic this context) context))
 

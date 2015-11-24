@@ -30,6 +30,25 @@
                   "application/clojure" (pr-str-dup entity)
                   "application/edn" (pr-str entity))))
 
+(facts "Can produce representation from java.util.Map"
+       (let [entity (doto (java.util.TreeMap.)
+                      (.put :foo "bar")
+                      (.put :baz "qux"))]
+         (tabular "Various media types are supported"
+                  (as-response entity {:representation {:media-type ?media-type :charset "UTF-8"}})
+                  => {:body ?body :headers { "Content-Type" (str ?media-type ";charset=UTF-8")}}
+                  ?media-type   ?body
+                  "text/csv"    "name,value\r\n:baz,qux\r\n:foo,bar\r\n"
+                  "text/tab-separated-values" "name\tvalue\r\n:baz\tqux\r\n:foo\tbar\r\n"
+                  "text/plain"  "baz=qux\r\nfoo=bar"
+                  "text/html"   (str "<div><table><tbody>"
+                                     "<tr><th>baz</th><td>qux</td></tr>"
+                                     "<tr><th>foo</th><td>bar</td></tr>"
+                                     "</tbody></table></div>")
+                  "application/json" (clojure.data.json/write-str entity)
+                  "application/clojure" (pr-str-dup entity)
+                  "application/edn" (pr-str entity))))
+
 (facts "Can produce representations from a seq of maps"
        (let [entity [(sorted-map :foo 1 :bar 2) (sorted-map :foo 2 :bar 3)]]
          (tabular "Various media types are supported"
