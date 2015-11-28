@@ -66,7 +66,8 @@
                       (filter #(= 'defhandler (first %)))
                       (map (fn [[_ name status _]] [name status])))
         actions (->> nodes
-                      (filter #(= 'defaction (first %)))
+                     (filter #(and (= 'defaction (first %))
+                                   (not= 'initialize-context (second %))))
                       (map second))]
     {:nodes nodes
      :decisions decisions
@@ -81,7 +82,7 @@
          (concat (rank-handler-groups handlers))
          (concat (rank-same actions))
          (apply str)
-         (format "digraph{\nid=\"trace\"; size=\"1000,1000\"; page=\"1000,1000\";\n\nnode[shape=\"box\", splines=ortho]\n\"start\"[id=\"start\" shape=circle];\n\"start\" -> \"service-available?\" [id=start_serviceavailable]\n%s\n}"))))
+         (format "digraph{\nid=\"trace\"; size=\"1000,1000\"; page=\"1000,1000\";\n\nnode[shape=\"box\", splines=ortho]\n%s\n}"))))
 
 (defn generate-graph-dot-file [f]
   (spit f (generate-graph-dot)))
