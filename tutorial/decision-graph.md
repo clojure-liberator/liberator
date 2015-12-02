@@ -9,8 +9,8 @@ determine the correct response status code and to provide the handler
 function with the necessary information to generate an appropriate
 response.
 
-Decisions are made according to a flowchart which determines the order
-in which decisions and places where the path splits into two.
+Decisions are made according to a flowchart which determines their order
+and places where the path splits into two.
 
 The flowchart always ends at a handler (at the bottom of the chart)
 which determines the HTTP status code in the response.
