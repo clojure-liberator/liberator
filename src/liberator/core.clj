@@ -269,9 +269,9 @@
 
 (defaction put! new?)
 
-(defdecision is-post-request? (partial =method :post) post! put!)
+(defdecision method-post? (partial =method :post) post! put!)
 
-(defdecision conflict? handle-conflict is-post-request?)
+(defdecision conflict? handle-conflict method-post?)
 
 (defhandler handle-not-implemented 501 "Not implemented.")
 
