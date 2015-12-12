@@ -42,6 +42,7 @@
 (defn MOVED-TEMPORARILY [location] (status-location 307 location))
 
 (def NOT-FOUND (is-status 404))
+(def CONFLICT (is-status 409))
 (def GONE (is-status 410))
 (def PRECONDITION-FAILED (is-status 412))
 

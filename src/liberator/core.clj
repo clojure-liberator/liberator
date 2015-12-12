@@ -269,7 +269,9 @@
 
 (defaction put! new?)
 
-(defdecision conflict? handle-conflict put!)
+(defdecision is-post-request? (partial =method :post) post! put!)
+
+(defdecision conflict? handle-conflict is-post-request?)
 
 (defhandler handle-not-implemented 501 "Not implemented.")
 
@@ -297,7 +299,7 @@
   conflict? multiple-representations?)
 
 (defdecision post-to-existing? (partial =method :post)
-  post! put-to-existing?)
+  conflict? put-to-existing?)
 
 (defhandler handle-accepted 202 "Accepted")
 
