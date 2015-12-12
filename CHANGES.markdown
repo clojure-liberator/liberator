@@ -6,6 +6,7 @@
   :accept-exists?, :accept-language-exists?, :accept-encoding-exists?,
   :accept-charset-exists? Empty Accept-* headers are treatened as
   absent.
+* Posting to an existing resource checks for conflicts.
 
 # New in 0.14.1
 
