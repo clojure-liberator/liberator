@@ -42,8 +42,10 @@
 (defn MOVED-TEMPORARILY [location] (status-location 307 location))
 
 (def NOT-FOUND (is-status 404))
+(def CONFLICT (is-status 409))
 (def GONE (is-status 410))
 (def PRECONDITION-FAILED (is-status 412))
+(def UNPROCESSABLE (is-status 422))
 
 (def INTERNAL-SERVER-ERROR (is-status 500))
 (def NOT-IMPLEMENTED (is-status 501))
