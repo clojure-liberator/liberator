@@ -141,7 +141,7 @@
        (let [r (resource :method-allowed? [:put]
                          :processable? false)
              resp (r (request :put "/"))]
-         (fact "Unprocessable can give 422" resp => (is-status 422))))
+         (fact "Unprocessable can give 422" resp => UNPROCESSABLE)))
 
 
 
