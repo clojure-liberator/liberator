@@ -2,6 +2,9 @@
 
 # Unreleased
 
+* Switch from `clojure.data.jdbc` to `cheshire` for faster, and
+  fancier JSON responses (pprinting, key-fn, escapes, date-formatting)
+
 # New in 0.14.1
 
 * Improved highlighting of tracing view

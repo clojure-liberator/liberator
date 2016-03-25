@@ -123,8 +123,8 @@
 (defmethod  render-seq-generic "application/xhtml+xml" [data context]
   (render-seq-html-table data context :html))
 
-(defmethod render-seq-generic "application/json" [data _]
-  (json/generate-string data))
+(defmethod render-seq-generic "application/json" [data context]
+  (json/generate-string data (:json context)))
 
 (defmethod render-seq-generic "application/clojure" [data _]
   (render-as-clojure data))

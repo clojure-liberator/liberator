@@ -26,7 +26,7 @@
                                      "<tr><th>baz</th><td>qux</td></tr>"
                                      "<tr><th>foo</th><td>bar</td></tr>"
                                      "</tbody></table></div>")
-                  "application/json" (cheshire.core/generate-string entity)
+                  "application/json" (json/generate-string entity)
                   "application/clojure" (pr-str-dup entity)
                   "application/edn" (pr-str entity))))
 
@@ -46,9 +46,30 @@
                                      "<tr><td>3</td><td>2</td></tr>"
                                      "</tbody>"
                                      "</table></div>")
-                  "application/json" (cheshire.core/generate-string entity)
+                  "application/json" (json/generate-string entity)
                   "application/clojure" (pr-str-dup entity)
                   "application/edn" (pr-str entity))))
+
+(facts "Representation will respect formatting options"
+  (let [data [{:name "jane" :gender "f" :likes "dogs"}
+              {:name "john" :gender "m" :likes "cats"}]
+        handler (resource :initialize-context {:fields [:name :likes]
+                                               :json {:pretty true}}
+                          :allowed-methods [:get]
+                          :available-media-types ["application/json" "text/csv"]
+                          :handle-ok data)
+        request (mock/request :get "/")]
+  (facts "Json can be pretty-printed"
+    (-> request
+        (mock/header "Accept" "application/json")
+        handler
+        :body) => (json/generate-string data {:pretty true}))
+  (facts "Fields can be specified for tabular data"
+    (facts "csv respects fields option"
+      (-> request
+          (mock/header "Accept" "text/csv")
+          handler
+          :body) => "name,likes\r\njane,dogs\r\njohn,cats\r\n"))))
 
 
 (facts "Can give ring response map to override response values"
