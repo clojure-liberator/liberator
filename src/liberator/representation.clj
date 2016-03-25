@@ -1,6 +1,6 @@
 (ns liberator.representation
   (:require
-   [clojure.data.json :as json]
+   [cheshire.core :as json]
    [clojure.data.csv :as csv]
    [clojure.string :refer [split trim]]
    [liberator.util :as util]
@@ -64,7 +64,7 @@
   (render-map-csv data \tab))
 
 (defmethod render-map-generic "application/json" [data context]
-  (json/write-str data))
+  (json/generate-string data))
 
 (defn render-as-clojure [data]
   (binding [*print-dup* true]
@@ -124,7 +124,7 @@
   (render-seq-html-table data context :html))
 
 (defmethod render-seq-generic "application/json" [data _]
-  (json/write-str data))
+  (json/generate-string data))
 
 (defmethod render-seq-generic "application/clojure" [data _]
   (render-as-clojure data))
@@ -278,7 +278,7 @@
 
 (defmethod parse-request-entity "application/json" [ctx]
   (if-let [body (:body (:request ctx))]
-    {:request-entity (json/read-str (slurp body :encoding (encoding ctx)) :key-fn keyword)}
+    {:request-entity (json/parse-string (slurp body :encoding (encoding ctx)) keyword)}
     true))
 
 (defmethod parse-request-entity :default [ctx]
