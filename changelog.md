@@ -4,6 +4,27 @@ title: Changelog
 ---
 # Changelog
 
+## New in 0.14.1
+
+* Improved highlighting of tracing view
+
+### Bugs fixed
+
+* #253 fix highlighting in tracing view broken since 0.14.0
+
+## New in 0.14.0
+
+* The `defresource` macro no longer implicitly binds `request`.
+
+* Values can be added to the context at the beginning of the execution
+  flow using the :initialize-context action.
+* If no handler is specified, the key :message is looked up from the
+  context to create a default response.
+* JSON body can be parsed into :request-entity by setting
+  representation/parse-request-entity for :processable?
+  parse-request-entity is a multimethod which can be extended for
+  additional media types.
+
 ## New in 0.13
 
 * Optionally a value can be specified for ring-response

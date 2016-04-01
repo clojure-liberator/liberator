@@ -33,12 +33,11 @@ For more Information about adding the web server component required for liberato
 Add the liberator dependency to your project.clj:
 
 {% highlight clojure %}
-[liberator "0.14.0"]{% endhighlight %}
+[liberator "0.14.1"]{% endhighlight %}
 
-<div class="alert alert-warning">Liberator is still under heavy
-development, however, the programming interface is settling down.
-Compatibility with prior releases is a goal but it cannot always be
-guaranteed. Compatibility notes are marked as follows: <span class="label label-info">since 0.9.0</span></div>
+<div class="alert alert-warning">Compatibility with prior releases is a goal
+but it cannot always be guaranteed. Compatibility notes are marked as follows:
+<span class="label label-info">since 0.9.0</span></div>
 
 Define your first resource using ````defresource````.
 
