@@ -3,9 +3,8 @@ layout: default
 title: Actions
 ---
 
-# Initializing the context
+# Initializing the context <span class="label label-info">since 0.14.0</span>
 
-<span class="label label-info">Not released as of 0.13</span>
 ````:initialize-context```` is the first action performed when a request
 is being handled --- its purpose is to allow additional values to be
 inserted into the context (in addition to the standard
