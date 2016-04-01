@@ -2,6 +2,12 @@
 
 # Unreleased
 
+* Improved highlighting of tracing view
+
+## Bugs fixed
+
+* #253 fix highlighting in tracing view broken since 0.14.0
+
 # New in 0.14.0
 
 * The `defresource` macro no longer implicitly binds `request`.
@@ -19,9 +25,6 @@
 
 * #76 Nullpointer with post options
 * Allow decisions to override status in context
-
-## Bugs fixed
-
 * Support multimethods as decision functions.
 
 # New in 0.13

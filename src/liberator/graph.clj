@@ -12,14 +12,17 @@
     'defdecision
     (let [[name then else] (apply extract args)]
       (format (str "\"%s\" [id = \"%s\"] \n "
-                   "\"%s\" -> \"%s\" [label = \"true\", id = \"%s\"] \n"
-                   "\"%s\" -> \"%s\" [label=\"false\", id = \"%s\"]\n")
+                   "\"%s\" -> \"%s\" [label = \"true\",  id = \"%s\"] \n"
+                   "\"%s\" -> \"%s\" [label = \"false\", id = \"%s\"]\n")
               name (clean-id name)
-              name then (clean-id (str name "_" then)) 
-              name else (clean-id (str name "_" else ))))
+              name then (clean-id (str name "_" then))
+              name else (clean-id (str name "_" else))))
     'defaction
     (let [[_ name then] args]
-      (format "\"%s\"[shape=\"ellipse\"];\n\"%s\"-> \"%s\"\n" name name then))
+      (format (str "\"%s\"[shape=\"ellipse\" id = \"%s\"];\n"
+                   "\"%s\"-> \"%s\" [id = \"%s\"] \n")
+              name (clean-id name)
+              name then (clean-id (str name "_" then))))
     'defhandler
     (let [[_ name status message] args
           color (cond
@@ -31,9 +34,7 @@
                  :else "#ffffff")]
       (format "\"%s\"[id=\"%s\" label=\"%s\\n%s\" style=\"filled\" fillcolor=\"%s\"];\n"
               name (clean-id name) status (clojure.string/replace name #"^handle-" "") color))
-    nil)
-  
-  )
+    nil))
 
 (defn rank-max [names]
   (str "subgraph {\nrank=max;\n"
@@ -79,9 +80,13 @@
          (map to-graph)
          (filter identity)
          (concat (rank-handler-groups handlers))
-         (concat (rank-same actions))
+         (concat (rank-same (remove #{'initialize-context} actions)))
          (apply str)
-         (format "digraph{\nid=\"trace\"; size=\"1000,1000\"; page=\"1000,1000\";\n\nnode[shape=\"box\", splines=ortho]\n\"start\"[id=\"start\" shape=circle];\n\"start\" -> \"service-available?\" [id=start_serviceavailable]\n%s\n}"))))
+         (format (str "digraph{\nid=\"trace\"; size=\"1000,1000\"; page=\"1000,1000\";\n\n"
+                      "edge[fontname=\"sans-serif\"]\n"
+                      "node[shape=\"box\", splines=ortho fontname=\"sans-serif\"]\n\n"
+                      "%s"
+                      "\n}")))))
 
 (defn generate-graph-dot-file [f]
   (spit f (generate-graph-dot)))
