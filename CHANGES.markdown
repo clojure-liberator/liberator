@@ -2,6 +2,8 @@
 
 # Unreleased
 
+# New in 0.14.1
+
 * Improved highlighting of tracing view
 
 ## Bugs fixed
