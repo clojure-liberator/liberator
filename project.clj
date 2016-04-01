@@ -1,7 +1,7 @@
 (defproject liberator "0.14.1-SNAPSHOT"
   :description "Liberator - A REST library for Clojure."
   :url "http://clojure-liberator.github.io/liberator"
-  :dependencies [[org.clojure/clojure "1.4.0"]
+  :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/data.json "0.2.1"]
                  [org.clojure/data.csv "0.1.2"]
                  [hiccup "1.0.3"]] ;; Used by code rendering default representations.
@@ -29,7 +29,11 @@
                    :source-paths [ "src" "examples/clj"]}
              :1.4 {:dependencies [[org.clojure/clojure "1.4.0"]]}
              :1.5 {:dependencies [[org.clojure/clojure "1.5.1"]]}
-             :1.6 {:dependencies [[org.clojure/clojure "1.6.0-beta1"]]}}
+             :1.6 {:dependencies [[org.clojure/clojure "1.6.0"]]}
+             :1.7 {:dependencies [[org.clojure/clojure "1.7.0"]]}
+             :1.8 {:dependencies [[org.clojure/clojure "1.8.0"]]}
+             :dl  {:jvm-opts ["-Dclojure.compiler.direct-linking=true"]}
+             :1.8dl [:1.8 :dl]}
 
   :source-paths ["src"]
   :test-paths ["test"]
@@ -38,4 +42,4 @@
          :adapter {:port 8000}}
 
   :aliases {"examples" ["run" "-m" "examples.server"]
-            "test-all" ["with-profile" "+1.4:+1.5:+1.6" "test"]})
+            "test-all" ["with-profile" "+1.4:+1.5:+1.6:+1.7:+1.8:+1.8dl" "test"]})
