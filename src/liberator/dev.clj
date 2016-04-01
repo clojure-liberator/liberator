@@ -40,6 +40,11 @@
   (if (vector? r) (first r)
       r))
 
+(defn hl-result [r]
+  (if (result->bool r)
+    "hl-true"
+    "hl-false"))
+
 (defresource log-handler [id]
   :available-media-types ["text/html" "application/json"]
   :exists? (fn [ctx] (if-let [l (log-by-id id)] (assoc ctx ::log l)))
@@ -57,7 +62,7 @@
                "var svg = document.getElementById(\"trace\").contentDocument;\n"
                "var style = svg.createElementNS(\"http://www.w3.org/2000/svg\",\"style\"); "
                (str  "style.textContent = '"
-                     (clojure.string/replace 
+                     (clojure.string/replace
                       (slurp (clojure.java.io/resource "liberator/trace.css"))
                       #"[\r\n]" " ") "'; ")
                "var root = svg.getElementsByTagName(\"svg\")[0];"
@@ -66,7 +71,7 @@
                (join "\n"
                      (map (fn [[l [n r]]]
                             (format
-                             "svg.getElementById(\"%s\").setAttribute(\"class\", svg.getElementById(\"%s\").getAttribute(\"class\") + \" %s\"); " (clean-id n) (clean-id n) (if (result->bool r) "hl-true" "hl-false"))) log))
+                             "svg.getElementById(\"%s\").setAttribute(\"class\", svg.getElementById(\"%s\").getAttribute(\"class\") + \" %s\"); " (clean-id n) (clean-id n) (hl-result r))) log))
 
                (join "\n"
                      (map (fn [[[l1 [n1 r1]] [lr2 [n2 r2]]]]
