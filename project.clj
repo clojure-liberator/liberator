@@ -29,7 +29,11 @@
                    :source-paths [ "src" "examples/clj"]}
              :1.4 {:dependencies [[org.clojure/clojure "1.4.0"]]}
              :1.5 {:dependencies [[org.clojure/clojure "1.5.1"]]}
-             :1.6 {:dependencies [[org.clojure/clojure "1.6.0-beta1"]]}}
+             :1.6 {:dependencies [[org.clojure/clojure "1.6.0"]]}
+             :1.7 {:dependencies [[org.clojure/clojure "1.7.0"]]}
+             :1.8 {:dependencies [[org.clojure/clojure "1.8.0"]]}
+             :dl  {:jvm-opts ["-Dclojure.compiler.direct-linking=true"]}
+             :1.8dl [:1.8 :dl]}
 
   :source-paths ["src"]
   :test-paths ["test"]
@@ -38,4 +42,4 @@
          :adapter {:port 8000}}
 
   :aliases {"examples" ["run" "-m" "examples.server"]
-            "test-all" ["with-profile" "+1.4:+1.5:+1.6" "test"]})
+            "test-all" ["with-profile" "+1.4:+1.5:+1.6:+1.7:+1.8:+1.8dl" "test"]})
