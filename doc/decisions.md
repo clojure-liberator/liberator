@@ -86,9 +86,4 @@ put-to-existing?                    | checks if the request method is put for re
 The Liberator flowchart - mousewheel to zoom, click-and-drag to
 pan. (if you don't see anything below, please [open it]({{site.baseurl}}/assets/img/decision-graph.svg))
 
-<span style="border: 1px solid #333; width: 90%; height: 40em; display:block;">
-<object data="{{site.baseurl}}/assets/img/decision-graph.svg" width="100%" height="100%">
-<img src="{{site.baseurl}}/assets/img/decision-graph.svg"
-        type="image/svg+xml">
-</object>
-</span>
+<span style="border: 1px solid #333; width: 90%; height: 40em; display:block;"><object data="{{site.baseurl}}/assets/img/decision-graph.svg" width="100%" height="100%"><img src="{{site.baseurl}}/assets/img/decision-graph.svg" type="image/svg+xml"></object></span>
