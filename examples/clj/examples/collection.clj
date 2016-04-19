@@ -1,7 +1,7 @@
 (ns examples.collection
   (:require [liberator.core :refer (defresource by-method)]
             [clojure.java.io :as io]
-            [clojure.data.json :as json]
+            [cheshire.core :as json]
             [liberator.dev :refer (wrap-trace)])
   (:import java.net.URL))
 
@@ -26,7 +26,7 @@
   (when (#{:put :post} (get-in context [:request :request-method]))
     (try
       (if-let [body (body-as-string context)]
-        (let [data (json/read-str body)]
+        (let [data (json/parse-string body)]
           [false {key data}])
         {:message "No body"})
       (catch Exception e
@@ -35,7 +35,7 @@
 
 (defn check-content-type [ctx content-types]
   (if (#{:put :post} (get-in ctx [:request :request-method]))
-    (or 
+    (or
      (some #{(get-in ctx [:request :headers "content-type"])}
            content-types)
      [false {:message "Unsupported Content-Type"}])
