@@ -22,7 +22,7 @@
       (format (str "\"%s\" [id = \"%s\" %s] \n "
                    "\"%s\" -> \"%s\" [label = \"true\", id = \"%s\"] \n"
                    "\"%s\" -> \"%s\" [label=\"false\", id = \"%s\"]\n")
-              name (clean-id name) (if internal? "style=\"filled\" fillcolor=\"#CCCCCC\"" "")
+              name (clean-id name) (if internal? "shape=\"octagon\" style=\"filled\" fillcolor=\"#CCCCCC\"" "")
               name then (clean-id (str name "_" then)) 
               name else (clean-id (str name "_" else ))))
     'defaction
@@ -57,6 +57,7 @@
 (defn rank-handler-groups [handlers]
   (->> handlers
        (group-by (fn [[name status]] (int (/ status 100))))
+       (remove #(#{4 5} (first %)))
        vals
        (map (fn [sg] (map first sg)))
        (map rank-same)
@@ -71,6 +72,8 @@
         decisions (->> nodes
                       (filter #(= 'defdecision (first %)))
                       (map second))
+        conneg-decisions (filter #(.endsWith (name %) "available?")
+                                   decisions)
         handlers (->> nodes
                       (filter #(= 'defhandler (first %)))
                       (map (fn [[_ name status _]] [name status])))
@@ -79,16 +82,18 @@
                       (map second))]
     {:nodes nodes
      :decisions decisions
+     :conneg-decisions conneg-decisions
      :handlers handlers
      :actions actions}))
 
 (defn generate-graph-dot []
-  (let [{:keys [nodes handlers actions]} (parse-source-definitions)]
+  (let [{:keys [nodes conneg-decisions handlers actions]} (parse-source-definitions)]
     (->> nodes
          (map to-graph)
          (remove nil?)
          (concat (rank-handler-groups handlers))
          (concat (rank-same (remove #{'initialize-context} actions)))
+         (concat (rank-same (remove #{'initialize-context} conneg-decisions)))
          (apply str)
          (format (str "digraph{\nid=\"trace\"; size=\"1000,1000\"; page=\"1000,1000\";\n\n"
                       "edge[fontname=\"sans-serif\"]\n"
