@@ -51,14 +51,14 @@ value of the function is used as the new context value:
 
 {% highlight clojure %}
 (defresource foo
-  :service-available? {:a [1]}
-  :exists? (fn [ctx] #(assoc ctx :a [2]))
+  :service-available? {:entity [1]}
+  :exists? (fn [ctx] #(assoc ctx :entity [2]))
   :handle-ok :entity)
 {% endhighlight %}
 
 Without the wrapping in a function the updated context after
-```exists?``` would be ````{:a [1 2]}```` whereas in this case we get
-````{:a [1]}````.
+```exists?``` would be ````{:entity [1 2]}```` whereas in this case we get
+````{:entity [2]}````.
 
 ## Decision functions
 
