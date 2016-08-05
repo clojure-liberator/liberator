@@ -15,6 +15,7 @@
                        "method-put?"
                        "method-delete?"
                        "method-patch?"
+                       "method-post?"
                        "post-to-existing?"
                        "post-to-missing?"
                        "post-to-gone?"
