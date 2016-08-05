@@ -1,3 +1,10 @@
+.node:not(.hl-false):not(.hl-true) polygon { fill: #f8f8f8; stroke: #dddddd; }
+.node ellipse { fill: #f8f8f8; stroke: #dddddd; }
+.node text { fill: #999999; }
+.edge path { stroke: #999999; stroke-width: 1;}
+.edge text { fill: #999999; }
+.edge polygon { fill: #999999; stroke: #999999 }
+
 .node.hl-true:not([id^="handle"]) polygon { fill: #ccffcc; stroke: #00dd00; }
 .node.hl-true polygon { stroke-width: 3;}
 .node.hl-true text { fill: #003300; }
@@ -10,4 +17,4 @@
 .node.hl-false text { fill: #330000; }
 .edge.hl-false path { stroke: #dd0000; stroke-width: 3;}
 .edge.hl-false polygon { fill: #dd0000; stroke: #dd0000; stroke-width: 3;}
-.edge.hl-false text { fill: #dd0000; } 
+.edge.hl-false text { fill: #dd0000; }
