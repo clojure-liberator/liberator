@@ -14,7 +14,7 @@
   `(if ~pred (-> ~form ~@term) ~form))
 
 (defprotocol Representation
-  (as-response [_ {represenation :represenation :as context}]
+  (as-response [_ {representation :representation :as context}]
     "Coerce to a standard Ring response (a map
     containing :status, :headers and :body). Developers can call
     as-response directly, usually when they need to augment the context. It
