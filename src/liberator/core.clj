@@ -109,7 +109,7 @@
     (assoc headers name value)
     headers))
 
-(defn build-vary-header [{:keys [media-type charset language encoding] :as represenation}]
+(defn build-vary-header [{:keys [media-type charset language encoding] :as representation}]
   (->> [(when-not (empty? media-type) "Accept")
         (when-not (empty? charset) "Accept-Charset")
         (when-not (empty? language) "Accept-Language")
