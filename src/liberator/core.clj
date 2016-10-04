@@ -44,10 +44,9 @@
   (doseq [l *loggers*]
     (l category values)))
 
-(declare if-none-match-exists?)
-
 (defn map-values [f m]
   (persistent! (reduce-kv (fn [out-m k v] (assoc! out-m k (f v))) (transient {}) m)))
+
 
 (defn request-method-in [& methods]
   #(some #{(:request-method (:request %))} methods))
@@ -189,12 +188,6 @@
   `(defn ~name [context#]
      (run-handler '~name ~status ~message context#)))
 
-(defn header-exists? [header context]
-  (get-in context [:request :headers header]))
-
-(defn if-match-star [context]
-  (= "*" (get-in context [:request :headers "if-match"])))
-
 (defn =method [method context]
   (= (get-in context [:request :request-method]) method))
 
@@ -267,7 +260,9 @@
 
 (defaction put! new?)
 
-(defdecision conflict? handle-conflict put!)
+(defdecision method-post? (partial =method :post) post! put!)
+
+(defdecision conflict? handle-conflict method-post?)
 
 (defhandler handle-not-implemented 501 "Not implemented.")
 
@@ -280,7 +275,7 @@
 (defhandler handle-precondition-failed 412 "Precondition failed.")
 
 (defdecision if-match-star-exists-for-missing?
-  if-match-star
+  (fn [context] (= "*" (get-in context [:request :headers "if-match"])))
   handle-precondition-failed
   method-put?)
 
@@ -295,7 +290,7 @@
   conflict? multiple-representations?)
 
 (defdecision post-to-existing? (partial =method :post)
-  post! put-to-existing?)
+  conflict? put-to-existing?)
 
 (defhandler handle-accepted 202 "Accepted")
 
@@ -311,90 +306,53 @@
   method-patch?)
 
 (defdecision modified-since?
-  (fn [context]
-    (let [last-modified (gen-last-modified context)]
-      [(and last-modified (.after last-modified (::if-modified-since-date context)))
-       {::last-modified last-modified}]))
+  (fn [{:keys [request] :as context}]
+    (let [modified-since (parse-http-date (get-in request [:headers "if-modified-since"]))]
+      (or (nil? modified-since)
+          (let [last-modified (gen-last-modified context)]
+            [(and last-modified (.after last-modified modified-since))
+             {::last-modified last-modified}]))))
   method-delete?
   handle-not-modified)
 
-(defdecision if-modified-since-valid-date?
-  (fn [context]
-    (if-let [date (parse-http-date (get-in context [:request :headers "if-modified-since"]))]
-      {::if-modified-since-date date}))
-  modified-since?
-  method-delete?)
-
-(defdecision if-modified-since-exists?
-  (partial header-exists? "if-modified-since")
-  if-modified-since-valid-date?
-  method-delete?)
-
 (defdecision etag-matches-for-if-none?
-  (fn [context]
-    (let [etag (gen-etag context)]
-      [(= (get-in context [:request :headers "if-none-match"]) etag)
-       {::etag etag}]))
+  (fn [{:keys [request] :as context}]
+    (if-let [if-none-match (get-in context [:request :headers "if-none-match"])]
+      (let [etag (gen-etag context)]
+        [(#{"*" etag} if-none-match)
+         {::etag etag}])))
   if-none-match?
-  if-modified-since-exists?)
-
-(defdecision if-none-match-star?
-  #(= "*" (get-in % [:request :headers "if-none-match"]))
-  if-none-match?
-  etag-matches-for-if-none?)
-
-(defdecision if-none-match-exists? (partial header-exists? "if-none-match")
-  if-none-match-star? if-modified-since-exists?)
+  modified-since?)
 
 (defdecision unmodified-since?
-  (fn [context]
-    (let [last-modified (gen-last-modified context)]
-      [(and last-modified
-            (.after last-modified
-                    (::if-unmodified-since-date context)))
-       {::last-modified last-modified}]))
+  (fn [{:keys [request] :as context}]
+    (when-let [unmodified-since (parse-http-date (get-in request [:headers "if-unmodified-since"]))]
+      (let [last-modified (gen-last-modified context)]
+        [(and last-modified (.after last-modified unmodified-since))
+         {::last-modified last-modified}])))
   handle-precondition-failed
-  if-none-match-exists?)
+  etag-matches-for-if-none?)
 
-(defdecision  if-unmodified-since-valid-date?
-  (fn [context]
-    (when-let [date (parse-http-date (get-in context [:request :headers "if-unmodified-since"]))]
-      {::if-unmodified-since-date date}))
-  unmodified-since?
-  if-none-match-exists?)
-
-(defdecision if-unmodified-since-exists? (partial header-exists? "if-unmodified-since")
-  if-unmodified-since-valid-date? if-none-match-exists?)
+(defn- match-etag-for-existing [{:keys [request resource] :as context}]
+  (let [if-match (get-in request [:headers "if-match"])]
+    (or (empty? if-match)
+        (= "*" if-match)
+        (let [etag (gen-etag context)]
+          [(= etag if-match)
+           {::etag etag}]))))
 
 (defdecision etag-matches-for-if-match?
-  (fn [context]
-    (let [etag (gen-etag context)]
-      [(= etag (get-in context [:request :headers "if-match"]))
-       {::etag etag}]))
-  if-unmodified-since-exists?
+  match-etag-for-existing
+  unmodified-since?
   handle-precondition-failed)
 
-(defdecision if-match-star?
-  if-match-star if-unmodified-since-exists? etag-matches-for-if-match?)
-
-(defdecision if-match-exists? (partial header-exists? "if-match")
-  if-match-star? if-unmodified-since-exists?)
-
-(defdecision exists? if-match-exists? if-match-star-exists-for-missing?)
+(defdecision exists? etag-matches-for-if-match? if-match-star-exists-for-missing?)
 
 (defhandler handle-unprocessable-entity 422 "Unprocessable entity.")
+
 (defdecision processable? exists? handle-unprocessable-entity)
 
 (defhandler handle-not-acceptable 406 "No acceptable resource available.")
-
-(defdecision encoding-available?
-  (fn [ctx]
-    (when-let [encoding (conneg/best-allowed-encoding
-                         (get-in ctx [:request :headers "accept-encoding"])
-                         ((get-in ctx [:resource :available-encodings]) ctx))]
-      {:representation {:encoding encoding}}))
-
-  processable? handle-not-acceptable)
 
 (defmacro try-header [header & body]
   `(try ~@body
@@ -402,64 +360,59 @@
           (throw (ProtocolException.
                   (format "Malformed %s header" ~header) e#)))))
 
-(defdecision accept-encoding-exists? (partial header-exists? "accept-encoding")
-  encoding-available? processable?)
+(defn- negotiate-encoding [{:keys [request resource] :as context}]
+  (try-header "Accept-Encoding"
+              (let [accept (get-in request [:headers "accept-encoding"])]
+                (or (empty? accept)
+                    (when-let [encoding (conneg/best-allowed-encoding
+                                         accept
+                                         ((:available-encodings resource) context))]
+                      {:representation {:encoding encoding}})))) )
 
-(defdecision charset-available?
-  #(try-header "Accept-Charset"
-               (when-let [charset (conneg/best-allowed-charset
-                                   (get-in % [:request :headers "accept-charset"])
-                                   ((get-in context [:resource :available-charsets]) context))]
-                 (if (= charset "*")
-                   true
-                   {:representation {:charset charset}})))
-  accept-encoding-exists? handle-not-acceptable)
+(defdecision encoding-available? negotiate-encoding
+  processable? handle-not-acceptable)
 
-(defdecision accept-charset-exists? (partial header-exists? "accept-charset")
-  charset-available? accept-encoding-exists?)
+(defn- negotiate-charset [{:keys [request resource] :as context}]
+  (try-header "Accept-Charset"
+              (let [accept (get-in request [:headers "accept-charset"])]
+                (or (empty? accept)
+                    (when-let [charset (conneg/best-allowed-charset
+                                        accept
+                                        ((:available-charsets resource) context))]
+                      {:representation {:charset charset}})))))
 
+(defdecision charset-available? negotiate-charset
+  encoding-available? handle-not-acceptable)
 
-(defdecision language-available?
-  #(try-header "Accept-Language"
-               (when-let [lang (conneg/best-allowed-language
-                                (get-in % [:request :headers "accept-language"])
-                                ((get-in context [:resource :available-languages]) context))]
-                 (if (= lang "*")
-                   true
-                   {:representation {:language lang}})))
-  accept-charset-exists? handle-not-acceptable)
+(defn negotiate-language [{:keys [request resource] :as context}]
+  (try-header "Accept-Language"
+              (let [accept (get-in request [:headers "accept-language"])]
+                (if-let [lang (conneg/best-allowed-language
+                               (if-not (empty? accept) accept "*" )
+                               ((:available-languages resource) context))]
+                  (or (= "*" lang) {:representation {:language lang}})
+                  (empty? accept)))))
 
-(defdecision accept-language-exists? (partial header-exists? "accept-language")
-  language-available? accept-charset-exists?)
+(defdecision language-available? negotiate-language
+  charset-available? handle-not-acceptable)
 
-(defn negotiate-media-type [context]
+(defn negotiate-media-type [{:keys [request resource] :as context}]
   (try-header "Accept"
-              (when-let [type (conneg/best-allowed-content-type
-                               (get-in context [:request :headers "accept"])
-                               ((get-in context [:resource :available-media-types] (constantly "text/html")) context))]
-                {:representation {:media-type (conneg/stringify type)}})))
+              (let [accept (get-in request [:headers "accept"])]
+                (if-let [type (conneg/best-allowed-content-type
+                               (if-not (empty? accept) accept "*/*")
+                               ((:available-media-types resource) context))]
+                  {:representation {:media-type (conneg/stringify type)}}
+                  ;; if there's no accept headers and we cannot negotiate a
+                  ;; media type then continue
+                  (empty? accept)))))
 
 (defdecision media-type-available? negotiate-media-type
-  accept-language-exists? handle-not-acceptable)
-
-(defdecision accept-exists?
-  #(if (header-exists? "accept" %)
-     true
-     ;; "If no Accept header field is present, then it is assumed that the
-     ;; client accepts all media types" [p100]
-     ;; in this case we do content-type negotiation using */* as the accept
-     ;; specification
-     (if-let [type (liberator.conneg/best-allowed-content-type
-                    "*/*"
-                    ((get-in context [:resource :available-media-types]) context))]
-       [false {:representation {:media-type (liberator.conneg/stringify type)}}]
-       false))
-  media-type-available?
-  accept-language-exists?)
+  language-available? handle-not-acceptable)
 
 (defhandler handle-options 200 nil)
 
-(defdecision is-options? #(= :options (:request-method (:request %))) handle-options accept-exists?)
+(defdecision is-options? #(= :options (:request-method (:request %))) handle-options media-type-available?)
 
 (defhandler handle-request-entity-too-large 413 "Request entity too large.")
 (defdecision valid-entity-length? is-options? handle-request-entity-too-large)
@@ -519,8 +472,6 @@
    :method-allowed?           (test-request-method :allowed-methods)
 
    :malformed?                false
-   ;;      :encoding-available?       true
-   ;;      :charset-available?        true
    :authorized?               true
    :allowed?                  true
    :valid-content-header?     true

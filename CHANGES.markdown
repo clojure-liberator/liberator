@@ -2,6 +2,12 @@
 
 # Unreleased
 
+* Refactoring of content negotiation, get rid of internal decision points
+  :accept-exists?, :accept-language-exists?, :accept-encoding-exists?,
+  :accept-charset-exists? Empty Accept-* headers are treatened as
+  absent.
+* Posting to an existing resource checks for conflicts.
+
 # New in 0.14.1
 
 * Improved highlighting of tracing view
