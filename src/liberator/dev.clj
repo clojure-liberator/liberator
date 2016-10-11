@@ -79,12 +79,12 @@
                                (format
                                 "svg.getElementById(\"%s\").setAttribute(\"class\", svg.getElementById(\"%s\").getAttribute(\"class\") + \" %s\");" id id (if (result->bool r1) "hl-true" "hl-false"))))
                           (map vector log (rest log))))
-               
+
                "};"
                "setTimeout(function(){insertStyle()}, 500);"
                "setTimeout(function(){insertStyle()}, 1000);"
                "setTimeout(function(){insertStyle()}, 5000);"
-               
+
                ""])]
        [:body
         [:a {:href mount-url} "List of all traces"]
@@ -99,10 +99,10 @@
         [:ol (map (fn [[l [n r]]] [:li (h l) ": " (h n) " "
                                   (if (nil? r) [:em "nil"] (h (pr-str r)))]) log)]
         [:div {:style "text-align: center;"}
-         [:object {:id "trace" :data (str mount-url "trace.svg") :width "90%"
+         [:object {:id "trace" :data (str mount-url "trace.svg") :width "100%"
                    :style "border: 1px solid #666;"}]]
 
-        
+
         [:h3 "Full Request"]
         [:pre [:tt (h (with-out-str (clojure.pprint/pprint r)))]]])
       "application/json"
@@ -123,7 +123,7 @@
 
 (defresource list-handler
   :available-media-types ["text/html"]
-  :handle-ok (fn [_] 
+  :handle-ok (fn [_]
                (html5
                 [:head
                  [:title "Liberator Request Traces"]]
@@ -168,11 +168,11 @@
   :available-media-types ["text/css"]
   :handle-ok "#x-liberator-trace {
   display:block;
-  
+
   position:absolute;
   top:0;
   right:0;
-  
+
   margin-top: 1em;
   margin-right: 1em;
   padding: 0 1em;
@@ -192,7 +192,6 @@
 (defn- wrap-trace-ui [handler]
   (let [base-url (with-slash mount-url)]
     (routes
-     ;;           (fn [_] 
      (GET (str base-url "trace.svg") [] (fn [_]  trace-svg))
      (ANY (str base-url "styles.css") [] styles)
      (ANY [(str base-url ":id") :id #".+"] [id] #((log-handler id) %))
@@ -226,7 +225,7 @@
    :ui     - Include link to a resource that dumps the current request
    :header - Include full trace in response header"
   [handler & opts]
-  (-> 
+  (->
    (fn [request]
      (let [request-log (atom [])]
        (binding [*current-id* (next-id)]
