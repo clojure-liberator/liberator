@@ -204,6 +204,8 @@
 
 (defmethod to-location clojure.lang.APersistentMap [this] this)
 
+(defmethod to-location java.net.URI [^java.net.URI uri] (to-location (.toString uri)))
+
 (defmethod to-location java.net.URL [^java.net.URL url] (to-location (.toString url)))
 
 (defmethod to-location nil [this] this)

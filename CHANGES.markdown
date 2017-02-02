@@ -2,6 +2,9 @@
 
 # Unreleased
 
+* #201 Add support for using a java.net.URI instance to specify
+  a Location for `moved` handlers
+
 # New in 0.14.1
 
 * Improved highlighting of tracing view
