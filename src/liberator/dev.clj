@@ -1,12 +1,12 @@
 (ns liberator.dev
   (:use hiccup.core
         hiccup.page
-        compojure.core
-        [liberator.core :only [defresource]]
-        [clojure.string :only [join]])
+        [liberator.core :only [defresource]])
   (:require [liberator.core :as core]
             [clojure.string :as string]
-            [clojure.data.json :as json])
+            [clojure.data.json :as json]
+            [ring.util.response :as response]
+            [clojure.string :as s])
   (:import java.util.Date))
 
 (def mount-url "/x-liberator/requests/")
@@ -56,7 +56,7 @@
        [:head
         [:title "Liberator Request Trace #" id " at " d]]
        [:script
-        (join "\n"
+        (s/join "\n"
               [""
                "function insertStyle() {"
                "var svg = document.getElementById(\"trace\").contentDocument;\n"
@@ -68,12 +68,12 @@
                "var root = svg.getElementsByTagName(\"svg\")[0];"
                "root.appendChild(style);  "
                "root.setAttribute(\"width\", \"100%\"); root.setAttribute(\"height\", \"100%\"); "
-               (join "\n"
+               (s/join "\n"
                      (map (fn [[l [n r]]]
                             (format
                              "svg.getElementById(\"%s\").setAttribute(\"class\", svg.getElementById(\"%s\").getAttribute(\"class\") + \" %s\"); " (clean-id n) (clean-id n) (hl-result r))) log))
 
-               (join "\n"
+               (s/join "\n"
                      (map (fn [[[l1 [n1 r1]] [lr2 [n2 r2]]]]
                              (let [id (format "%s_%s" (clean-id n1) (clean-id n2))]
                                (format
@@ -189,22 +189,26 @@
 
 (def trace-svg (clojure.java.io/resource "liberator/trace.svg"))
 
+(defn- handle-and-add-trace-link [handler req]
+  (let [resp (handler req)]
+    (if-let [id (get-in resp [:headers trace-id-header])]
+      (update-in resp [:headers "Link"]
+                 #(if %1 [%1 %2] %2)
+                 (format "</%s>; rel=x-liberator-trace" (trace-url id)))
+      resp)))
+
 (defn- wrap-trace-ui [handler]
   (let [base-url (with-slash mount-url)]
-    (routes
-     ;;           (fn [_] 
-     (GET (str base-url "trace.svg") [] (fn [_]  trace-svg))
-     (ANY (str base-url "styles.css") [] styles)
-     (ANY [(str base-url ":id") :id #".+"] [id] #((log-handler id) %))
-     (ANY [(str base-url ":id")  :id #""] [id] list-handler)
-     (ANY base-url [] list-handler)
-     (fn [req]
-       (let [resp (handler req)]
-         (if-let [id (get-in resp [:headers trace-id-header])]
-           (update-in resp [:headers "Link"]
-                      #(if %1 [%1 %2] %2)
-                      (format "</%s>; rel=x-liberator-trace" (trace-url id)))
-           resp))))))
+    (fn [req]
+      (if (.startsWith (:uri req) base-url)
+        (let [subpath (s/replace (:uri req) base-url "")]
+          (case subpath
+            "trace.svg" (response/content-type (response/url-response  trace-svg) "image/svg+xml")
+            "styles.css" (styles req)
+            "" (list-handler req)
+            ((log-handler subpath) req)))
+
+        (handle-and-add-trace-link handler req))))) 
 
 (defn- wrap-trace-header [handler]
   (fn [req]
@@ -212,7 +216,7 @@
       (if-let [id (get-in resp [:headers trace-id-header])]
         (let [[_ [_ _ l]] (log-by-id id)]
           (assoc-in resp [:headers "X-Liberator-Trace"]
-                    (map #(clojure.string/join " " %) l)))
+                    (map #(s/join " " %) l)))
         resp))))
 
 (defn- cond-wrap [fn expr wrapper]
