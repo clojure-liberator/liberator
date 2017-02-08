@@ -2,6 +2,9 @@
 
 # Unreleased
 
+* Drop support for clojure versions 1.6 and ealier.
+* Bump dependency revision to non-ancient versions.
+* Drop dependency on compojure except for examples.
 * #201 Add support for using a java.net.URI instance to specify
   a Location for `moved` handlers
 
