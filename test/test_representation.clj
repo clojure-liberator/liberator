@@ -139,3 +139,16 @@
 
   (fact "it cannot parse exotic content"
     (parsable-content-type? {:request {:headers {"content-type" "foobar/foo"}}}) => false))
+
+(defrecord TestRecord [])
+
+(extend-protocol Representation
+  TestRecord
+  (as-response [_ _]
+    (as-response "works great" nil)))
+
+(facts "Can extend Representation protocol after compiling liberator.core"
+  (fact (-> (mock/request :get "/")
+            ((resource :available-media-types ["text/plain"]
+                       :handle-ok (->TestRecord))))
+        => (contains {:status 200})))
