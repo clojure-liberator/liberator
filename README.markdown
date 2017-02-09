@@ -1,4 +1,5 @@
 # Liberator [![Build Status](https://travis-ci.org/clojure-liberator/liberator.svg?branch=master)](https://travis-ci.org/clojure-liberator/liberator) [![Clojars Project](http://clojars.org/liberator/latest-version.svg)](http://clojars.org/liberator)
+[![Dependencies Status](https://jarkeeper.com/clojure-liberator/liberator/status.svg)](https://jarkeeper.com/clojure-liberator/liberator)
 
 Liberator is a Clojure library for building RESTful applications.
 
