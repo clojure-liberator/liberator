@@ -273,7 +273,7 @@
 
 (defhandler handle-not-implemented 501 "Not implemented.")
 
-(defdecision can-put-to-missing? conflict? handle-not-implemented)
+(defdecision can-put-to-missing? conflict? handle-not-found)
 
 (defdecision put-to-different-url? handle-moved-permanently can-put-to-missing?)
 
