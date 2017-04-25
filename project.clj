@@ -30,6 +30,10 @@
                    :source-paths [ "src" "examples/clj"]}
              :1.7 {:dependencies [[org.clojure/clojure "1.7.0" :upgrade? false]]}
              :1.8 {:dependencies [[org.clojure/clojure "1.8.0" :upgrade? false]]}
+             :1.9a {:dependencies [[org.clojure/clojure "1.9.0-alpha17" :upgrade? false]
+                                   [org.clojure/clojurescript "1.9.521"]
+                                   [midje "1.9.0-alpha6"]]}
+
              :dl  {:jvm-opts ["-Dclojure.compiler.direct-linking=true"]}
              :1.8dl [:1.8 :dl]}
 
@@ -40,8 +44,9 @@
          :adapter {:port 8000}}
 
   :aliases {"examples" ["run" "-m" "examples.server"]
-            "test-all" ["with-profile" "+1.7:+1.8:+1.8dl" "test"]
+            "test-all" ["with-profile" "+1.7:+1.8:+1.8dl:+1.9a" "test"]
             "graph"    ["do"
                         ["run" "-m" "liberator.graph/generate-dot-file" "trace.dot"]
                         ["shell" "dot" "-O" "-Tsvg" "trace.dot"]
                         ["shell" "mv" "trace.dot.svg" "src/liberator/trace.svg"]]})
+

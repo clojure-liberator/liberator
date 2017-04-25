@@ -11,6 +11,7 @@
 * Add `:post-enacted?`, `:put-enacted?` and `:patch-enacted?`
   which return status 202 accepted if true.
 * Add leiningen alias `graph` to generate `trace.svg`
+* Add lein profile `1.9a` to test compatibility with clojure 1.9 alphas
 
 # New in 0.14.1
 
