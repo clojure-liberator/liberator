@@ -132,10 +132,10 @@ Precondition failed.
 The necessary steps to implement handling of PUT are mostly those for
 POST. A key difference is that ````:can-put-to-missing?```` can lead
 to ````:conflict?```` which can send you to ````:handle-conflict````.
-This is not possible for POST requests. On the other hand PUT to a
-nonexistent resource does not allow a response that sends you to a
-different location. The necessary flow can be seen as always on the
-[decision graph](decision-graph.html).
+This is also possible for POST requests, when the resource already exists.
+On the other hand PUT to a nonexistent resource does not allow a response 
+that sends you to a different location. The necessary flow can be seen 
+as always on the [decision graph](decision-graph.html).
 
 # PATCH request
 
