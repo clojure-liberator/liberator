@@ -226,6 +226,8 @@
 
 (defhandler handle-multiple-representations 300 nil) ; nil body because the body is reserved to reveal the actual representations available.
 
+(defhandler handle-accepted 202 "Accepted")
+
 (defdecision multiple-representations? handle-multiple-representations handle-ok)
 
 (defdecision respond-with-entity? multiple-representations? handle-no-content)
@@ -236,11 +238,15 @@
 
 (defdecision post-redirect? handle-see-other new?)
 
+(defdecision post-enacted? post-redirect? handle-accepted)
+
+(defdecision put-enacted? new? handle-accepted)
+
 (defhandler handle-not-found 404 "Resource not found.")
 
 (defhandler handle-gone 410 "Resource is gone.")
 
-(defaction post! post-redirect?)
+(defaction post! post-enacted?)
 
 (defdecision can-post-to-missing? post! handle-not-found)
 
@@ -252,8 +258,6 @@
 (defhandler handle-moved-temporarily 307 nil)
 
 (defdecision can-post-to-gone? post! handle-gone)
-
-
 
 (defdecision post-to-gone? (partial =method :post) can-post-to-gone? handle-gone)
 
@@ -267,7 +271,7 @@
 
 (defaction patch! respond-with-entity?)
 
-(defaction put! new?)
+(defaction put! put-enacted?)
 
 (defdecision method-post? (partial =method :post) post! put!)
 
@@ -300,8 +304,6 @@
 
 (defdecision post-to-existing? (partial =method :post)
   conflict? put-to-existing?)
-
-(defhandler handle-accepted 202 "Accepted")
 
 (defdecision delete-enacted? respond-with-entity? handle-accepted)
 
@@ -542,6 +544,8 @@
    :can-put-to-missing?       true
    :moved-permanently?        false
    :moved-temporarily?        false
+   :post-enacted?             true
+   :put-enacted?              true 
    :delete-enacted?           true
    :processable?              true
 
