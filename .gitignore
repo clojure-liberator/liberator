@@ -2,10 +2,10 @@
 \#*#
 classes
 lib/
-/compojure-rest*.jar
-/liberator*.jar
 /pom.xml
 .lein*
 /target
 _site
 profiles.clj
+.nrepl-port
+trace.dot
