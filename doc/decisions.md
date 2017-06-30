@@ -40,6 +40,7 @@ moved-temporarily?          | Was the resource moved temporarily?               
 multiple-representations?   | Should the response be 310 multiple representations?                                                                          | false                                             |
 post-enacted?               | Was the post request finally processed? <span class="label label-info">since 0.15.0</span>                                    | true                                              |
 put-enacted?                | Was the put request finally processed? <span class="label label-info">since 0.15.0</span>                                     | true                                              |
+patch-enacted?                | Was the patch request finally processed? <span class="label label-info">since 0.15.0</span>                                     | true                                              |
 new?                        | Was the resource created by this request?                                                                                     | true                                              |
 post-redirect?              | Shall the response redirect after a POST?                                                                                     | false                                             |
 put-to-different-url?       | Should the PUT request be made to a different url?                                                                            | false                                             |
