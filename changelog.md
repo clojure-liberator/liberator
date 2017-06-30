@@ -4,6 +4,17 @@ title: Changelog
 ---
 # Changelog
 
+## New in 0.15.0
+
+* Posting to an existing resource checks for conflicts.
+* Add `:post-enacted?`, `:put-enacted?` and `:patch-enacted?`
+  which return status 202 accepted if true.
+* Drop support for clojure versions 1.6 and ealier.
+* Bump dependency revision to non-ancient versions.
+* Drop dependency on compojure except for examples.
+* #201 Add support for using a java.net.URI instance to specify
+  a Location for `moved` handlers
+
 ## New in 0.14.1
 
 * Improved highlighting of tracing view
