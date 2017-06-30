@@ -168,11 +168,11 @@
   :available-media-types ["text/css"]
   :handle-ok "#x-liberator-trace {
   display:block;
-  
+
   position:absolute;
   top:0;
   right:0;
-  
+
   margin-top: 1em;
   margin-right: 1em;
   padding: 0 1em;
@@ -208,7 +208,7 @@
             "" (list-handler req)
             ((log-handler subpath) req)))
 
-        (handle-and-add-trace-link handler req))))) 
+        (handle-and-add-trace-link handler req)))))
 
 (defn- wrap-trace-header [handler]
   (fn [req]
@@ -230,7 +230,7 @@
    :ui     - Include link to a resource that dumps the current request
    :header - Include full trace in response header"
   [handler & opts]
-  (-> 
+  (->
    (fn [request]
      (let [request-log (atom [])]
        (binding [*current-id* (next-id)]

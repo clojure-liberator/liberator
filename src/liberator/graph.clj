@@ -88,5 +88,6 @@
                       "%s"
                       "\n}")))))
 
-(defn generate-graph-dot-file [f]
+(defn generate-dot-file [f]
   (spit f (generate-graph-dot)))
+

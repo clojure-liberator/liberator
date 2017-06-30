@@ -17,7 +17,8 @@
         :url "https://github.com/clojure-liberator/liberator"}
 
   :plugins [[lein-midje "3.2.1"]
-            [lein-ring "0.10.0"]]
+            [lein-ring "0.10.0"]
+            [lein-shell "0.5.0"]]
 
   :profiles {:dev {:dependencies [[ring/ring-jetty-adapter "1.5.1"]
                                   [ring-mock "0.1.5" :exclusions [ring/ring-codec]]
@@ -39,4 +40,8 @@
          :adapter {:port 8000}}
 
   :aliases {"examples" ["run" "-m" "examples.server"]
-            "test-all" ["with-profile" "+1.7:+1.8:+1.8dl" "test"]})
+            "test-all" ["with-profile" "+1.7:+1.8:+1.8dl" "test"]
+            "graph"    ["do"
+                        ["run" "-m" "liberator.graph/generate-dot-file" "trace.dot"]
+                        ["shell" "dot" "-O" "-Tsvg" "trace.dot"]
+                        ["shell" "mv" "trace.dot.svg" "src/liberator/trace.svg"]]})
