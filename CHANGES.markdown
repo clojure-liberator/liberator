@@ -8,7 +8,9 @@
 * #201 Add support for using a java.net.URI instance to specify
   a Location for `moved` handlers
 * Posting to an existing resource checks for conflicts.
-
+* Add `:post-enacted?`, `:put-enacted?` and `:patch-enacted?`
+  which return status 202 accepted if true.
+* Add leiningen alias `graph` to generate `trace.svg`
 
 # New in 0.14.1
 

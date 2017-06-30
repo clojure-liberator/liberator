@@ -269,7 +269,9 @@
 
 (defhandler handle-conflict 409 "Conflict.")
 
-(defaction patch! respond-with-entity?)
+(defdecision patch-enacted? respond-with-entity? handle-accepted)
+
+(defaction patch! patch-enacted?)
 
 (defaction put! put-enacted?)
 
