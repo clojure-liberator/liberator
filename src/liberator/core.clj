@@ -547,7 +547,8 @@
    :moved-permanently?        false
    :moved-temporarily?        false
    :post-enacted?             true
-   :put-enacted?              true 
+   :put-enacted?              true
+   :patch-enacted?            true
    :delete-enacted?           true
    :processable?              true
 

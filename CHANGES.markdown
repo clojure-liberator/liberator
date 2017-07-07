@@ -1,6 +1,10 @@
 # Changelog
 
-# Unreleased
+# New in 0.15.1
+
+## Bugs fixed
+
+* A default value for :patch-enacted? was missing.
 
 # New in 0.15.0
 
@@ -11,7 +15,7 @@
   a Location for `moved` handlers
 * Posting to an existing resource checks for conflicts.
 * Add `:post-enacted?`, `:put-enacted?` and `:patch-enacted?`
-  which return status 202 accepted if true.
+  which return status 202 accepted if false.
 * Add leiningen alias `graph` to generate `trace.svg`
 * Add lein profile `1.9a` to test compatibility with clojure 1.9 alphas
 
