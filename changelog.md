@@ -6,7 +6,7 @@ title: Changelog
 
 ## New in 0.15.1
 
-* Fix missing default value for :patch-enacted?
+* Fix missing default value for `:patch-enacted?`
 
 ## New in 0.15.0
 
