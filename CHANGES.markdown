@@ -5,6 +5,7 @@
 ## Bugs fixed
 
 * A default value for :patch-enacted? was missing.
+* Removed javax.xml.ws dependency
 
 # New in 0.15.0
 

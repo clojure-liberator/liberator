@@ -3,9 +3,10 @@
             [liberator.representation :refer
              [Representation as-response ring-response]]
             [liberator.util :refer
-             [as-date http-date parse-http-date combine make-function]]
+             [as-date http-date parse-http-date
+              combine make-function is-protocol-exception?]]
             [clojure.string :refer [join upper-case]])
-  (:import (javax.xml.ws ProtocolException)))
+  (:import (clojure.lang ExceptionInfo)))
 
 (defmulti coll-validator
   "Return a function that evaluaties if the give argument
@@ -406,9 +407,11 @@
 
 (defmacro try-header [header & body]
   `(try ~@body
-        (catch ProtocolException e#
-          (throw (ProtocolException.
-                  (format "Malformed %s header" ~header) e#)))))
+        (catch ExceptionInfo e#
+          (if (is-protocol-exception? e#)
+            (throw (ex-info (format "Malformed %s header" ~header)
+                            {:inner-exception e#}))
+            (throw e#)))))
 
 (defdecision accept-encoding-exists? (partial header-exists? "accept-encoding")
   encoding-available? processable?)
@@ -593,11 +596,13 @@
                          :resource (map-values make-function (merge default-functions kvs))
                          :representation {}})
 
-    (catch ProtocolException e         ; this indicates a client error
-      {:status 400
-       :headers {"Content-Type" "text/plain"}
-       :body (.getMessage e)
-       ::throwable e}))) ; ::throwable gets picked up by an error renderer
+    (catch ExceptionInfo e
+      (if (is-protocol-exception? e) ; this indicates a client error
+        {:status 400
+         :headers {"Content-Type" "text/plain"}
+         :body (.getMessage e)
+         ::throwable e} ; ::throwable gets picked up by an error renderer
+        (throw e)))))       
 
 
 (defn get-options
