@@ -1,6 +1,6 @@
 (ns liberator.conneg
-  (:require [clojure.string :as string])
-  (:import (javax.xml.ws ProtocolException)))
+  (:require [clojure.string :as string]
+            [liberator.util :refer [protocol-exception]]))
 
 ;;; TODO: sort by level for text/html. Maybe also sort by charset.
 ;;; Finally, compare by precedence rules:
@@ -170,11 +170,11 @@
     (when (and
            (not (nil? q))
            (> q 1.0))
-      (throw (ProtocolException. "Quality value of header exceeds 1")))
+      (throw (protocol-exception "Quality value of header exceeds 1")))
     (when (and
            (not (nil? q))
            (< q 0))
-      (throw (ProtocolException. "Quality value of header is less than 0")))
+      (throw (protocol-exception "Quality value of header is less than 0")))
     [charset (or q 1)]))
 
 (defn parse-accepts-header [accepts-header]

@@ -81,3 +81,13 @@
    (and (set? curr) (coll? newval)) (set (concat curr newval))
    :otherwise newval))
 
+(defn is-protocol-exception?
+  "Detects if given exception is a protocol exception."
+  [exception]
+  (= (:type (ex-data exception)) :protocol))
+
+(defn protocol-exception
+  "Creates new protocol exception"
+  [msg]
+  (ex-info msg
+           {:type :protocol}))

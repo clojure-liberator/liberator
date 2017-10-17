@@ -1,5 +1,9 @@
 # Changelog
 
+# Unreleased 
+
+* Removed javax.xml.ws dependency
+
 # New in 0.15.1
 
 ## Bugs fixed
