@@ -39,10 +39,11 @@ After forking the repository, host the website in a local copy of the fork:
 ```console
 gem install redcarpet
 gem install jekyll
+gem install bundler
 
 git checkout gh-pages
 
-jekyll serve --baseurl '' --port 3000
+bundle exec jekyll serve --baseurl '' --port 3000
 ```
 
 In another terminal, open your browser on the local copy of the site:
@@ -56,11 +57,11 @@ open http://localhost:3000
 Edit the source markdown files, then build the updates once:
 
 ```console
-jekyll build
+bundle exec jekyll build
 ```
 
 Or have jekyll watch the files for your updates and build them continuously:
 
 ```console
-jekyll build --watch
+bundle exec jekyll build --watch
 ```
