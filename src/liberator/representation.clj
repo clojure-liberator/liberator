@@ -68,11 +68,10 @@
 
 (defn render-as-clojure [data]
   (binding [*print-dup* true]
-    (with-out-str (pr data))))
+    (pr-str data)))
 
 (defn render-as-edn [data]
-  (binding [*print-dup* false]
-    (with-out-str (pr data))))
+  (pr-str data))
 
 (defmethod render-map-generic "application/clojure" [data context]
   (render-as-clojure data))
@@ -138,12 +137,13 @@
     :keys [dictionary fields] :or {dictionary default-dictionary
                                    fields (keys (first data))}
     :as context} sep]
-  (with-out-str
-    (csv/write-csv *out* [(map #(or (dictionary % language)
-                                    (default-dictionary % language)) fields)]
+  (let [sw (java.io.StringWriter.)]
+    (csv/write-csv sw [(map #(or (dictionary % language)
+                                 (default-dictionary % language)) fields)]
                    :newline :cr+lf :separator sep)
-    (csv/write-csv *out* (map (apply juxt (map (fn [x] (fn [m] (get m x))) fields)) data)
-                   :newline :cr+lf :separator sep)))
+    (csv/write-csv sw (map (apply juxt (map (fn [x] (fn [m] (get m x))) fields)) data)
+                   :newline :cr+lf :separator sep)
+    (str sw)))
 
 (defmethod render-seq-generic "text/csv" [data context]
    (render-seq-csv data context \,))
