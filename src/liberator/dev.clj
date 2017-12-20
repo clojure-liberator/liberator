@@ -20,7 +20,8 @@
 
 (defn save-log! [id msg]
   (swap! logs #(->> (conj % [id msg])
-                    (take log-size))))
+                    (take log-size)
+                    (doall))))
 
 (defn- with-slash [^String s] (if (.endsWith s "/") s (str s "/")))
 
