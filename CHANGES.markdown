@@ -1,8 +1,11 @@
 # Changelog
 
-# Unreleased 
+# Unreleased
 
-* Removed javax.xml.ws dependency
+## Bugs fixed
+
+* Log sequence could grow beyond limit (#295)
+* Removed javax.xml.ws dependency (#290)
 
 # New in 0.15.1
 
