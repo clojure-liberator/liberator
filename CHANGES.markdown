@@ -1,5 +1,9 @@
 # Changelog
 
+# New in 0.15.3 (unreleased)
+
+## Bugs fixed
+
 # New in 0.15.2
 
 ## Bugs fixed
