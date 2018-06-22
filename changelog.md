@@ -4,6 +4,13 @@ title: Changelog
 ---
 # Changelog
 
+## New in 0.15.2
+
+### Bugs fixed
+
+* Log sequence could grow beyond limit (#295)
+* Removed javax.xml.ws dependency (#290)
+
 ## New in 0.15.1
 
 * Fix missing default value for `:patch-enacted?`
