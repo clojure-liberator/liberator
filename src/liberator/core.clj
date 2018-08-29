@@ -417,13 +417,12 @@
   encoding-available? processable?)
 
 (defdecision charset-available?
-  #(try-header "Accept-Charset"
-               (when-let [charset (conneg/best-allowed-charset
-                                   (get-in % [:request :headers "accept-charset"])
-                                   ((get-in context [:resource :available-charsets]) context))]
-                 (if (= charset "*")
-                   true
-                   {:representation {:charset charset}})))
+  #(when-let [charset (conneg/best-allowed-charset
+                       (get-in % [:request :headers "accept-charset"])
+                       ((get-in context [:resource :available-charsets]) context))]
+     (if (= charset "*")
+       true
+       {:representation {:charset charset}}))
   accept-encoding-exists? handle-not-acceptable)
 
 (defdecision accept-charset-exists? (partial header-exists? "accept-charset")
@@ -431,13 +430,12 @@
 
 
 (defdecision language-available?
-  #(try-header "Accept-Language"
-               (when-let [lang (conneg/best-allowed-language
-                                (get-in % [:request :headers "accept-language"])
-                                ((get-in context [:resource :available-languages]) context))]
-                 (if (= lang "*")
-                   true
-                   {:representation {:language lang}})))
+  #(when-let [lang (conneg/best-allowed-language
+                   (get-in % [:request :headers "accept-language"])
+                   ((get-in context [:resource :available-languages]) context))]
+    (if (= lang "*")
+      true
+      {:representation {:language lang}}))
   accept-charset-exists? handle-not-acceptable)
 
 (defdecision accept-language-exists? (partial header-exists? "accept-language")
