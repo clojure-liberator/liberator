@@ -34,6 +34,8 @@
       (negotiate "Accept-Language" :available-languages :language ?available ?accepted) => ?negotiated
       ?available ?accepted ?negotiated
       []          "en" 406
+      ["en"]      "en;q=garbage" 400
+      ["en"]      "en;q=" 400
       ["en"]      "en" "en"
       ["en" "de"] "de" "de"
       ["en" "de"] "de,fr" "de"
@@ -60,6 +62,7 @@
      ?available ?accepted ?negotiated
      []          "ascii" 406
      ["utf-8"]     "ascii" 406
+     ["utf-8"]     "ascii;q=0.7)" 400
      ["utf-8"]     "utf-8" "utf-8"
      ["ascii" "utf-8"] "utf-8" "utf-8"
      ["ascii" "utf-8"] "utf-8,fr" "utf-8"
@@ -72,6 +75,7 @@
      ?available ?accepted ?negotiated
      []            "gzip" "identity"
      ["gzip"]      "gzip" "gzip"
+     ["gzip"]      "gzip;q=foo" 400
      ["compress"]  "gzip" "identity"
      ["gzip" "compress"] "compress" "compress"
      ["gzip" "compress"] "compress,fr" "compress"
