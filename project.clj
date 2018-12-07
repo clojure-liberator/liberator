@@ -23,7 +23,7 @@
   :profiles {:dev {:dependencies [[ring/ring-jetty-adapter "1.5.1"]
                                   [ring-mock "0.1.5" :exclusions [ring/ring-codec]]
                                   [ring/ring-devel "1.5.1"]
-                                  [midje "1.8.3"]
+                                  [midje "1.9.3"]
                                   ;; only for examples
                                   [compojure "1.5.2"]
                                   [org.clojure/clojurescript "1.7.145"]]
@@ -31,8 +31,7 @@
              :1.7 {:dependencies [[org.clojure/clojure "1.7.0" :upgrade? false]]}
              :1.8 {:dependencies [[org.clojure/clojure "1.8.0" :upgrade? false]]}
              :1.9a {:dependencies [[org.clojure/clojure "1.9.0-alpha17" :upgrade? false]
-                                   [org.clojure/clojurescript "1.9.521"]
-                                   [midje "1.9.0-alpha6"]]}
+                                   [org.clojure/clojurescript "1.9.521"]]}
 
              :dl  {:jvm-opts ["-Dclojure.compiler.direct-linking=true"]}
              :1.8dl [:1.8 :dl]}
