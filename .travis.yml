@@ -3,8 +3,9 @@ lein: lein
 script: lein test-all
 jdk:
   - openjdk7
-  - oraclejdk7
   - oraclejdk8
+  - openjdk11
+  - openjdk-ea
 branches:
   except:
     - gh-pages
