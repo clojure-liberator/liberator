@@ -28,6 +28,7 @@
              :1.8 {:dependencies [[org.clojure/clojure "1.8.0" :upgrade? false]]}
              :1.9 {:dependencies [[org.clojure/clojure "1.9.0" :upgrade? false]
                                   [midje "1.9.0-alpha6"]]}
+             :1.10 {:dependencies [[org.clojure/clojure "1.10.0" :upgrade? false]]}
 
              :dl  {:jvm-opts ["-Dclojure.compiler.direct-linking=true"]}
              :1.8dl [:1.8 :dl]}
@@ -35,7 +36,7 @@
   :source-paths ["src"]
   :test-paths ["test"]
 
-  :aliases {"test-all" ["with-profile" "+1.7:+1.8:+1.8dl:+1.9" "test"]
+  :aliases {"test-all" ["with-profile" "+1.7:+1.8:+1.8dl:+1.9:+1.10" "test"]
             "graph"    ["do"
                         ["run" "-m" "liberator.graph/generate-dot-file" "trace.dot"]
                         ["shell" "dot" "-O" "-Tsvg" "trace.dot"]
