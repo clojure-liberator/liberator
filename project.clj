@@ -22,12 +22,11 @@
   :profiles {:dev {:dependencies [[ring/ring-jetty-adapter "1.5.1"]
                                   [ring-mock "0.1.5" :exclusions [ring/ring-codec]]
                                   [ring/ring-devel "1.5.1"]
-                                  [midje "1.8.3"]
+                                  [midje "1.9.4"]
                                   [compojure "1.5.2"]]}
              :1.7 {:dependencies [[org.clojure/clojure "1.7.0" :upgrade? false]]}
              :1.8 {:dependencies [[org.clojure/clojure "1.8.0" :upgrade? false]]}
-             :1.9 {:dependencies [[org.clojure/clojure "1.9.0" :upgrade? false]
-                                  [midje "1.9.0-alpha6"]]}
+             :1.9 {:dependencies [[org.clojure/clojure "1.9.0" :upgrade? false]]}
              :1.10 {:dependencies [[org.clojure/clojure "1.10.0" :upgrade? false]]}
 
              :dl  {:jvm-opts ["-Dclojure.compiler.direct-linking=true"]}
