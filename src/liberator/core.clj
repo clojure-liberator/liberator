@@ -615,17 +615,24 @@
   (fn [request]
     (run-resource request (get-options kvs))))
 
-(defmacro defresource [name & kvs]
-  (if (vector? (first kvs))
-    (let [args (first kvs)
-          kvs (rest kvs)]
-      ;; Rather than call resource, create anonymous fn in callers namespace for better debugability.
-      `(defn ~name [~@args]
-         (fn [request#]
-           (run-resource request# (get-options (list ~@kvs))))))
-    `(def ~name
-         (fn [request#]
-           (run-resource request# (get-options (list ~@kvs)))))))
+(defmacro defresource [name & resource-decl]
+  (let [[docstring resource-decl] (if (string? (first resource-decl))
+                                    [(first resource-decl) (rest resource-decl)]
+                                    [nil resource-decl])
+        [args kvs] (if (vector? (first resource-decl))
+                     [(first resource-decl) (rest resource-decl)]
+                     [nil resource-decl])
+        ;; Rather than call `resource` directly, create an anonymous
+        ;; function in the caller's namespace for better debugability.
+        resource-fn `(fn [request#]
+                       (run-resource request# (get-options (list ~@kvs))))]
+    (if args
+      (if docstring
+        `(defn ~name ~docstring [~@args] ~resource-fn)
+        `(defn ~name [~@args] ~resource-fn))
+      (if docstring
+        `(def ~name ~docstring ~resource-fn)
+        `(def ~name ~resource-fn)))))
 
 (defn by-method
   "returns a handler function that uses the request method to

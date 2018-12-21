@@ -22,6 +22,10 @@
   :service-available? with-service-available?-multimethod*
   :handle-ok (fn [_] "with-service-available?-multimethod"))
 
+(defresource with-docstring
+  "This is a fancy docstring."
+  :handle-ok (fn [_] "OK"))
+
 (defresource without-param
   :handle-ok (fn [_] (format "The text is %s" "test")))
 
@@ -56,6 +60,9 @@
   :handle-ok (str request))
 
 (facts "about defresource"
+       (fact "a docstring can be optionally provided"
+             (with-docstring {:request-method :get})
+             => {:headers {"Content-Type" "text/plain;charset=UTF-8"}, :body "OK", :status 200})
        (fact "its simple form should behave as it always has"
              (without-param {:request-method :get})
              => {:headers {"Content-Type" "text/plain;charset=UTF-8"}, :body "The text is test", :status 200}
