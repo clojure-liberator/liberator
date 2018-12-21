@@ -6,6 +6,7 @@
   version which blocked updating some dependencies
 * Update clojure versions in the build matrix.
 * Allow `defresource` to have a docstring (#305)
+* Improve `liberator.util/combine` to not return lazy sequences (#304)
 
 ## Bugs fixed
 
