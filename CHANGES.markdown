@@ -2,6 +2,10 @@
 
 # New in 0.15.3 (unreleased)
 
+* Remove old examples. These dependet on an ancient clojurescript
+  version which blocked updating some dependencies
+* Update clojure versions in the build matrix.
+
 ## Bugs fixed
 
 # New in 0.15.2
