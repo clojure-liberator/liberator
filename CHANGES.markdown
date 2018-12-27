@@ -5,6 +5,7 @@
 * Remove old examples. These dependet on an ancient clojurescript
   version which blocked updating some dependencies
 * Update clojure versions in the build matrix.
+* Allow `defresource` to have a docstring (#305)
 
 ## Bugs fixed
 
