@@ -164,13 +164,12 @@
 (defn split-qval [caq]
   (let [[charset & params] (string/split caq #"[\s\r\n]*;[\s\r\n]*")
         parse (fn [s]
-                (let [[param value] (string/split s #"[\s\r\n]*=")
-                      failure (protocol-exception "Quality value of header is malformed")]
+                (let [[param value] (string/split s #"[\s\r\n]*=")]
                   (when (= "q" param)
                     (try
                       (Float/parseFloat value)
-                      (catch NumberFormatException e (throw failure))
-                      (catch NullPointerException e (throw failure))))))
+                      (catch NumberFormatException e 0.001)
+                      (catch NullPointerException e 0.001)))))
         q (first (reverse (sort (filter (comp not nil?)
                                         (map parse params)))))]
     (when (and
