@@ -2,9 +2,14 @@ language: clojure
 lein: lein
 script: lein test-all
 jdk:
-  - openjdk7
-  - oraclejdk7
+  - openjdk8
+  - openjdk9
+  - openjdk10
+  - openjdk11
+  - openjdk-ea
   - oraclejdk8
+  - oraclejdk9
+  - oraclejdk11
 branches:
   except:
     - gh-pages

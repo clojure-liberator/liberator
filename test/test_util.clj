@@ -5,9 +5,13 @@
 (facts "combine function"
   (facts "simple combinations"
     (fact "merges map" (combine {:a 1} {:b 2}) => {:a 1 :b 2})
+    (fact "returns a map" (combine {:a 1} {:b 2}) => map?)
     (fact "concats list" (combine '(1 2) [3 4]) => '(1 2 3 4))
+    (fact "returns a list" (combine '(1 2) [3 4]) => list?)
     (fact "concats vector" (combine [1 2] '(3 4)) => [1 2 3 4])
+    (fact "returns a vector" (combine [1 2] '(3 4)) => vector?)
     (fact "concats set" (combine #{1 2} [3 4]) => #{1 2 3 4})
+    (fact "returns a set" (combine #{1 2} [3 4]) => set?)
     (facts "replaces other types"
       (fact (combine 123 456) => 456)
       (fact (combine "abc" 123) => 123)
