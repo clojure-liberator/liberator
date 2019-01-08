@@ -10,6 +10,8 @@
 
 ## Bugs fixed
 
+* Use minimum quality value when one provided is malformed (#199)
+
 # New in 0.15.2
 
 ## Bugs fixed
