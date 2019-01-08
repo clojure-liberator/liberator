@@ -76,9 +76,9 @@
   (cond
    (-> newval meta :replace) newval
    (and (map? curr) (map? newval)) (merge-with combine curr newval)
-   (and (list? curr) (coll? newval)) (concat curr newval)
-   (and (vector? curr) (coll? newval)) (concat curr newval)
-   (and (set? curr) (coll? newval)) (set (concat curr newval))
+   (and (list? curr) (coll? newval)) (apply list (concat curr newval))
+   (and (vector? curr) (coll? newval)) (into curr newval)
+   (and (set? curr) (coll? newval)) (into curr newval)
    :otherwise newval))
 
 (defn is-protocol-exception?

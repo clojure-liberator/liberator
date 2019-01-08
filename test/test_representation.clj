@@ -53,12 +53,12 @@
 
 (facts "Using print in layz-seqs does not side-effect with response generation"
   (print "Expecting test output <<<")
-  (let [entity (map #(do (print "BAD")
+  (let [entity (map #(do (print "TEST-OUTPUT ")
                          {:foo (inc %)})
                     (range 100))]
     (tabular "Various media types are supported"
              (as-response entity {:representation {:media-type ?media-type :charset "UTF-8"}})
-             =not=> (contains {:body (contains "BAD")})
+             =not=> (contains {:body (contains "TEST-OUTPUT ")})
 
              ?media-type
              "text/csv"
