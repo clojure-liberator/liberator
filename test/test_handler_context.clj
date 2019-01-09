@@ -34,7 +34,10 @@
       (negotiate "Accept-Language" :available-languages :language ?available ?accepted) => ?negotiated
       ?available ?accepted ?negotiated
       []          "en" 406
+      ["en"]      "en;q=garbage" "en"
+      ["en"]      "en;q=" "en"
       ["en"]      "en" "en"
+      ["en" "de"] "en;q=garabage,de;q=0.8" "de"
       ["en" "de"] "de" "de"
       ["en" "de"] "de,fr" "de"
       ["en" "de"] "de;q=0.1,en" "en"
@@ -60,7 +63,9 @@
      ?available ?accepted ?negotiated
      []          "ascii" 406
      ["utf-8"]     "ascii" 406
+     ["utf-8"]     "utf-8;q=0.7)" "utf-8"
      ["utf-8"]     "utf-8" "utf-8"
+     ["ascii" "utf-8"] "ascii;q=0.7),utf-8" "utf-8"
      ["ascii" "utf-8"] "utf-8" "utf-8"
      ["ascii" "utf-8"] "utf-8,fr" "utf-8"
      ["ascii" "utf-8"] "ascii;q=0.1,utf-8" "utf-8"
@@ -72,8 +77,10 @@
      ?available ?accepted ?negotiated
      []            "gzip" "identity"
      ["gzip"]      "gzip" "gzip"
+     ["gzip"]      "gzip;q=foo" "gzip"
      ["compress"]  "gzip" "identity"
      ["gzip" "compress"] "compress" "compress"
+     ["gzip" "compress"] "compress;q=0.A,gzip;q=0.1" "gzip"
      ["gzip" "compress"] "compress,fr" "compress"
      ["gzip" "compress"] "compress;q=0.1,gzip" "gzip"
      ["gzip" "compress"] "compress;q=0.3,gzip;q=0.2;fr=0.9;la" "compress")))
