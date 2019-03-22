@@ -1,6 +1,6 @@
 # Changelog
 
-# New in 0.15.3 (unreleased)
+# New in 0.15.3
 
 * Remove old examples. These dependet on an ancient clojurescript
   version which blocked updating some dependencies
