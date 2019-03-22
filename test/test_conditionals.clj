@@ -95,7 +95,7 @@
 
 
 ;; put and post requests
-(tabular 
+(tabular
  (facts "conditional request for post and put"
    (facts "if-modified-since true"
      (let [resp ((resource :exists? true
@@ -192,7 +192,7 @@
 
 
 (facts "if-match * false on unexisting"
-  (tabular 
+  (tabular
    (let [resp ((resource :method-allowed? true
                          :exists? false
                          :etag (constantly "TAG1"))
@@ -206,7 +206,7 @@
    :delete))
 
 (facts "if-none-match * false on existing"
-  (tabular 
+  (tabular
    (let [resp ((resource :method-allowed? true
                          :exists? true
                          :etag (constantly "TAG1"))
@@ -220,4 +220,3 @@
    :post
    :put
    :delete))
-
