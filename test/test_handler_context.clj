@@ -45,7 +45,7 @@
       ["en" "de"] "de;q=0.3,en;q=0.2;fr=0.9;la" "de"))
 
    (future-facts "with subtag"
-     (tabular 
+     (tabular
       (negotiate "Accept-Language" :available-languages :language ?available ?accepted) => ?negotiated
       ?available ?accepted ?negotiated
       []          "en-GB" 406
@@ -55,7 +55,7 @@
       ["en-US" "de"] "de;q=0.1,en" "en"
       ["en-US" "en-GB"] "en-US" "en-US"
       ["en-US" "en-GB"] "en" "en")))
-  
+
 
   (facts "Charset negotitation"
     (tabular
@@ -70,7 +70,7 @@
      ["ascii" "utf-8"] "utf-8,fr" "utf-8"
      ["ascii" "utf-8"] "ascii;q=0.1,utf-8" "utf-8"
      ["ascii" "utf-8"] "utf-8;q=0.3,ascii;q=0.2;iso8859-1=0.9;iso-8859-2" "utf-8"))
-  
+
   (facts "Encoding negotitation"
     (tabular
      (negotiate "Accept-Encoding" :available-encodings :encoding ?available ?accepted) => ?negotiated

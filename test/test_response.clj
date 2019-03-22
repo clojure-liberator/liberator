@@ -13,7 +13,7 @@
       (header "Accept" ?accept)
       ((resource :available-media-types [?available] :handle-ok "ok")))
   => (content-type (str ?expected ";charset=UTF-8"))
-  ?accept ?available ?expected    
+  ?accept ?available ?expected
   "text/html" "text/html" "text/html"
   "text/plain" "text/plain" "text/plain"
   "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8" "text/html" "text/html"
@@ -43,8 +43,8 @@
         {:media-type "m"
          :charset "ASCII"
          :encoding "x"}       "Accept, Accept-Charset, Accept-Encoding")
-  
-  
+
+
   (fact "Vary header can be overriden by handler"
         (-> (run-handler "handle-ok" 200 "ok"
                          {:resource {:handle-ok (fn [c] (ring-response
@@ -55,13 +55,13 @@
     => "*"))
 
 (facts "Adding `Allow` header automatically"
-  
-  (fact "done for `OPTIONS` request" 
+
+  (fact "done for `OPTIONS` request"
     (-> (request :options "/")
         ((resource :handle-ok "ok" :allowed-methods [:get :head :options])))
     => (header-value "Allow" "GET, HEAD, OPTIONS"))
 
-  (fact "Accept-Patch check for `OPTIONS` request" 
+  (fact "Accept-Patch check for `OPTIONS` request"
     (-> (request :options "/")
         ((resource :handle-ok "ok" :allowed-methods [:get :head :options :patch]
                    :patch-content-types ["application/json-patch+json"])))
