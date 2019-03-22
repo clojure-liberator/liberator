@@ -4,6 +4,18 @@ title: Changelog
 ---
 # Changelog
 
+## New in 0.15.3
+
+* Remove old examples. These dependet on an ancient clojurescript
+  version which blocked updating some dependencies
+* Update clojure versions in the build matrix.
+* Allow `defresource` to have a docstring (#305)
+* Improve `liberator.util/combine` to not return lazy sequences (#304)
+
+### Bugs fixed
+
+* Use minimum quality value when one provided is malformed (#199)
+
 ## New in 0.15.2
 
 ### Bugs fixed
