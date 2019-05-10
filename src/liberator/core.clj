@@ -322,7 +322,7 @@
 (defdecision modified-since?
   (fn [context]
     (let [last-modified (gen-last-modified context)]
-      [(and last-modified (.after last-modified (::if-modified-since-date context)))
+      [(or (not last-modified) (.after last-modified (::if-modified-since-date context)))
        {::last-modified last-modified}]))
   method-delete?
   handle-not-modified)
