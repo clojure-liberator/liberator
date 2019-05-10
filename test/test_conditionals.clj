@@ -41,6 +41,13 @@
       (fact resp => (no-body))
       (fact resp => (header-value "Last-Modified" (http-date (as-date 1000))))))
 
+  (facts "if-modified-since false due to missing last-modified"
+    (let [resp ((resource :exists? true)
+                (-> (request :get "/")
+                    (if-modified-since (http-date (as-date 1000)))))]
+      (fact resp => OK)
+      (fact resp => (body "OK"))))
+
   (facts "if-unmodified-since true"
     (let [resp ((resource :exists? true
                           :last-modified (as-date 1000)
