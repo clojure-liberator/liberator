@@ -4,6 +4,11 @@
 
 ## Changes
 
+* Return 304 not modified if request contains a if-modified-since
+  header and the resource does not specify modification date. This
+  is a better default for clients that do no handle resources without
+  a modification date well.
+
 ## Bugs fixes
 
 # New in 0.15.3
