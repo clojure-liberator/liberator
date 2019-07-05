@@ -286,8 +286,8 @@
 <!-- multiple&#45;representations?&#45;&gt;handle&#45;ok -->
 <g id="multiplerepresentations_handleok" class="edge">
 <title>multiple&#45;representations?&#45;&gt;handle&#45;ok</title>
-<path fill="none" stroke="#000000" d="M531.7985,-85.7616C543.683,-73.4475 559.534,-57.0235 572.6541,-43.4293"/>
-<polygon fill="#000000" stroke="#000000" points="575.1934,-45.8382 579.6195,-36.2121 570.1566,-40.977 575.1934,-45.8382"/>
+<path fill="none" stroke="#b2df8a" d="M531.7985,-85.7616C543.683,-73.4475 559.534,-57.0235 572.6541,-43.4293"/>
+<polygon fill="#b2df8a" stroke="#b2df8a" points="575.1934,-45.8382 579.6195,-36.2121 570.1566,-40.977 575.1934,-45.8382"/>
 <text text-anchor="middle" x="575.9824" y="-56.8" font-family="sans-serif" font-size="14.00" fill="#000000">false</text>
 </g>
 <!-- respond&#45;with&#45;entity? -->
@@ -299,8 +299,8 @@
 <!-- respond&#45;with&#45;entity?&#45;&gt;handle&#45;no&#45;content -->
 <g id="respondwithentity_handlenocontent" class="edge">
 <title>respond&#45;with&#45;entity?&#45;&gt;handle&#45;no&#45;content</title>
-<path fill="none" stroke="#000000" d="M749.2501,-171.9181C747.6837,-141.981 744.5397,-81.8972 742.677,-46.2989"/>
-<polygon fill="#000000" stroke="#000000" points="746.1611,-45.9012 742.1433,-36.0977 739.1707,-46.267 746.1611,-45.9012"/>
+<path fill="none" stroke="#b2df8a" d="M749.2501,-171.9181C747.6837,-141.981 744.5397,-81.8972 742.677,-46.2989"/>
+<polygon fill="#b2df8a" stroke="#b2df8a" points="746.1611,-45.9012 742.1433,-36.0977 739.1707,-46.267 746.1611,-45.9012"/>
 <text text-anchor="middle" x="761.9824" y="-99.8" font-family="sans-serif" font-size="14.00" fill="#000000">false</text>
 </g>
 <!-- respond&#45;with&#45;entity?&#45;&gt;multiple&#45;representations? -->
@@ -319,8 +319,8 @@
 <!-- new?&#45;&gt;handle&#45;created -->
 <g id="new_handlecreated" class="edge">
 <title>new?&#45;&gt;handle&#45;created</title>
-<path fill="none" stroke="#000000" d="M938.0009,-257.8579C935.0807,-213.5401 927.5673,-99.5129 924.0562,-46.2275"/>
-<polygon fill="#000000" stroke="#000000" points="927.5404,-45.8702 923.3904,-36.122 920.5555,-46.3305 927.5404,-45.8702"/>
+<path fill="none" stroke="#b2df8a" d="M938.0009,-257.8579C935.0807,-213.5401 927.5673,-99.5129 924.0562,-46.2275"/>
+<polygon fill="#b2df8a" stroke="#b2df8a" points="927.5404,-45.8702 923.3904,-36.122 920.5555,-46.3305 927.5404,-45.8702"/>
 <text text-anchor="middle" x="943.2583" y="-142.8" font-family="sans-serif" font-size="14.00" fill="#000000">true</text>
 </g>
 <!-- new?&#45;&gt;respond&#45;with&#45;entity? -->
@@ -346,8 +346,8 @@
 <!-- post&#45;redirect?&#45;&gt;new? -->
 <g id="postredirect_new" class="edge">
 <title>post&#45;redirect?&#45;&gt;new?</title>
-<path fill="none" stroke="#000000" d="M958.8944,-343.7616C955.5468,-332.2456 951.1542,-317.1353 947.3667,-304.1064"/>
-<polygon fill="#000000" stroke="#000000" points="950.6429,-302.8376 944.4905,-294.2121 943.9211,-304.7916 950.6429,-302.8376"/>
+<path fill="none" stroke="#b2df8a" d="M958.8944,-343.7616C955.5468,-332.2456 951.1542,-317.1353 947.3667,-304.1064"/>
+<polygon fill="#b2df8a" stroke="#b2df8a" points="950.6429,-302.8376 944.4905,-294.2121 943.9211,-304.7916 950.6429,-302.8376"/>
 <text text-anchor="middle" x="967.9824" y="-314.8" font-family="sans-serif" font-size="14.00" fill="#000000">false</text>
 </g>
 <!-- post&#45;enacted?&#45;&gt;handle&#45;accepted -->
@@ -360,8 +360,8 @@
 <!-- post&#45;enacted?&#45;&gt;post&#45;redirect? -->
 <g id="postenacted_postredirect" class="edge">
 <title>post&#45;enacted?&#45;&gt;post&#45;redirect?</title>
-<path fill="none" stroke="#000000" d="M913.769,-429.7616C922.6785,-417.7896 934.4788,-401.9328 944.4244,-388.5685"/>
-<polygon fill="#000000" stroke="#000000" points="947.4808,-390.324 950.6431,-380.2121 941.8651,-386.1449 947.4808,-390.324"/>
+<path fill="none" stroke="#b2df8a" d="M913.769,-429.7616C922.6785,-417.7896 934.4788,-401.9328 944.4244,-388.5685"/>
+<polygon fill="#b2df8a" stroke="#b2df8a" points="947.4808,-390.324 950.6431,-380.2121 941.8651,-386.1449 947.4808,-390.324"/>
 <text text-anchor="middle" x="948.2583" y="-400.8" font-family="sans-serif" font-size="14.00" fill="#000000">true</text>
 </g>
 <!-- put&#45;enacted?&#45;&gt;handle&#45;accepted -->
@@ -374,8 +374,8 @@
 <!-- put&#45;enacted?&#45;&gt;new? -->
 <g id="putenacted_new" class="edge">
 <title>put&#45;enacted?&#45;&gt;new?</title>
-<path fill="none" stroke="#000000" d="M771.6384,-343.9716C810.3712,-328.2592 865.8852,-305.7394 902.2326,-290.9947"/>
-<polygon fill="#000000" stroke="#000000" points="903.9954,-294.0567 911.9463,-287.0543 901.364,-287.5701 903.9954,-294.0567"/>
+<path fill="none" stroke="#b2df8a" d="M771.6384,-343.9716C810.3712,-328.2592 865.8852,-305.7394 902.2326,-290.9947"/>
+<polygon fill="#b2df8a" stroke="#b2df8a" points="903.9954,-294.0567 911.9463,-287.0543 901.364,-287.5701 903.9954,-294.0567"/>
 <text text-anchor="middle" x="858.2583" y="-314.8" font-family="sans-serif" font-size="14.00" fill="#000000">true</text>
 </g>
 <!-- can&#45;post&#45;to&#45;missing? -->
@@ -387,8 +387,8 @@
 <!-- can&#45;post&#45;to&#45;missing?&#45;&gt;post! -->
 <g id="canposttomissing_post" class="edge">
 <title>can&#45;post&#45;to&#45;missing?&#45;&gt;post!</title>
-<path fill="none" stroke="#000000" d="M1242.0376,-687.9181C1166.2956,-653.8144 1003.6656,-580.5883 933.5222,-549.0054"/>
-<polygon fill="#000000" stroke="#000000" points="934.8125,-545.748 924.2572,-544.8337 931.9385,-552.1308 934.8125,-545.748"/>
+<path fill="none" stroke="#b2df8a" d="M1242.0376,-687.9181C1166.2956,-653.8144 1003.6656,-580.5883 933.5222,-549.0054"/>
+<polygon fill="#b2df8a" stroke="#b2df8a" points="934.8125,-545.748 924.2572,-544.8337 931.9385,-552.1308 934.8125,-545.748"/>
 <text text-anchor="middle" x="1140.2583" y="-615.8" font-family="sans-serif" font-size="14.00" fill="#000000">true</text>
 </g>
 <!-- can&#45;post&#45;to&#45;missing?&#45;&gt;handle&#45;not&#45;found -->
@@ -474,8 +474,8 @@
 <!-- moved&#45;temporarily?&#45;&gt;post&#45;to&#45;gone? -->
 <g id="movedtemporarily_posttogone" class="edge">
 <title>moved&#45;temporarily?&#45;&gt;post&#45;to&#45;gone?</title>
-<path fill="none" stroke="#000000" d="M1069.9271,-859.9716C1053.4987,-847.2433 1031.3045,-830.0478 1013.35,-816.1371"/>
-<polygon fill="#000000" stroke="#000000" points="1015.4836,-813.3626 1005.4349,-810.0047 1011.1963,-818.8961 1015.4836,-813.3626"/>
+<path fill="none" stroke="#b2df8a" d="M1069.9271,-859.9716C1053.4987,-847.2433 1031.3045,-830.0478 1013.35,-816.1371"/>
+<polygon fill="#b2df8a" stroke="#b2df8a" points="1015.4836,-813.3626 1005.4349,-810.0047 1011.1963,-818.8961 1015.4836,-813.3626"/>
 <text text-anchor="middle" x="1059.9824" y="-830.8" font-family="sans-serif" font-size="14.00" fill="#000000">false</text>
 </g>
 <!-- moved&#45;permanently? -->
@@ -494,8 +494,8 @@
 <!-- moved&#45;permanently?&#45;&gt;moved&#45;temporarily? -->
 <g id="movedpermanently_movedtemporarily" class="edge">
 <title>moved&#45;permanently?&#45;&gt;moved&#45;temporarily?</title>
-<path fill="none" stroke="#000000" d="M1132.5926,-945.7616C1125.6984,-933.9036 1116.5884,-918.2345 1108.8655,-904.951"/>
-<polygon fill="#000000" stroke="#000000" points="1111.8368,-903.098 1103.7847,-896.2121 1105.7852,-906.6164 1111.8368,-903.098"/>
+<path fill="none" stroke="#b2df8a" d="M1132.5926,-945.7616C1125.6984,-933.9036 1116.5884,-918.2345 1108.8655,-904.951"/>
+<polygon fill="#b2df8a" stroke="#b2df8a" points="1111.8368,-903.098 1103.7847,-896.2121 1105.7852,-906.6164 1111.8368,-903.098"/>
 <text text-anchor="middle" x="1134.9824" y="-916.8" font-family="sans-serif" font-size="14.00" fill="#000000">false</text>
 </g>
 <!-- existed? -->
@@ -507,8 +507,8 @@
 <!-- existed?&#45;&gt;post&#45;to&#45;missing? -->
 <g id="existed_posttomissing" class="edge">
 <title>existed?&#45;&gt;post&#45;to&#45;missing?</title>
-<path fill="none" stroke="#000000" d="M1173.5918,-1031.742C1191.2925,-1019.6676 1212.7105,-1002.3381 1226.1963,-982 1259.8964,-931.1764 1273.7789,-859.5975 1279.1288,-820.4031"/>
-<polygon fill="#000000" stroke="#000000" points="1282.6302,-820.6131 1280.4208,-810.2512 1275.6862,-819.7293 1282.6302,-820.6131"/>
+<path fill="none" stroke="#b2df8a" d="M1173.5918,-1031.742C1191.2925,-1019.6676 1212.7105,-1002.3381 1226.1963,-982 1259.8964,-931.1764 1273.7789,-859.5975 1279.1288,-820.4031"/>
+<polygon fill="#b2df8a" stroke="#b2df8a" points="1282.6302,-820.6131 1280.4208,-810.2512 1275.6862,-819.7293 1282.6302,-820.6131"/>
 <text text-anchor="middle" x="1271.9824" y="-916.8" font-family="sans-serif" font-size="14.00" fill="#000000">false</text>
 </g>
 <!-- existed?&#45;&gt;moved&#45;permanently? -->
@@ -528,8 +528,8 @@
 <!-- patch&#45;enacted?&#45;&gt;respond&#45;with&#45;entity? -->
 <g id="patchenacted_respondwithentity" class="edge">
 <title>patch&#45;enacted?&#45;&gt;respond&#45;with&#45;entity?</title>
-<path fill="none" stroke="#000000" d="M780.0168,-257.8969C774.9216,-252.5342 769.8357,-246.3785 766.0723,-240 762.1268,-233.313 759.0485,-225.5349 756.6973,-218.134"/>
-<polygon fill="#000000" stroke="#000000" points="760.0342,-217.0723 753.9288,-208.4135 753.3019,-218.9897 760.0342,-217.0723"/>
+<path fill="none" stroke="#b2df8a" d="M780.0168,-257.8969C774.9216,-252.5342 769.8357,-246.3785 766.0723,-240 762.1268,-233.313 759.0485,-225.5349 756.6973,-218.134"/>
+<polygon fill="#b2df8a" stroke="#b2df8a" points="760.0342,-217.0723 753.9288,-208.4135 753.3019,-218.9897 760.0342,-217.0723"/>
 <text text-anchor="middle" x="778.2583" y="-228.8" font-family="sans-serif" font-size="14.00" fill="#000000">true</text>
 </g>
 <!-- method&#45;post? -->
@@ -568,8 +568,8 @@
 <!-- conflict?&#45;&gt;method&#45;post? -->
 <g id="conflict_methodpost" class="edge">
 <title>conflict?&#45;&gt;method&#45;post?</title>
-<path fill="none" stroke="#000000" d="M723.2567,-687.7616C723.9196,-676.3597 724.7873,-661.4342 725.5397,-648.494"/>
-<polygon fill="#000000" stroke="#000000" points="729.051,-648.3984 726.1374,-638.2121 722.0628,-647.9921 729.051,-648.3984"/>
+<path fill="none" stroke="#b2df8a" d="M723.2567,-687.7616C723.9196,-676.3597 724.7873,-661.4342 725.5397,-648.494"/>
+<polygon fill="#b2df8a" stroke="#b2df8a" points="729.051,-648.3984 726.1374,-638.2121 722.0628,-647.9921 729.051,-648.3984"/>
 <text text-anchor="middle" x="739.9824" y="-658.8" font-family="sans-serif" font-size="14.00" fill="#000000">false</text>
 </g>
 <!-- can&#45;put&#45;to&#45;missing? -->
@@ -588,8 +588,8 @@
 <!-- can&#45;put&#45;to&#45;missing?&#45;&gt;conflict? -->
 <g id="canputtomissing_conflict" class="edge">
 <title>can&#45;put&#45;to&#45;missing?&#45;&gt;conflict?</title>
-<path fill="none" stroke="#000000" d="M879.7688,-945.8189C866.8412,-932.5969 849.5507,-913.942 836.1963,-896 795.3307,-841.0958 756.2029,-770.7326 736.1368,-732.9192"/>
-<polygon fill="#000000" stroke="#000000" points="739.2144,-731.2518 731.4565,-724.0362 733.0214,-734.5148 739.2144,-731.2518"/>
+<path fill="none" stroke="#b2df8a" d="M879.7688,-945.8189C866.8412,-932.5969 849.5507,-913.942 836.1963,-896 795.3307,-841.0958 756.2029,-770.7326 736.1368,-732.9192"/>
+<polygon fill="#b2df8a" stroke="#b2df8a" points="739.2144,-731.2518 731.4565,-724.0362 733.0214,-734.5148 739.2144,-731.2518"/>
 <text text-anchor="middle" x="812.2583" y="-830.8" font-family="sans-serif" font-size="14.00" fill="#000000">true</text>
 </g>
 <!-- put&#45;to&#45;different&#45;url? -->
@@ -608,8 +608,8 @@
 <!-- put&#45;to&#45;different&#45;url?&#45;&gt;can&#45;put&#45;to&#45;missing? -->
 <g id="puttodifferenturl_canputtomissing" class="edge">
 <title>put&#45;to&#45;different&#45;url?&#45;&gt;can&#45;put&#45;to&#45;missing?</title>
-<path fill="none" stroke="#000000" d="M916.3186,-1031.7616C913.2387,-1020.2456 909.1976,-1005.1353 905.7131,-992.1064"/>
-<polygon fill="#000000" stroke="#000000" points="909.0318,-990.9683 903.067,-982.2121 902.2695,-992.7769 909.0318,-990.9683"/>
+<path fill="none" stroke="#b2df8a" d="M916.3186,-1031.7616C913.2387,-1020.2456 909.1976,-1005.1353 905.7131,-992.1064"/>
+<polygon fill="#b2df8a" stroke="#b2df8a" points="909.0318,-990.9683 903.067,-982.2121 902.2695,-992.7769 909.0318,-990.9683"/>
 <text text-anchor="middle" x="925.9824" y="-1002.8" font-family="sans-serif" font-size="14.00" fill="#000000">false</text>
 </g>
 <!-- method&#45;put? -->
@@ -722,8 +722,8 @@
 <!-- delete&#45;enacted?&#45;&gt;respond&#45;with&#45;entity? -->
 <g id="deleteenacted_respondwithentity" class="edge">
 <title>delete&#45;enacted?&#45;&gt;respond&#45;with&#45;entity?</title>
-<path fill="none" stroke="#000000" d="M619.7857,-257.9716C645.0862,-244.7846 679.5865,-226.8027 706.7468,-212.6464"/>
-<polygon fill="#000000" stroke="#000000" points="708.4024,-215.7304 715.6524,-208.0047 705.1669,-209.523 708.4024,-215.7304"/>
+<path fill="none" stroke="#b2df8a" d="M619.7857,-257.9716C645.0862,-244.7846 679.5865,-226.8027 706.7468,-212.6464"/>
+<polygon fill="#b2df8a" stroke="#b2df8a" points="708.4024,-215.7304 715.6524,-208.0047 705.1669,-209.523 708.4024,-215.7304"/>
 <text text-anchor="middle" x="690.2583" y="-228.8" font-family="sans-serif" font-size="14.00" fill="#000000">true</text>
 </g>
 <!-- method&#45;patch? -->
@@ -1022,8 +1022,8 @@
 <!-- exists?&#45;&gt;if&#45;match&#45;exists? -->
 <g id="exists_ifmatchexists" class="edge">
 <title>exists?&#45;&gt;if&#45;match&#45;exists?</title>
-<path fill="none" stroke="#000000" d="M788.3763,-2181.754C739.426,-2168.2179 640.847,-2140.9581 574.4149,-2122.5878"/>
-<polygon fill="#000000" stroke="#000000" points="575.0205,-2119.124 564.4493,-2119.832 573.1548,-2125.8707 575.0205,-2119.124"/>
+<path fill="none" stroke="#b2df8a" d="M788.3763,-2181.754C739.426,-2168.2179 640.847,-2140.9581 574.4149,-2122.5878"/>
+<polygon fill="#b2df8a" stroke="#b2df8a" points="575.0205,-2119.124 564.4493,-2119.832 573.1548,-2125.8707 575.0205,-2119.124"/>
 <text text-anchor="middle" x="694.2583" y="-2142.8" font-family="sans-serif" font-size="14.00" fill="#000000">true</text>
 </g>
 <!-- processable? -->
@@ -1042,8 +1042,8 @@
 <!-- processable?&#45;&gt;exists? -->
 <g id="processable_exists" class="edge">
 <title>processable?&#45;&gt;exists?</title>
-<path fill="none" stroke="#000000" d="M1499.5264,-2270.1565C1362.7634,-2254.0667 982.593,-2209.3408 858.174,-2194.7033"/>
-<polygon fill="#000000" stroke="#000000" points="858.2997,-2191.194 847.9593,-2193.5015 857.4818,-2198.1461 858.2997,-2191.194"/>
+<path fill="none" stroke="#b2df8a" d="M1499.5264,-2270.1565C1362.7634,-2254.0667 982.593,-2209.3408 858.174,-2194.7033"/>
+<polygon fill="#b2df8a" stroke="#b2df8a" points="858.2997,-2191.194 847.9593,-2193.5015 857.4818,-2198.1461 858.2997,-2191.194"/>
 <text text-anchor="middle" x="1239.2583" y="-2228.8" font-family="sans-serif" font-size="14.00" fill="#000000">true</text>
 </g>
 <!-- encoding&#45;available? -->
@@ -1242,8 +1242,8 @@
 <!-- valid&#45;entity&#45;length?&#45;&gt;is&#45;options? -->
 <g id="validentitylength_isoptions" class="edge">
 <title>valid&#45;entity&#45;length?&#45;&gt;is&#45;options?</title>
-<path fill="none" stroke="#000000" d="M1876.5559,-3117.9716C1860.7156,-3105.358 1839.3659,-3088.3573 1821.9811,-3074.5139"/>
-<polygon fill="#000000" stroke="#000000" points="1823.8099,-3071.496 1813.8068,-3068.0047 1819.4494,-3076.972 1823.8099,-3071.496"/>
+<path fill="none" stroke="#b2df8a" d="M1876.5559,-3117.9716C1860.7156,-3105.358 1839.3659,-3088.3573 1821.9811,-3074.5139"/>
+<polygon fill="#b2df8a" stroke="#b2df8a" points="1823.8099,-3071.496 1813.8068,-3068.0047 1819.4494,-3076.972 1823.8099,-3071.496"/>
 <text text-anchor="middle" x="1863.2583" y="-3088.8" font-family="sans-serif" font-size="14.00" fill="#000000">true</text>
 </g>
 <!-- known&#45;content&#45;type? -->
@@ -1262,8 +1262,8 @@
 <!-- known&#45;content&#45;type?&#45;&gt;valid&#45;entity&#45;length? -->
 <g id="knowncontenttype_validentitylength" class="edge">
 <title>known&#45;content&#45;type?&#45;&gt;valid&#45;entity&#45;length?</title>
-<path fill="none" stroke="#000000" d="M2006.6862,-3203.9716C1986.1951,-3191.014 1958.3827,-3173.4267 1936.1826,-3159.3884"/>
-<polygon fill="#000000" stroke="#000000" points="1937.9914,-3156.3912 1927.6688,-3154.0047 1934.2501,-3162.3075 1937.9914,-3156.3912"/>
+<path fill="none" stroke="#b2df8a" d="M2006.6862,-3203.9716C1986.1951,-3191.014 1958.3827,-3173.4267 1936.1826,-3159.3884"/>
+<polygon fill="#b2df8a" stroke="#b2df8a" points="1937.9914,-3156.3912 1927.6688,-3154.0047 1934.2501,-3162.3075 1937.9914,-3156.3912"/>
 <text text-anchor="middle" x="1987.2583" y="-3174.8" font-family="sans-serif" font-size="14.00" fill="#000000">true</text>
 </g>
 <!-- valid&#45;content&#45;header? -->
@@ -1282,8 +1282,8 @@
 <!-- valid&#45;content&#45;header?&#45;&gt;known&#45;content&#45;type? -->
 <g id="validcontentheader_knowncontenttype" class="edge">
 <title>valid&#45;content&#45;header?&#45;&gt;known&#45;content&#45;type?</title>
-<path fill="none" stroke="#000000" d="M2035.1963,-3289.7616C2035.1963,-3278.3597 2035.1963,-3263.4342 2035.1963,-3250.494"/>
-<polygon fill="#000000" stroke="#000000" points="2038.6964,-3250.2121 2035.1963,-3240.2121 2031.6964,-3250.2121 2038.6964,-3250.2121"/>
+<path fill="none" stroke="#b2df8a" d="M2035.1963,-3289.7616C2035.1963,-3278.3597 2035.1963,-3263.4342 2035.1963,-3250.494"/>
+<polygon fill="#b2df8a" stroke="#b2df8a" points="2038.6964,-3250.2121 2035.1963,-3240.2121 2031.6964,-3250.2121 2038.6964,-3250.2121"/>
 <text text-anchor="middle" x="2047.2583" y="-3260.8" font-family="sans-serif" font-size="14.00" fill="#000000">true</text>
 </g>
 <!-- allowed? -->
@@ -1302,8 +1302,8 @@
 <!-- allowed?&#45;&gt;valid&#45;content&#45;header? -->
 <g id="allowed_validcontentheader" class="edge">
 <title>allowed?&#45;&gt;valid&#45;content&#45;header?</title>
-<path fill="none" stroke="#000000" d="M2184.5264,-3377.4183C2155.666,-3364.0021 2114.7549,-3344.984 2083.0497,-3330.2454"/>
-<polygon fill="#000000" stroke="#000000" points="2084.4937,-3327.057 2073.9502,-3326.0153 2081.5428,-3333.4046 2084.4937,-3327.057"/>
+<path fill="none" stroke="#b2df8a" d="M2184.5264,-3377.4183C2155.666,-3364.0021 2114.7549,-3344.984 2083.0497,-3330.2454"/>
+<polygon fill="#b2df8a" stroke="#b2df8a" points="2084.4937,-3327.057 2073.9502,-3326.0153 2081.5428,-3333.4046 2084.4937,-3327.057"/>
 <text text-anchor="middle" x="2150.2583" y="-3346.8" font-family="sans-serif" font-size="14.00" fill="#000000">true</text>
 </g>
 <!-- authorized? -->
@@ -1322,8 +1322,8 @@
 <!-- authorized?&#45;&gt;allowed? -->
 <g id="authorized_allowed" class="edge">
 <title>authorized?&#45;&gt;allowed?</title>
-<path fill="none" stroke="#000000" d="M2302.3945,-3461.9716C2287.1408,-3449.358 2266.5818,-3432.3573 2249.8409,-3418.5139"/>
-<polygon fill="#000000" stroke="#000000" points="2251.9063,-3415.6801 2241.9694,-3412.0047 2247.4454,-3421.0746 2251.9063,-3415.6801"/>
+<path fill="none" stroke="#b2df8a" d="M2302.3945,-3461.9716C2287.1408,-3449.358 2266.5818,-3432.3573 2249.8409,-3418.5139"/>
+<polygon fill="#b2df8a" stroke="#b2df8a" points="2251.9063,-3415.6801 2241.9694,-3412.0047 2247.4454,-3421.0746 2251.9063,-3415.6801"/>
 <text text-anchor="middle" x="2290.2583" y="-3432.8" font-family="sans-serif" font-size="14.00" fill="#000000">true</text>
 </g>
 <!-- malformed? -->
@@ -1342,8 +1342,8 @@
 <!-- malformed?&#45;&gt;authorized? -->
 <g id="malformed_authorized" class="edge">
 <title>malformed?&#45;&gt;authorized?</title>
-<path fill="none" stroke="#000000" d="M2409.5559,-3547.9716C2393.7156,-3535.358 2372.3659,-3518.3573 2354.9811,-3504.5139"/>
-<polygon fill="#000000" stroke="#000000" points="2356.8099,-3501.496 2346.8068,-3498.0047 2352.4494,-3506.972 2356.8099,-3501.496"/>
+<path fill="none" stroke="#b2df8a" d="M2409.5559,-3547.9716C2393.7156,-3535.358 2372.3659,-3518.3573 2354.9811,-3504.5139"/>
+<polygon fill="#b2df8a" stroke="#b2df8a" points="2356.8099,-3501.496 2346.8068,-3498.0047 2352.4494,-3506.972 2356.8099,-3501.496"/>
 <text text-anchor="middle" x="2398.9824" y="-3518.8" font-family="sans-serif" font-size="14.00" fill="#000000">false</text>
 </g>
 <!-- method&#45;allowed? -->
@@ -1382,8 +1382,8 @@
 <!-- uri&#45;too&#45;long?&#45;&gt;method&#45;allowed? -->
 <g id="uritoolong_methodallowed" class="edge">
 <title>uri&#45;too&#45;long?&#45;&gt;method&#45;allowed?</title>
-<path fill="none" stroke="#000000" d="M2630.5338,-3719.7616C2617.9333,-3707.4475 2601.1274,-3691.0235 2587.2169,-3677.4293"/>
-<polygon fill="#000000" stroke="#000000" points="2589.4301,-3674.6983 2579.8319,-3670.2121 2584.5375,-3679.7046 2589.4301,-3674.6983"/>
+<path fill="none" stroke="#b2df8a" d="M2630.5338,-3719.7616C2617.9333,-3707.4475 2601.1274,-3691.0235 2587.2169,-3677.4293"/>
+<polygon fill="#b2df8a" stroke="#b2df8a" points="2589.4301,-3674.6983 2579.8319,-3670.2121 2584.5375,-3679.7046 2589.4301,-3674.6983"/>
 <text text-anchor="middle" x="2624.9824" y="-3690.8" font-family="sans-serif" font-size="14.00" fill="#000000">false</text>
 </g>
 <!-- known&#45;method? -->
@@ -1422,8 +1422,8 @@
 <!-- service&#45;available?&#45;&gt;known&#45;method? -->
 <g id="serviceavailable_knownmethod" class="edge">
 <title>service&#45;available?&#45;&gt;known&#45;method?</title>
-<path fill="none" stroke="#000000" d="M152.4618,-3907.8419C506.7292,-3895.9454 2218.4865,-3838.4635 2581.4669,-3826.2744"/>
-<polygon fill="#000000" stroke="#000000" points="2581.6817,-3829.7693 2591.5586,-3825.9355 2581.4467,-3822.7732 2581.6817,-3829.7693"/>
+<path fill="none" stroke="#b2df8a" d="M152.4618,-3907.8419C506.7292,-3895.9454 2218.4865,-3838.4635 2581.4669,-3826.2744"/>
+<polygon fill="#b2df8a" stroke="#b2df8a" points="2581.6817,-3829.7693 2591.5586,-3825.9355 2581.4467,-3822.7732 2581.6817,-3829.7693"/>
 <text text-anchor="middle" x="1533.2583" y="-3862.8" font-family="sans-serif" font-size="14.00" fill="#000000">true</text>
 </g>
 <!-- initialize&#45;context -->
