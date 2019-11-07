@@ -1,0 +1,15 @@
+name: CLJ-Kondo
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - uses: DeLaGuardo/clojure-lint-action@v1
+      with:
+        clj-kondo-args: --lint src
+        github_token: ${{ secrets.GITHUB_TOKEN }}
