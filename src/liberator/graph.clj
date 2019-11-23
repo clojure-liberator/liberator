@@ -1,4 +1,5 @@
-(ns liberator.graph)
+(ns liberator.graph
+  (:require [liberator.core :as liberator]))
 
 (defn extract
   ([_ name then else] [name then else])
@@ -7,16 +8,21 @@
 (defn clean-id [str]
   (clojure.string/replace str #"[^a-zA-Z0-9_]+" ""))
 
+(def default-style "color=\"#b2df8a\"")
+
 (defn to-graph [[& args]]
   (condp = (first args)
     'defdecision
-    (let [[name then else] (apply extract args)]
+    (let [[name then else] (apply extract args)
+          default (get liberator/default-functions (keyword name))
+          then-default (if (true? default) default-style "")
+          else-default (if (false? default) default-style "")]
       (format (str "\"%s\" [id = \"%s\"] \n "
-                   "\"%s\" -> \"%s\" [label = \"true\",  id = \"%s\"] \n"
-                   "\"%s\" -> \"%s\" [label = \"false\", id = \"%s\"]\n")
+                   "\"%s\" -> \"%s\" [label = \"true\",  id = \"%s\" %s] \n"
+                   "\"%s\" -> \"%s\" [label = \"false\", id = \"%s\" %s]\n")
               name (clean-id name)
-              name then (clean-id (str name "_" then))
-              name else (clean-id (str name "_" else))))
+              name then (clean-id (str name "_" then)) then-default
+              name else (clean-id (str name "_" else)) else-default))
     'defaction
     (let [[_ name then] args]
       (format (str "\"%s\"[shape=\"ellipse\" id = \"%s\"];\n"
