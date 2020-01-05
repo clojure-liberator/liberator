@@ -1,4 +1,5 @@
 # Liberator [![Build Status](https://travis-ci.org/clojure-liberator/liberator.svg?branch=master)](https://travis-ci.org/clojure-liberator/liberator) [![Clojars Project](http://clojars.org/liberator/latest-version.svg)](http://clojars.org/liberator)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fclojure-liberator%2Fliberator.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fclojure-liberator%2Fliberator?ref=badge_shield)
 
 Liberator is a Clojure library for building RESTful applications.
 
@@ -45,3 +46,6 @@ Documentation and a tutorial can be found on [http://clojure-liberator.github.io
 # License
 
 Liberator is licensed under EPL 1.0 (see file epl-v10.html).
+
+
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fclojure-liberator%2Fliberator.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fclojure-liberator%2Fliberator?ref=badge_large)
