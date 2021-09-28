@@ -8,6 +8,22 @@ Liberator supports a whole lot of decisions points. Some of them are
 needed for next to every resource definition. Others are seldom used
 or there is no other sensible implementation.
 
+## Implementing a decision
+
+A decision is a `(fn [{:keys [request resource] :as context}] ...)` that is expected to return a truthy value. In addition, it can also update the context - if the returned value is a map then it is merged into the context, if it is a function than the context is passed through it, if it is a vector then its second element is checked for being a map/function. Example:
+
+```clojure
+(defresource foo
+  :allowed-methods [:get]
+  :allowed? (fn [{:keys [request resource]}]
+              (let [user (my/fetch-user! request)]
+                (when (my/authorized? user resource)
+                  {::user user})))
+  :handle-ok (fn [ctx]
+               (log/info "user" (-> ctx ::user :name) "accessed foo")
+               (foo/get (:request ctx))))
+```
+
 ## Typical decision points for resource implementors
 
 The following decisions points will be typically specified depending
